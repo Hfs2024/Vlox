@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vlox Light in NS</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js"></script>
+
+</head>
+
+<body>
+    <header>
+        <a href="/" class="logo">Vlox</a>
+        <div class="group">
+            <i class="fas fa-user-plus" id="signup-btn" role="button" tabindex="0" aria-label="Sign Up"></i>
+            <div id="loggedIn-group">
+                <i class="fas fa-user-circle" id="profile-btn" role="button" tabindex="0" aria-label="Profile"></i>
+                <i id="post-bookmarks-btn" class="fas fa-bookmark" role="button" tabindex="0"
+                    aria-label="Bookmarks"></i>
+                <i class="fas fa-sign-out" id="signout-btn" role="button" tabindex="0" aria-label="Sign Out"></i>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="left">
+            <h1>What's on your mind today?</h1>
+            <input id="create-post-title" type="text" placeholder="Enter post title..." /><br /><br />
+            <textarea id="create-post-content" placeholder="Enter post content..."></textarea>
+            <div class="space-between">
+                <div class="group">
+                    <i id="copy-post-content-btn" class="fas fa-copy copy" role="button" tabindex="0"
+                        aria-label="Copy"></i>
+                    <i id="clear-post-content-btn" class="fas fa-eraser clear" role="button" tabindex="0"
+                        aria-label="Clear"></i>
+                    <i id="card-generator-btn" class="fas fa-address-card card-generator" role="button" tabindex="0"
+                        aria-label="Card Generator"></i>
+                </div>
+                <p class="count-text-wrapper">
+                    Count:
+                    <span class="count" id="create-post-content-count">0/2000</span>
+                </p>
+            </div>
+
+            <button id="create-post-btn" style="width: 100%;">Create post</button>
+        </section>
+
+        <section class="right">
+            <div id="posts-container">
+                <!-- Posts will be loaded here -->
+            </div>
+
+            <div class="center">
+                <button id="prev-btn">
+                    <i class="fas fa-chevron-left"></i>
+                    Prev
+                </button>
+
+                <button id="reload-btn">
+                    <i class="fas fa-repeat"></i>
+                    Reload
+                </button>
+
+                <button id="next-btn">
+                    <i class="fas fa-chevron-right"></i>
+                    Next
+                </button>
+            </div>
+        </section>
+
+        <button id="toggle-theme-btn">
+            <i class="fas fa-adjust"></i>
+        </button>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Vlox</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/nanoscript.min.js"></script>
+    <script>
+        // Accessibility
+        NS("[role='button']").each(btn => {
+            btn = NS(btn);
+            btn.on("keydown", function (e) {
+                if (e.key === "Enter" || e.key === ' ') btn.click();
+            });
+        });
+
+        // Quick info
+        async function getQuickInfo() {
+            const quickInfo = await NS.fetch({
+                url: "/api/get/current-user-quick-info"
+            });
+
+            window.currentUserQuickInfo = quickInfo;
+        }
+
+        getQuickInfo();
+
+        // Capitalize strings
+        function capitalizeFirstLtter(string) {
+            return string.split("")[0].toUpperCase() + string.slice(1) || "";
+        }
+
+        // Taskbar
+        function setUpTaskbar() {
+            NS(".taskbar-button").each((btn, index) => {
+                btn = NS(btn);
+                btn.on("click", function () {
+                    NS(".taskbar-button").removeClass("taskbar-button-chosen");
+                    NS(".taskbar-panel").removeClass("taskbar-panel-chosen");
+
+                    btn.addClass("taskbar-button-chosen");
+                    NS(NS(".taskbar-panel")[index]).addClass("taskbar-panel-chosen");
+                });
+            });
+        }
+    </script>
+    <script src="js/render-profile-post.js"></script>
+    <script src="js/card-generator.js"></script>
+    <script src="js/signup.js"></script>
+    <script src="js/render-posts.js"></script>
+    <script src="js/plugins/live-counter.js"></script>
+    <script src="js/plugins/ghost-state.js"></script>
+    <script src="js/plugins/theme-toggle.js"></script>
+    <script src="js/plugins/copy.js"></script>
+    <script src="js/theme-toggle.js"></script>
+    <script src="js/create-post.js"></script>
+</body>
+
+</html>

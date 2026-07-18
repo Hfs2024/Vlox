@@ -1,0 +1,486 @@
+/* Basic stylesheet */
+html {
+    box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+body {
+    background-color: white;
+    margin: 0;
+    padding: 0;
+    font-family: "Roboto Slab", serif;
+    transition: background-color 0.3s ease;
+}
+
+body.dark {
+    background-color: #333;
+}
+
+header,
+footer {
+    background-color: rgb(33, 65, 152);
+    padding: 10px;
+    color: white;
+    margin: 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header i {
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+header i:hover {
+    color: #918f8f;
+    cursor: pointer;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 10px;
+    color: white;
+    text-decoration: none;
+}
+
+/* Containers */
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.left,
+.right {
+    margin: 20px;
+    background-color: aliceblue;
+    border-radius: 20px;
+    padding: 20px;
+    height: 100vh;
+    text-align: center;
+    box-sizing: border-box;
+    overflow: auto;
+}
+
+.right {
+    flex-grow: 1;
+    width: 100%;
+}
+
+#posts-container {
+    max-height: 100%;
+    overflow: auto;
+}
+
+#user-posts-container,
+#user-bookmarks-container,
+#user-pinned-posts-container {
+    max-height: 400px;
+    overflow: auto;
+}
+
+/* Elements */
+input:not([type="range"]),
+.password-input-container,
+textarea,
+select {
+    width: 100%;
+    font-weight: bold;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 2px solid rgba(24, 67, 186, 0.642);
+    box-shadow: 0 2px 5px rgba(238, 0, 119, 0.1);
+    border-radius: 10px;
+}
+
+.password-input-container {
+    padding: 0;
+}
+
+.password-input-eye {
+    margin-right: 7px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.password-input-eye:hover {
+    color: #aaa;
+}
+
+.password-input {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.password-input:focus {
+    outline: none !important;
+}
+
+textarea {
+    height: 130px;
+}
+
+/* Buttons */
+button {
+    border-radius: 100px;
+    background-color: rgb(63, 62, 62);
+    color: white;
+    border: none;
+    font-weight: bold;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+    white-space: nowrap;
+}
+
+button:hover {
+    background-color: #222;
+}
+
+.buttons-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: auto;
+    gap: 20px;
+}
+
+.buttons-panel button {
+    width: 100%;
+}
+
+.delete-btn {
+    background-color: red;
+    width: 100%;
+}
+
+.delete-btn:hover {
+    background-color: darkred;
+}
+
+/* Posts and post group icons */
+.post,
+.bookmark,
+.nothing-found {
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: left;
+    color: black;
+    transition: transform 0.3s ease;
+}
+
+.post-header-group-icon {
+    font-size: 20px;
+    color: #07E;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.post-header-group-icon:hover {
+    color: #0055b3;
+}
+
+.post p,
+.nothing-found p {
+    white-space: pre-wrap;
+    width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+/* Post actions */
+.options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: rgb(12, 34, 159);
+    border-radius: 20px;
+    margin-top: 20px;
+    gap: 10px;
+    overflow: auto;
+}
+
+.options button {
+    background-color: white;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    transition: all 0.3s ease;
+    margin-top: 0;
+    white-space: nowrap;
+    color: black;
+}
+
+.options button:hover {
+    background-color: wheat;
+}
+
+.options i {
+    font-size: 20px;
+    color: #505050;
+}
+
+.comments-list {
+    max-height: 200px;
+    overflow: auto;
+}
+
+
+/* Post comments */
+.comment-item,
+.no-comments {
+    white-space: nowrap;
+    overflow: auto;
+    padding: 10px;
+    background-color: ghostwhite;
+    color: black;
+    border-radius: 20px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.comment-item:hover,
+.no-comments:hover {
+    background-color: rgb(175, 199, 214);
+}
+
+/* Emojis */
+.emoji-container-item {
+    padding: 10px;
+    background-color: #07E;
+    border-radius: 100px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+.emoji-container-item:hover {
+    background-color: #0055b3;
+}
+
+#user-current-emoji {
+    font-size: 30px;
+    margin-bottom: 20px;
+}
+
+/* Copy, clear, card generator and live counter */
+.copy,
+.clear,
+.card-generator {
+    cursor: pointer;
+    transition: color 0.3s ease;
+    font-size: 18px;
+}
+
+.copy:hover,
+.clear:hover,
+.card-generator:hover {
+    color: #aaa;
+}
+
+.count-text-wrapper, .forget-password {
+    text-align: right;
+    color: gray;
+    font-size: 14px;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.forget-password {
+    cursor: pointer;
+}
+
+.forget-password:hover {
+    color: #aaa;
+}
+
+.count-yellow {
+    color: rgb(165, 165, 69);
+}
+
+.count-orange {
+    color: orange;
+}
+
+.count-red {
+    color: red;
+}
+
+.count-darkred {
+    color: darkred;
+}
+
+/* Card generator */
+#card-generator-image-preview {
+    background-color: #eee;
+    padding: 10px;
+    border-radius: 20px;
+    font-family: "Merriweather", serif;
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+}
+
+#card-generator-username {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#card-generator-age {
+    color: rgb(174, 137, 89);
+}
+
+#card-generator-bio {
+    color: #0055b3;
+}
+
+#card-generator-website {
+    text-decoration: underline;
+    color: blue;
+}
+
+.card-generator-preview-skills-container {
+    display: flex;
+    overflow: hideen;
+    align-items: center;
+    max-width: 100%;
+    gap: 10px;
+}
+
+.card-generator-export-image-type-btn {
+    width: 100%;
+}
+
+#card-generator-skills-status-message {
+    font-size: 20px;
+    color: black;
+}
+
+/* Taskbar */
+.taskbar, .card-generator-preview-skill-cell {
+    background-color: #ccc;
+    white-space: nowrap;
+    padding: 10px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-generator-preview-skill-cell {
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    overflow: auto;
+}
+
+.card-generator-preview-skill-cell:hover {
+    background-color: #aaa;
+}
+
+.taskbar-button {
+    width: 100%;
+    margin-top: 0;
+}
+
+.taskbar-panel {
+    display: none;
+}
+
+.taskbar-button-chosen {
+    background-color: #07E;
+}
+
+.taskbar-button-chosen:hover {
+    background-color: #0055b3;
+}
+
+.taskbar-panel-chosen {
+    display: block;
+}
+
+/* Swal styles */
+.swal-toggle-link {
+    color: #07E;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.swal-toggle-link:hover {
+    color: blue;
+}
+
+.swal2-input {
+    width: auto !important;
+}
+
+/* Toggle theme button */
+#toggle-theme-btn {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    z-index: 9999;
+    border: 2px solid #eee;
+}
+
+/* Others */
+.center,
+.space-between,
+.center-overflow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.space-between {
+    justify-content: space-between;
+}
+
+.center-overflow {
+    overflow: auto;
+    white-space: nowrap;
+    justify-content: flex-start;
+    max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    .container {
+        display: block;
+        min-height: 0;
+    }
+
+    .left,
+    .right {
+        height: auto;
+        width: auto;
+    }
+
+    #posts-container {
+        max-height: 400px;
+        overflow: auto;
+    }
+}
