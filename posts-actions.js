@@ -1,8 +1,6 @@
 const schemas = require("./schemas.js");
 const { checkAuth, createErrorMessage, checkValidID, cleanData } = require("./helpers.js");
 const express = require("express");
-const fs = require("fs").promises;
-const path = require("path");
 const router = express.Router();
 
 // Pin and unpin

@@ -5,7 +5,6 @@ const express = require("express");
 const path = require("path");
 const session = require("express-session");
 const rateLimit = require("express-rate-limit");
-const fs = require("fs").promises;
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const { checkAuth, createErrorMessage, checkValidID, cleanData, generateRecoveryCodes } = require("./helpers.js");
@@ -20,7 +19,6 @@ mongoose.connect(process.env.MONGO_URI)
     .catch(err => console.error("MongoDB connection error:", err));
 
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -428,6 +426,6 @@ app.use((req, res) => {
 
 // Start the server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
+if (process.env.NODE_ENV === "development") app.listen(PORT, "0.0.0.0", () => {
     console.log(`Clean Engine live on port ${PORT}`);
 });
