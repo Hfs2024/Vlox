@@ -170,9 +170,9 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req,
     try {
         const { newComment } = req.body;
         if (!newComment.trim()) return res.status(400).json({ error: "Comment content cannot be empty." });
+        if (newComment.length > 200) return res.status(400).json({ error: "Comment cannot exceed 200 characters" });
         const cleanedPayload = cleanData({ newComment })
         const id = req.params.id;
-
         const result = await schemas.Comments.findOneAndUpdate({
             _id: id,
             by: req.session.userId

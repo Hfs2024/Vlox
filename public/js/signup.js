@@ -406,6 +406,7 @@ signOutBtn.on("click", async function () {
 
     if (!data.success) return Swal.fire(data.error);
     checkUserStatus();
+    getQuickInfo();
     Swal.fire("Success", "You have been logged out!", "success");
 });
 

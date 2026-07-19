@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const he = require("he");
 
+// Clean data
 function cleanData(data) {
     if (typeof data === "string") return he.encode(data).trim();
     if (Array.isArray(data)) return data.map((item) => cleanData(item));
@@ -27,12 +28,8 @@ async function checkAuth(req, res, next) {
         }
 
         const foundUser = await schemas.Users.findById(req.session.userId);
-        if (!foundUser) {
-            return res.status(401).json({ error: "Can't find your account right now!" });
-        }
-        if (foundUser.banned) {
-            return res.status(403).json({ error: "Your account is banned.", banned: true });
-        }
+        if (!foundUser) return res.status(401).json({ error: "Can't find your account right now!" });
+        if (foundUser.banned)  return res.status(403).json({ error: "Your account is banned." });
 
         req.currentUser = foundUser;
         next();

@@ -85,9 +85,15 @@ async function renderPosts(posts, skip = 0) {
             if (comments && comments.length > 0) {
                 comments.forEach(comment => {
                     const commentItem = NS(NS.createEl("div", commentsList, { className: "comment-item" }));
-                    commentItem.html(`<span style='color: green'>${decodeHTML(comment.by.emoji)} ${capitalizeFirstLtter(comment.by.username)}</span>: ${comment.content}`);
-                    if (comment.by.username === window.currentUserQuickInfo.username) commentItem.on("contextmenu", function (e) {
+                    commentItem.html(`
+                        ${decodeHTML(comment.by.emoji)} 
+                        <span class='comment-item-author'>${capitalizeFirstLtter(comment.by.username)}</span>:
+                        ${comment.content}`
+                    );
+                    commentItem.on("contextmenu", function (e) {
                         e.preventDefault();
+                        if (comment.by.username !== window.currentUserQuickInfo.username) return;
+
                         Swal.fire({
                             title: "Update comment: ",
                             input: "text",

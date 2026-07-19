@@ -283,7 +283,7 @@ app.get("/api/get/current-user-quick-info", checkAuth, async (req, res) => {
     try {
         return res.status(200).json({ success: true, username: req.currentUser.username, emoji: req.currentUser.emoji, bio: req.currentUser.bio });
     } catch (e) {
-        console.error(`Failed To Get Username: ${e.message}. User ID: ${req.userId}`);
+        console.error(`Failed To Get Username: ${e.message}. User ID: ${req.session.userId}`);
         createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Could not get your username. Try again." });
     }

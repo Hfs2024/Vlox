@@ -263,6 +263,10 @@ button:hover {
     background-color: rgb(175, 199, 214);
 }
 
+.comment-item-author {
+    color: green;
+}
+
 /* Emojis */
 .emoji-container-item {
     padding: 10px;
