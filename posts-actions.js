@@ -165,6 +165,34 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
     }
 });
 
+// Edit comment
+router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req, res) => {
+    try {
+        const { newComment } = req.body;
+        if (!newComment.trim()) return res.status(400).json({ error: "Comment content cannot be empty." });
+        const cleanedPayload = cleanData({ newComment })
+        const id = req.params.id;
+
+        const result = await schemas.Comments.findOneAndUpdate({
+            _id: id,
+            by: req.session.userId
+        }, {
+            $set: {
+                content: cleanedPayload.newComment
+            }
+        }, {
+            new: true
+        });
+
+        if (!result) return res.status(400).json({ error: "Comment not found or it's not your comment!" });
+        return res.status(200).json({ success: true, updatedDoc: result });
+    } catch (e) {
+        console.log("Error: " + e.message);
+        createErrorMessage(e, req.session.userId, req.originalUrl);
+        return res.status(500).json({ error: "Failed to create comment. Try again." });
+    }
+});
+
 // Edit
 router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) => {
     try {

@@ -84,8 +84,28 @@ async function renderPosts(posts, skip = 0) {
 
             if (comments && comments.length > 0) {
                 comments.forEach(comment => {
-                    const commentItem = NS.createEl("div", commentsList, { className: "comment-item" });
-                    commentItem.innerHTML = `<span style='color: green'>${decodeHTML(comment.by.emoji)} ${capitalizeFirstLtter(comment.by.username)}</span>: ${comment.content}`;
+                    const commentItem = NS(NS.createEl("div", commentsList, { className: "comment-item" }));
+                    commentItem.html(`<span style='color: green'>${decodeHTML(comment.by.emoji)} ${capitalizeFirstLtter(comment.by.username)}</span>: ${comment.content}`);
+                    if (comment.by.username === window.currentUserQuickInfo.username) commentItem.on("contextmenu", function (e) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: "Update comment: ",
+                            input: "text",
+                            inputPlaceholder: "Enter new comment..."
+                        }).then(async result => {
+                            if (result.isConfirmed && result.value) {
+                                const updateCommentResponse = await NS.fetch({
+                                    url: `/api/v1/edit/post/comment/${comment._id}/`,
+                                    method: "PUT",
+                                    body: { newComment: result.value }
+                                });
+
+                                if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
+                                Swal.fire("Success", "Comment updated!", "success");
+                                commentItem.html(`<span style='color: green'>${decodeHTML(comment.by.emoji)} ${capitalizeFirstLtter(comment.by.username)}</span>: ${updateCommentResponse.updatedDoc.content}`);
+                            }
+                        });
+                    });
                 });
             } else {
                 const noCommentsItem = NS.createEl("div", commentsList, { className: "no-comments" });
