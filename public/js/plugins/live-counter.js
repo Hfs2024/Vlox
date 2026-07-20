@@ -48,8 +48,8 @@ NS.liveCounter = ({
 
         if (newLength > max) {
             e.preventDefault();
-            const length = foundElement.value.length;
             foundElement.value += pasted.slice(0, remain);
+            const length = foundElement.value.length;
             if (showCounter && foundCounter) foundCounter.textContent = `${length}/${max}`;
             if (showRemaining && foundRemaining) foundRemaining.textContent = max - length;
 

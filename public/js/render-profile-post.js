@@ -8,9 +8,13 @@ async function renderProfilePost({
     titleEl.textContent = decodeHTML(post.title);
     const contentEl = NS.createEl("p", postCard, {});
     contentEl.textContent = decodeHTML(post.content);
+    const visibilityEl = NS(NS.createEl("p", postCard, {
+        style: "font-size: 15px;"
+    })).html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
+
     if (isUsernameMatch) {
         const buttonGroup = NS.createEl("div", postCard, {
-            className: "center"
+            className: "center-overflow"
         });
 
         NS(NS.createEl("button", buttonGroup, {
@@ -39,6 +43,20 @@ async function renderProfilePost({
             if (!pinData.success) return Swal.fire(pinData.error);
             getQuickInfo();
             Swal.fire("Success", `Post ${isPinned ? "unpinned" : "pinned"}!`, "success");
+        });
+
+        NS(NS.createEl("button", buttonGroup, {
+            id: "set-visibility-user-post-btn",
+            style: "width: 100%"
+        })).setText("Set visibility").on("click", async function () {
+            const visibilityData = await NS.fetch({
+                url: `/api/v1/set-visibility/post/${post._id}`,
+                method: "POST",
+                body: { value: !post.private }
+            });
+
+            if (!visibilityData.success) return Swal.fire(visibilityData.error);
+            Swal.fire("Success", `Post visibility set as ${post.private ? "public" : "private"}!`, "success");
         });
 
         NS(NS.createEl("button", buttonGroup, {

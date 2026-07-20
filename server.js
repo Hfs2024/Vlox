@@ -22,6 +22,9 @@ app.use(express.static(path.join(__dirname, "public"), { index: false }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+const isProduction = process.env.NODE_ENV === "production";
+if (isProduction) app.set("trust proxy", true);
+
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
@@ -31,11 +34,12 @@ app.use(
             mongoUrl: process.env.MONGO_URI,
             collectionName: 'sessions',
         }),
+        proxy: isProduction,
         cookie: {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            secure: isProduction,
             maxAge: 3600000,
-            sameSite: "lax"
+            sameSite: isProduction ? "none" : "lax"
         }
     })
 );
@@ -136,7 +140,13 @@ app.post("/api/v1/login", async (req, res) => {
 
         req.session.isLoggedIn = true;
         req.session.userId = user._id;
-        return res.status(200).json({ success: true });
+        req.session.save((err) => {
+            if (err) {
+                console.error("Login Session Save Failure: ", err.message);
+                return res.status(500).json({ error: "Session initialization failed" });
+            }
+            return res.status(200).json({ success: true });
+        });
     } catch (e) {
         console.error("Login Failure: ", e.message);
         return res.status(500).json({ error: "Internal server error" });
@@ -151,10 +161,10 @@ app.post("/api/v1/signup", async (req, res) => {
         if (username.length < 3 || username.length > 10) return res.status(400).json({ error: "Username must be between 3 and 10 chars." });
         if (password.length < 6 || password.length > 12) return res.status(400).json({ error: "Password must be between 6 and 12 chars." });
         if (bio && bio.length > 20) return res.status(400).json({ error: "Bio must be less than 20 chars" });
-        const existingUser = await schemas.Users.findOne({
-            username: username
-        });
+
+        const existingUser = await schemas.Users.findOne({ username: username });
         if (existingUser) return res.status(409).json({ error: "Username already exists" });
+
         const recoveryCodes = await generateRecoveryCodes();
         const cleanedPayload = cleanData({ username, bio });
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -168,9 +178,16 @@ app.post("/api/v1/signup", async (req, res) => {
         });
 
         await newUser.save();
+
         req.session.isLoggedIn = true;
         req.session.userId = newUser._id;
-        return res.status(201).json({ success: true, recoveryCodes: recoveryCodes.raw });
+        req.session.save((err) => {
+            if (err) {
+                console.error("Signup Session Save Failure: ", err.message);
+                return res.status(500).json({ error: "Session creation failed" });
+            }
+            return res.status(201).json({ success: true, recoveryCodes: recoveryCodes.raw });
+        });
     } catch (e) {
         console.error("Signup Failure: ", e.message);
         return res.status(500).json({ error: "Failed to create new user. Try again." });
@@ -264,7 +281,7 @@ app.get("/api/get/post/:id", checkValidID, async (req, res) => {
 app.get("/api/get/posts", async (req, res) => {
     try {
         const skip = parseInt(req.query.skip) || 0;
-        const posts = await schemas.Posts.find({})
+        const posts = await schemas.Posts.find({ private: false })
             .sort({ createdAt: -1, _id: -1 })
             .skip(skip)
             .limit(50)

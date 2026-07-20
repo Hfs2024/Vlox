@@ -221,6 +221,31 @@ router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) =>
     }
 });
 
+// Set visibility
+router.post("/api/v1/set-visibility/post/:id", checkAuth, checkValidID, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { value } = req.body;
+        const result = await schemas.Posts.findOneAndUpdate({
+            _id: id,
+            by: req.session.userId
+        }, {
+            $set: {
+                private: value ? true : false
+            }
+        }, {
+            new: true
+        });
+
+        if (!result) return res.status(400).json({ error: "Post not found or this isn't your post!" });
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.log("Error: " + e.message);
+        createErrorMessage(e, req.session.userId, req.originalUrl);
+        return res.status(500).json({ error: "Failed to change post visibility. Try again." });
+    }
+});
+
 // Likes and reports
 router.post("/api/v1/:action/post/:id", checkAuth, checkValidID, async (req, res) => {
     try {

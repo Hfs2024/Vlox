@@ -37,7 +37,8 @@ const postsSchema = new mongoose.Schema({
     likes: { type: Number, default: 0 },
     reports: { type: Number, default: 0 },
     comments: { type: Number, default: 0 },
-    by: { type: mongoose.Schema.Types.ObjectId, ref: "Users" }
+    by: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
+    private: { type: Boolean, default: false }
 }, { timestamps: true });
 postsSchema.index({ createdAt: -1, _id: -1 });
 postsSchema.index({ by: 1, createdAt: -1 });
