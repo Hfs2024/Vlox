@@ -8,7 +8,7 @@ router.post("/api/get/bookmarks/posts", checkAuth, async (req, res) => {
     try {
         const { ids } = req.body;
         if (!Array.isArray(ids)) return res.status(400).json({ error: "Invalid request. 'ids' must be an array." });
-        const postPromises = ids.map(id => schemas.Posts.findOne({ _id: id }).populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount").lean());
+        const postPromises = ids.map(id => schemas.Posts.findOne({ _id: id, private: false }).populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount").lean());
         const bookmarksPosts = await Promise.all(postPromises);
 
         return res.status(200).json({ success: true, posts: bookmarksPosts });
@@ -22,8 +22,8 @@ router.post("/api/get/bookmarks/posts", checkAuth, async (req, res) => {
 router.post("/api/v1/bookmark/post/:id", checkAuth, checkValidID, async (req, res) => {
     try {
         const id = req.params.id;
-        const isValidPost = await schemas.Posts.findOne({ _id: id });
-        if (!isValidPost) return res.status(200).json({ error: "Post not found!" });
+        const isValidPost = await schemas.Posts.findOne({ _id: id, private: false });
+        if (!isValidPost) return res.status(400).json({ error: "Post not found!" });
 
         const newBookmark = new schemas.Bookmarks({
             postId: id,
@@ -92,7 +92,7 @@ router.get("/api/get/user-bookmarks", checkAuth, async function (req, res) {
         const skip = parseInt(req.query.skip) || 0;
         const bookmarks = await schemas.Bookmarks.find({
             by: req.currentUser.username
-        }).sort({ createdAt: -1, _id: -1 }).skip(skip).limit(10);
+        }).sort({ createdAt: -1, _id: -1 }).skip(skip).limit(10).lean();
 
         return res.status(200).json({ success: true, bookmarks: bookmarks });
     } catch (e) {

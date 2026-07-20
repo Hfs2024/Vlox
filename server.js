@@ -67,7 +67,7 @@ app.post("/api/v1/posts", checkAuth, async (req, res) => {
     try {
         const { title, content } = req.body;
         if (!title || !content) return res.status(400).json({ error: "Title and text content fields are strictly required" });
-        if (title.length > 20 || content.length > 2000) return res.status(400).json({ error: "Title must be less than 20 chars and content should be less than 1000 chars" });
+        if (title.length > 20 || content.length > 2000) return res.status(400).json({ error: "Title must be less than 20 chars and content should be less than 2000 chars" });
 
         const cleanedPayload = cleanData({ title, content });
         const newPost = new schemas.Posts({
@@ -92,6 +92,9 @@ app.post("/api/get/posts/comments", async (req, res) => {
         const customId = req.body.customId ? true : false;
 
         if (customId) {
+            const isPublic = await schemas.Posts.findOne({ _id: ids, private: false });
+            if (!isPublic) return res.status(400).json({ error: "This is not a public post!" });
+
             const comments = await schemas.Comments.find({ for: ids }) // It's already a string id
                 .sort({ createdAt: -1, _id: -1 })
                 .skip(skip)
@@ -105,6 +108,9 @@ app.post("/api/get/posts/comments", async (req, res) => {
 
         if (!Array.isArray(ids)) return res.status(400).json({ error: "Invalid request. 'ids' must be an array." });
         const commentPromises = ids.map(async id => {
+            const isPublic = await schemas.Posts.findOne({ _id: id, private: false });
+            if (!isPublic) return res.status(400).json({ error: "This is not a private post!" });
+
             const found = await schemas.Comments.find({ for: id })
                 .sort({ createdAt: -1, _id: -1 })
                 .limit(10)
@@ -162,7 +168,12 @@ app.post("/api/v1/signup", async (req, res) => {
         if (password.length < 6 || password.length > 12) return res.status(400).json({ error: "Password must be between 6 and 12 chars." });
         if (bio && bio.length > 20) return res.status(400).json({ error: "Bio must be less than 20 chars" });
 
-        const existingUser = await schemas.Users.findOne({ username: username });
+        const existingUser = await schemas.Users.findOne({
+            $or: [
+                { username: username },
+                { email: email }
+            ]
+        });
         if (existingUser) return res.status(409).json({ error: "Username already exists" });
 
         const recoveryCodes = await generateRecoveryCodes();
@@ -234,7 +245,7 @@ app.put("/api/v1/update/emoji", checkAuth, async (req, res) => {
             runValidators: true, new: true
         });
 
-        if (!result) return res.status(200).json({ error: "Can't find your account right now!" });
+        if (!result) return res.status(400).json({ error: "Can't find your account right now!" });
 
         return res.status(200).json({
             success: true
@@ -268,7 +279,7 @@ app.delete("/api/v1/signout", checkAuth, async (req, res) => {
 // Posts
 app.get("/api/get/post/:id", checkValidID, async (req, res) => {
     try {
-        const foundPost = await schemas.Posts.findOne({ _id: req.params.id }).populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount");
+        const foundPost = await schemas.Posts.findOne({ _id: req.params.id, private: false }).populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount");
         if (!foundPost) return res.status(400).json({ error: "Post not found!" });
         return res.status(200).json({ success: true, posts: [foundPost] });
     } catch (e) {
@@ -312,7 +323,8 @@ app.get("/api/get/user-profile/:name", checkAuth, async function (req, res) {
         const user = await schemas.Users.findOne({ username: req.params.name });
         if (!user) return res.status(400).json({ error: "User not found!" });
         const foundPosts = await schemas.Posts.find({
-            by: user._id
+            by: user._id,
+            private: false
         }).sort({ createdAt: -1, _id: -1 })
             .skip(skip)
             .limit(10)

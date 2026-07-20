@@ -192,7 +192,7 @@ createPostBtn.on("click", async function () {
 
 async function createPost({ title, content } = {}) {
     const mentions = content.match(/@[a-zA-Z0-9_]+/g) || [];
-    if (title.length > 20 || content.length > 2000) return Swal.fire("Title must be less than 20 chars and content should be less than 1000 chars");
+    if (title.length > 20 || content.length > 2000) return Swal.fire("Title must be less than 20 chars and content should be less than 2000 chars");
 
     try {
         const data = await NS.fetch({

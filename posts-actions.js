@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/api/v1/pin/post/:id", checkAuth, checkValidID, async function (req, res) {
     try {
         const id = req.params.id;
-        const isUserPost = await schemas.Posts.findOne({ _id: id, by: req.session.userId });
+        const isUserPost = await schemas.Posts.findOne({ _id: id, by: req.session.userId, private: false });
         if (!isUserPost) return res.status(400).json({ error: "Seems like this is not your post!" });
 
         const result = await schemas.Users.findOneAndUpdate({
@@ -66,7 +66,7 @@ router.post("/api/get/user-pinned-posts", checkAuth, async (req, res) => {
     try {
         const ids = req.body.ids;
         if (!Array.isArray(ids)) return res.status(400).json({ erorr: "Invalid request. 'ids' must be a type of array" });
-        const postPromises = ids.map(id => schemas.Posts.findOne({ _id: id }).lean());
+        const postPromises = ids.map(id => schemas.Posts.findOne({ _id: id, private: false }).lean());
         const pinnedPosts = await Promise.all(postPromises);
 
         return res.status(200).json({ success: true, foundPinnedPosts: pinnedPosts });
@@ -135,7 +135,8 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
         await newComment.save();
 
         const result = await schemas.Posts.findOneAndUpdate({
-            _id: id
+            _id: id,
+            private: false // If this was true, the comment will be removed
         },
             {
                 $inc: {
@@ -203,7 +204,8 @@ router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) =>
 
         const cleanedPayload = cleanData({ newContent });
         const result = await schemas.Posts.findOneAndUpdate({
-            _id: id
+            _id: id,
+            by: req.session.userId
         }, {
             $set: {
                 content: cleanedPayload.newContent
@@ -226,6 +228,9 @@ router.post("/api/v1/set-visibility/post/:id", checkAuth, checkValidID, async (r
     try {
         const id = req.params.id;
         const { value } = req.body;
+        const isPinned = await schemas.Users.findOne({ username: req.currentUser.username, pinnedPosts: id });
+        if (isPinned) return res.status(400).json({ error: "You can't make a pinned post private! Unpin it first!" });
+
         const result = await schemas.Posts.findOneAndUpdate({
             _id: id,
             by: req.session.userId
@@ -264,7 +269,8 @@ router.post("/api/v1/:action/post/:id", checkAuth, checkValidID, async (req, res
 
         // Update the post
         let result = await schemas.Posts.findOneAndUpdate({
-            _id: id
+            _id: id,
+            private: false
         },
             {
                 $inc: {

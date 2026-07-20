@@ -2,6 +2,7 @@ async function renderProfilePost({
     post, pinnedPosts, isUsernameMatch, container
 } = {}) {
     if (!Array.isArray(pinnedPosts)) return console.log("Invalid 'pinnedPosts'");
+    if (!post) return;
     const isPinned = pinnedPosts.find(p => p === post._id);
     const postCard = NS.createEl("div", NS(container), { className: "post" });
     const titleEl = NS.createEl("h2", postCard, {});
