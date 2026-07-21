@@ -7,14 +7,9 @@ const nextBtn = NS("#next-btn");
 
 // Bookmarks
 async function showBookMarks() {
-    let response = await NS.fetch({
-        url: "/api/get/user-bookmarks"
-    });
-    const bookmarksIds = response.bookmarks.map(bookmark => bookmark.postId);
-    const bookmarksPosts = await NS.fetch({
+    let bookmarksPosts = await NS.fetch({
         url: "/api/get/bookmarks/posts",
-        method: "POST",
-        body: { ids: bookmarksIds }
+        method: "POST"
     });
     let bookmarksSkip = 0;
 
@@ -37,7 +32,7 @@ async function showBookMarks() {
     const renderBookmarks = () => {
         NS("#user-bookmarks-container").html("");
 
-        if (!response.bookmarks || response.bookmarks.length <= 0) {
+        if (!bookmarksPosts.posts || bookmarksPosts.posts.length <= 0) {
             const noBookmarksFound = NS.createEl("h2", NS("#user-bookmarks-container"), {
                 className: "nothing-found",
                 style: "text-align: center"
@@ -46,7 +41,7 @@ async function showBookMarks() {
             return;
         }
 
-        response.bookmarks.forEach((bookmark, index) => {
+        bookmarksPosts.posts.forEach((bookmark, index) => {
             const post = bookmarksPosts.posts[index];
             const bookmarkCard = NS.createEl("div", NS("#user-bookmarks-container"), { className: "bookmark" });
             NS(NS.createEl("h2", bookmarkCard, {})).setText(capitalizeFirstLtter(decodeHTML(bookmark.title)) || `Bookmark ${index + 1}`);
@@ -96,8 +91,9 @@ async function showBookMarks() {
         if (bookmarksSkip <= 0) return;
         bookmarksSkip -= 10;
 
-        response = await NS.fetch({
-            url: `/api/get/user-bookmarks/?skip=${bookmarksSkip}`
+        bookmarksPosts = await NS.fetch({
+            url: `/api/get/bookmarks/posts/?skip=${bookmarksSkip}`,
+            method: "POST"
         });
 
         renderBookmarks();
@@ -107,8 +103,9 @@ async function showBookMarks() {
         if (NS("#user-bookmarks-container").get(".nothing-found")[0]) return;
         bookmarksSkip += 10;
 
-        response = await NS.fetch({
-            url: `/api/get/user-bookmarks/?skip=${bookmarksSkip}`
+        bookmarksPosts = await NS.fetch({
+            url: `/api/get/bookmarks/posts/?skip=${bookmarksSkip}`,
+            method: "POST"
         });
 
         renderBookmarks();

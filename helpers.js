@@ -24,7 +24,7 @@ function cleanData(data) {
 async function checkAuth(req, res, next) {
     try {
         if (!req.session.isLoggedIn || !req.session.userId) {
-            return res.status(401).json({ error: "You are not logged in!" });
+            return res.status(400).json({ error: "You are not logged in!" });
         }
 
         const foundUser = await schemas.Users.findById(req.session.userId);
@@ -34,7 +34,7 @@ async function checkAuth(req, res, next) {
         req.currentUser = foundUser;
         next();
     } catch (err) {
-        return res.status(500).json({ error: "Error:" + err.message });
+        return res.status(500).json({ error: "Something went wrong!" });
     }
 }
 

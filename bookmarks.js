@@ -6,10 +6,15 @@ const router = express.Router();
 // Post, delete and put routes
 router.post("/api/get/bookmarks/posts", checkAuth, async (req, res) => {
     try {
-        const { ids } = req.body;
-        if (!Array.isArray(ids)) return res.status(400).json({ error: "Invalid request. 'ids' must be an array." });
-        const postPromises = ids.map(id => schemas.Posts.findOne({ _id: id, private: false }).populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount").lean());
-        const bookmarksPosts = await Promise.all(postPromises);
+        const skip = parseInt(req.query.skip) || 0;
+        const bookmarks = await schemas.Bookmarks.find({
+            by: req.currentUser.username
+        }).sort({ createdAt: -1, _id: -1 }).skip(skip).limit(10).select("postId");
+        const ids = bookmarks.map(bookmark => bookmark.postId.toString());
+        const bookmarksPosts = await schemas.Posts.find({ 
+            _id: { $in: ids }, 
+            private: false 
+        }).populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount").lean(); 
 
         return res.status(200).json({ success: true, posts: bookmarksPosts });
     } catch (e) {
@@ -83,22 +88,6 @@ router.delete("/api/v1/delete/bookmark/:id", checkAuth, checkValidID, async (req
         console.error(`Bookmark Delete Failue: ${e.message}.`);
         createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Could not delete bookmark. Try again." });
-    }
-});
-
-// Get routes
-router.get("/api/get/user-bookmarks", checkAuth, async function (req, res) {
-    try {
-        const skip = parseInt(req.query.skip) || 0;
-        const bookmarks = await schemas.Bookmarks.find({
-            by: req.currentUser.username
-        }).sort({ createdAt: -1, _id: -1 }).skip(skip).limit(10).lean();
-
-        return res.status(200).json({ success: true, bookmarks: bookmarks });
-    } catch (e) {
-        console.error(`Failed To Get User Bookmarks: ${e.message}. User ID: ${req.session.userId}`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Could not find your bookmarks right now" });
     }
 });
 

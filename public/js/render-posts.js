@@ -116,6 +116,8 @@ async function renderPosts(posts, skip = 0) {
                                     ],
                                     onLimit: () => { }
                                 });
+
+                                NS("#update-comment-input").focus();
                             },
 
                             preConfirm: () => {
@@ -199,6 +201,8 @@ async function renderPosts(posts, skip = 0) {
                         ],
                         onLimit: () => { }
                     });
+
+                    NS("#create-comment-input").focus();
                 },
                 showCancelButton: true,
                 confirmButtonText: "Submit",

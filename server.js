@@ -23,7 +23,6 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 const isProduction = process.env.NODE_ENV === "production";
-if (isProduction) app.set("trust proxy", true);
 
 app.use(
     session({
@@ -34,7 +33,6 @@ app.use(
             mongoUrl: process.env.MONGO_URI,
             collectionName: 'sessions',
         }),
-        proxy: isProduction,
         cookie: {
             httpOnly: true,
             secure: isProduction,
@@ -133,6 +131,25 @@ app.post("/api/get/posts/comments", async (req, res) => {
 });
 
 // User
+app.post("/api/get/user-private-posts", checkAuth, async (req, res) => {
+    try {
+        const skip = parseInt(req.query.skip) || 0;
+        const foundPosts = await schemas.Posts.find({
+            by: req.session.userId,
+            private: true
+        })
+            .sort({ createdAt: -1, _id: -1 })
+            .skip(skip)
+            .limit(10)
+            .lean();
+
+        return res.json({ success: true, posts: foundPosts });
+    } catch (e) {
+        console.error("Fetch Private Posts Break: ", e.message);
+        return res.status(500).json({ error: "Could not retrieve your private posts" });
+    }
+});
+
 app.post("/api/v1/login", async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -391,7 +408,7 @@ app.post("/api/v1/reset/password", passwordRecoveryHourLimit, async (req, res) =
         const { username, recoveryCode, newPassword } = req.body;
         const foundUser = await schemas.Users.findOne({ username: username });
         if (!foundUser) return res.status(400).json({ error: "Failed to find user!" });
-        if (newPassword.length < 6 || newPassword.length > 12) return res.status(200).json({ error: "Password must be between 6 and 12 chars!" });
+        if (newPassword.length < 6 || newPassword.length > 12) return res.status(400).json({ error: "Password must be between 6 and 12 chars!" });
         let foundOne = false;
 
         for (let code of foundUser.recoveryCodes) {

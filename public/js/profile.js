@@ -115,7 +115,7 @@ async function showProfile(data) {
     });
 
     // Reset bio
-    NS(".user-profile-bio").on("click", function () {
+    if (isUsernameMatch) NS(".user-profile-bio").on("click", function () {
         Swal.fire({
             title: "Enter new bio: ",
             input: "text",

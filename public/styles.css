@@ -84,7 +84,8 @@ header i:hover {
 
 #user-posts-container,
 #user-bookmarks-container,
-#user-pinned-posts-container {
+#user-pinned-posts-container,
+#user-private-posts-container {
     max-height: 400px;
     overflow: auto;
 }

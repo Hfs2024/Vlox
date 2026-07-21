@@ -223,8 +223,8 @@ router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) =>
     }
 });
 
-// Set visibility
-router.post("/api/v1/set-visibility/post/:id", checkAuth, checkValidID, async (req, res) => {
+// Change visibility
+router.post("/api/v1/change-visibility/post/:id", checkAuth, checkValidID, async (req, res) => {
     try {
         const id = req.params.id;
         const { value } = req.body;

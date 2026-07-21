@@ -25,6 +25,8 @@
             <i class="fas fa-user-plus" id="signup-btn" role="button" tabindex="0" aria-label="Sign Up"></i>
             <div id="loggedIn-group">
                 <i class="fas fa-user-circle" id="profile-btn" role="button" tabindex="0" aria-label="Profile"></i>
+                <i class="fas fa-vault" id="private-posts-btn" role="button" tabindex="0"
+                    aria-label="Private Posts"></i>
                 <i id="post-bookmarks-btn" class="fas fa-bookmark" role="button" tabindex="0"
                     aria-label="Bookmarks"></i>
                 <i class="fas fa-sign-out" id="signout-btn" role="button" tabindex="0" aria-label="Sign Out"></i>
@@ -88,7 +90,7 @@
     </footer>
 
     <!-- JavaScript -->
-    <script src="js/nanoscript.min.js"></script>
+    <script src="nanoscript.min.js"></script>
     <script>
         // Accessibility
         NS("[role='button']").each(btn => {
@@ -128,7 +130,30 @@
                 });
             });
         }
+
+        // Change post visibility
+        function changeVisibility({
+            container,
+            buttonText,
+            value,
+            postId
+        }) {
+            NS(NS.createEl("button", container, {
+                id: "change-visibility-user-post-btn",
+                style: "width: 100%"
+            })).setText(buttonText).on("click", async function () {
+                const visibilityData = await NS.fetch({
+                    url: `/api/v1/change-visibility/post/${postId}`,
+                    method: "POST",
+                    body: { value: value ? true : false } // Force a boolean
+                });
+
+                if (!visibilityData.success) return Swal.fire(visibilityData.error);
+                Swal.fire("Success", `Post visibility set as ${value ? "private" : "public"}!`, "success");
+            });
+        }
     </script>
+    <script src="js/private-posts.js"></script>
     <script src="js/render-profile-post.js"></script>
     <script src="js/card-generator.js"></script>
     <script src="js/signup.js"></script>

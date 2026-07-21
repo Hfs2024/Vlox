@@ -9,11 +9,12 @@ async function renderProfilePost({
     titleEl.textContent = decodeHTML(post.title);
     const contentEl = NS.createEl("p", postCard, {});
     contentEl.textContent = decodeHTML(post.content);
-    const visibilityEl = NS(NS.createEl("p", postCard, {
-        style: "font-size: 15px;"
-    })).html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
 
     if (isUsernameMatch) {
+        const visibilityEl = NS(NS.createEl("p", postCard, {
+            style: "font-size: 15px;"
+        })).html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
+
         const buttonGroup = NS.createEl("div", postCard, {
             className: "center-overflow"
         });
@@ -47,20 +48,6 @@ async function renderProfilePost({
         });
 
         NS(NS.createEl("button", buttonGroup, {
-            id: "set-visibility-user-post-btn",
-            style: "width: 100%"
-        })).setText("Set visibility").on("click", async function () {
-            const visibilityData = await NS.fetch({
-                url: `/api/v1/set-visibility/post/${post._id}`,
-                method: "POST",
-                body: { value: !post.private }
-            });
-
-            if (!visibilityData.success) return Swal.fire(visibilityData.error);
-            Swal.fire("Success", `Post visibility set as ${post.private ? "public" : "private"}!`, "success");
-        });
-
-        NS(NS.createEl("button", buttonGroup, {
             id: "edit-user-post-btn",
             style: "width: 100%"
         })).setText("Edit").on("click", async function () {
@@ -86,6 +73,13 @@ async function renderProfilePost({
                     Swal.fire("Success", `Post updated!`, "success");
                 }
             });
+        });
+
+        changeVisibility({
+            value: !post.private,
+            buttonText: "Change visibility",
+            container: postCard,
+            postId: post._id
         });
     };
 }
