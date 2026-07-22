@@ -25,7 +25,7 @@ async function viewAnalytics(post) {
     NS(NS.createEl("p", postCard, { style: "text-align: center" }))
         .html(
             likesPercent === 100 ?
-                `You filled the bar! You are a <span style='color: goldenrod'><b>LEGEND</b></span>`
+                `You filled the bar! You are a <span style='color: goldenrod'><b>LEGEND!!</b></span>`
                 : `Fill the bar and be a LEGEND!`
         );
 
