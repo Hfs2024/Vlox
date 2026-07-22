@@ -1,3 +1,42 @@
+async function viewAnalytics(post) {
+    Swal.fire({
+        title: post.title,
+        html: "<div id='user-post-analytics-container'></div>"
+    });
+
+    const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "post" });
+    const titleEl = NS.createEl("h2", postCard, {});
+    titleEl.textContent = decodeHTML(post.title);
+    const contentEl = NS.createEl("p", postCard, {});
+    contentEl.textContent = decodeHTML(post.content);
+    const panelAnalyticsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
+    let likesPercent = 10;
+    if (post.likes === 0) likesPercent = 0;
+    else if (post.likes >= 100) likesPercent = 100;
+    else if (post.likes >= 80) likesPercent = 80;
+    else if (post.likes >= 60) likesPercent = 60;
+    else if (post.likes >= 40) likesPercent = 40;
+    else if (post.likes >= 20) likesPercent = 20;
+
+    // Quick analytics
+    NS(NS.createEl("div", panelAnalyticsGroup, { className: "analytics-item" })).setText(`Likes: ${post.likes}`);
+    NS(NS.createEl("div", panelAnalyticsGroup, { className: "analytics-item" })).setText(`Reports: ${post.reports}`);
+    NS(NS.createEl("div", panelAnalyticsGroup, { className: "analytics-item" })).setText(`Comments: ${post.comments}`);
+    NS(NS.createEl("p", postCard, { style: "text-align: center" }))
+        .html(
+            likesPercent === 100 ?
+                `You filled the bar! You are a <span style='color: goldenrod'><b>LEGEND</b></span>`
+                : `Fill the bar and be a LEGEND!`
+        );
+
+    // Likes bar
+    NS(NS.createEl("div", postCard, { className: "analytics-likes-bar" }))
+        .html("<div class='analytics-likes-bar-fill'></div>");
+    NS(".analytics-likes-bar-fill").css({
+        width: `${likesPercent}%`
+    });
+}
+
 async function renderProfilePost({
     post, pinnedPosts, isUsernameMatch, container
 } = {}) {
@@ -15,9 +54,8 @@ async function renderProfilePost({
             style: "font-size: 15px;"
         })).html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
 
-        const buttonGroup = NS.createEl("div", postCard, {
-            className: "center-overflow"
-        });
+        const buttonGroup = NS.createEl("div", postCard, { className: "center-overflow" });
+        const buttonGroup2 = NS.createEl("div", postCard, { className: "center-overflow" });
 
         NS(NS.createEl("button", buttonGroup, {
             id: "delete-user-post-btn",
@@ -78,8 +116,15 @@ async function renderProfilePost({
         changeVisibility({
             value: !post.private,
             buttonText: "Change visibility",
-            container: postCard,
+            container: buttonGroup2,
             postId: post._id
+        });
+
+        NS(NS.createEl("button", buttonGroup2, {
+            id: "view-mini-analytics-post-btn",
+            style: "width: 100%"
+        })).setText("View mini analytics").on("click", async function () {
+            viewAnalytics(post);
         });
     };
 }

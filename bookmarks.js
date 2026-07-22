@@ -53,7 +53,7 @@ router.post("/api/v1/rename/bookmark/:id", checkAuth, checkValidID, async (req, 
         if (!title) return res.status(400).json({ error: "You didn't enter a title!" });
         const cleanedPayload = cleanData({ title });
 
-        const result = await schemas.Bookmarks.findOneAndUpdate({
+        const result = await schemas.Bookmarks.updateOne({
             _id: id,
             by: req.currentUser.username // Is this your bookmark?
         }, {
@@ -64,7 +64,7 @@ router.post("/api/v1/rename/bookmark/:id", checkAuth, checkValidID, async (req, 
             new: true
         });
 
-        if (!result) return res.status(400).json({ error: "Bookmark not found!" });
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Bookmark not found!" });
         return res.status(200).json({ success: true });
     } catch (e) {
         console.error(`Bookmark Rename Failue: ${e.message}.`);
@@ -76,12 +76,12 @@ router.post("/api/v1/rename/bookmark/:id", checkAuth, checkValidID, async (req, 
 router.delete("/api/v1/delete/bookmark/:id", checkAuth, checkValidID, async (req, res) => {
     try {
         const id = req.params.id;
-        const result = await schemas.Bookmarks.findOneAndDelete({
+        const result = await schemas.Bookmarks.deleteOne({
             _id: id,
             by: req.currentUser.username // Is this your bookmark?
         });
 
-        if (!result) return res.status(400).json({ error: "Bookmark not found!" });
+        if (result.deletedCount === 0) return res.status(400).json({ error: "Bookmark not found!" });
 
         return res.status(200).json({ success: true });
     } catch (e) {

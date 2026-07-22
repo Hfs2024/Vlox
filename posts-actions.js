@@ -10,7 +10,7 @@ router.post("/api/v1/pin/post/:id", checkAuth, checkValidID, async function (req
         const isUserPost = await schemas.Posts.findOne({ _id: id, by: req.session.userId, private: false });
         if (!isUserPost) return res.status(400).json({ error: "Seems like this is not your post!" });
 
-        const result = await schemas.Users.findOneAndUpdate({
+        const result = await schemas.Users.updateOne({
             username: req.currentUser.username,
             pinnedPostsCount: { $lt: 10 }
         }, {
@@ -25,7 +25,7 @@ router.post("/api/v1/pin/post/:id", checkAuth, checkValidID, async function (req
             new: true
         });
 
-        if (!result) return res.status(400).json({ error: "Seems you have more than 10 pinned posts!" })
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Seems you have more than 10 pinned posts!" })
 
         return res.status(200).json({ success: true });
     } catch (e) {
@@ -38,7 +38,7 @@ router.post("/api/v1/pin/post/:id", checkAuth, checkValidID, async function (req
 router.post("/api/v1/unpin/post/:id", checkAuth, checkValidID, async function (req, res) {
     try {
         const id = req.params.id;
-        const result = await schemas.Users.findOneAndUpdate({
+        const result = await schemas.Users.updateOne({
             username: req.currentUser.username
         }, {
             $pull: {
@@ -52,7 +52,7 @@ router.post("/api/v1/unpin/post/:id", checkAuth, checkValidID, async function (r
             new: true
         });
 
-        if (!result) return res.status(400).json({ error: "Seems this post wasn't pinned!" });
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Seems this post wasn't pinned!" });
 
         return res.status(200).json({ success: true });
     } catch (e) {
@@ -81,13 +81,13 @@ router.post("/api/get/user-pinned-posts", checkAuth, async (req, res) => {
 router.delete("/api/v1/delete/post/:id", checkAuth, checkValidID, async function (req, res) {
     try {
         const id = req.params.id;
-        const result = await schemas.Posts.findOneAndDelete({
+        const result = await schemas.Posts.deleteOne({
             _id: id,
             by: req.session.userId // Is this your post? 
         });
 
-        if (!result) return res.status(404).json({ error: "Post not found!" });
-        await schemas.Users.findOneAndUpdate({
+        if (result.deletedCount === 0) return res.status(404).json({ error: "Post not found!" });
+        await schemas.Users.updateOne({
             username: req.currentUser.username,
             pinnedPosts: id
         }, {
@@ -134,7 +134,7 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
 
         await newComment.save();
 
-        const result = await schemas.Posts.findOneAndUpdate({
+        const result = await schemas.Posts.updateOne({
             _id: id,
             private: false // If this was true, the comment will be removed
         },
@@ -148,8 +148,8 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
             }
         );
 
-        if (!result) {
-            await schemas.Comments.findOneAndDelete({
+        if (result.matchedCount === 0) {
+            await schemas.Comments.deleteOne({
                 for: id,
                 by: req.currentUser.username,
                 content: comment
@@ -158,7 +158,7 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
             return res.status(400).json({ error: "Post not found." });
         }
 
-        return res.status(200).json({ success: true, comments: result.comments });
+        return res.status(200).json({ success: true });
     } catch (e) {
         console.log("Error: " + e.message);
         createErrorMessage(e, req.session.userId, req.originalUrl);
@@ -174,7 +174,7 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req,
         if (newComment.length > 200) return res.status(400).json({ error: "Comment cannot exceed 200 characters" });
         const cleanedPayload = cleanData({ newComment })
         const id = req.params.id;
-        const result = await schemas.Comments.findOneAndUpdate({
+        const result = await schemas.Comments.updateOne({
             _id: id,
             by: req.session.userId
         }, {
@@ -185,7 +185,7 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req,
             new: true
         });
 
-        if (!result) return res.status(400).json({ error: "Comment not found or it's not your comment!" });
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Comment not found or it's not your comment!" });
         return res.status(200).json({ success: true, updatedDoc: result });
     } catch (e) {
         console.log("Error: " + e.message);
@@ -203,7 +203,7 @@ router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) =>
         if (newContent.length > 2000) return res.status(400).json({ error: "Content cannot exceed 2000 characters!" });
 
         const cleanedPayload = cleanData({ newContent });
-        const result = await schemas.Posts.findOneAndUpdate({
+        const result = await schemas.Posts.updateOne({
             _id: id,
             by: req.session.userId
         }, {
@@ -214,7 +214,7 @@ router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) =>
             new: true
         });
 
-        if (!result) return res.status(400).json({ error: "Post not found!" });
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Post not found!" });
         return res.status(200).json({ success: true });
     } catch (e) {
         console.log("Error: " + e.message);
@@ -231,7 +231,7 @@ router.post("/api/v1/change-visibility/post/:id", checkAuth, checkValidID, async
         const isPinned = await schemas.Users.findOne({ username: req.currentUser.username, pinnedPosts: id });
         if (isPinned) return res.status(400).json({ error: "You can't make a pinned post private! Unpin it first!" });
 
-        const result = await schemas.Posts.findOneAndUpdate({
+        const result = await schemas.Posts.updateOne({
             _id: id,
             by: req.session.userId
         }, {
@@ -242,7 +242,7 @@ router.post("/api/v1/change-visibility/post/:id", checkAuth, checkValidID, async
             new: true
         });
 
-        if (!result) return res.status(400).json({ error: "Post not found or this isn't your post!" });
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Post not found or this isn't your post!" });
         return res.status(200).json({ success: true });
     } catch (e) {
         console.log("Error: " + e.message);
@@ -268,7 +268,7 @@ router.post("/api/v1/:action/post/:id", checkAuth, checkValidID, async (req, res
         await newReaction.save();
 
         // Update the post
-        let result = await schemas.Posts.findOneAndUpdate({
+        const result = await schemas.Posts.updateOne({
             _id: id,
             private: false
         },
@@ -284,8 +284,8 @@ router.post("/api/v1/:action/post/:id", checkAuth, checkValidID, async (req, res
         );
 
         // Nothing found? Delete the reaction
-        if (!result) {
-            await schemas.Reactions.findOneAndDelete({
+        if (result.matchedCount === 0) {
+            await schemas.Reactions.deleteOne({
                 by: req.currentUser.username,
                 for: id,
                 type: action
@@ -294,11 +294,7 @@ router.post("/api/v1/:action/post/:id", checkAuth, checkValidID, async (req, res
             return res.status(404).json({ error: "Post not found." });
         }
 
-        return res.status(200).json({
-            success: true,
-            likes: result.likes,
-            reports: result.reports
-        });
+        return res.status(200).json({ success: true });
     } catch (e) {
         console.log("Error: " + e.message);
         createErrorMessage(e, req.session.userId, req.originalUrl);

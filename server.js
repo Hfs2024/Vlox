@@ -229,7 +229,7 @@ app.put("/api/v1/update/user-bio", checkAuth, async (req, res) => {
         if (newBio.length > 20) return res.status(400).json({ error: "Bio should be less than 20 chars!" });
 
         const cleanedPayload = cleanData({ newBio });
-        const result = await schemas.Users.findOneAndUpdate({
+        const result = await schemas.Users.updateOne({
             username: req.currentUser.username
         }, {
             $set: {
@@ -239,7 +239,7 @@ app.put("/api/v1/update/user-bio", checkAuth, async (req, res) => {
             new: true
         });
 
-        if (!result) return res.status(400).json({ error: "Could not find your account right now" });
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Could not find your account right now" });
         return res.status(200).json({ success: true });
     } catch (e) {
         console.error(`Bio Update Failure: ${e.message}. User ID: ${req.userId}`);
@@ -252,7 +252,7 @@ app.put("/api/v1/update/emoji", checkAuth, async (req, res) => {
     try {
         const emoji = req.body.emoji ? req.body.emoji.normalize("NFC") : null;
         const cleanedPayload = cleanData({ emoji });
-        const result = await schemas.Users.findOneAndUpdate({
+        const result = await schemas.Users.updateOne({
             username: req.currentUser.username
         }, {
             $set: {
@@ -262,11 +262,9 @@ app.put("/api/v1/update/emoji", checkAuth, async (req, res) => {
             runValidators: true, new: true
         });
 
-        if (!result) return res.status(400).json({ error: "Can't find your account right now!" });
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Can't find your account right now!" });
 
-        return res.status(200).json({
-            success: true
-        });
+        return res.status(200).json({ success: true });
     } catch (e) {
         console.error(`Emoji Update Failure: ${e.message}. User ID: ${req.userId}`);
         createErrorMessage(e, req.session.userId, req.originalUrl);
@@ -415,7 +413,7 @@ app.post("/api/v1/reset/password", passwordRecoveryHourLimit, async (req, res) =
             const isValid = await bcrypt.compare(recoveryCode, code);
 
             if (isValid) {
-                await schemas.Users.findOneAndUpdate({
+                await schemas.Users.updateOne({
                     username: username
                 }, {
                     $set: {
@@ -447,7 +445,7 @@ app.post("/api/v1/reset/password", passwordRecoveryHourLimit, async (req, res) =
 app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryHourLimit, checkAuth, async (req, res) => {
     try {
         const newCodes = await generateRecoveryCodes(3);
-        const result = await schemas.Users.findOneAndUpdate({
+        const result = await schemas.Users.updateOne({
             username: req.currentUser.username
         }, {
             $set: {
@@ -457,7 +455,7 @@ app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryHourLimit, che
             new: true
         });
 
-        if (!result) return res.status(400).json({ error: "Could not find your account right now!" });
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Could not find your account right now!" });
         return res.status(200).json({ success: true, codes: newCodes.raw });
     } catch (e) {
         console.error(`Failed To Revoke Recovery Codes: ${e.message}`);

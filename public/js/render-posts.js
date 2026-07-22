@@ -166,7 +166,7 @@ async function renderPosts(posts, skip = 0) {
             });
 
             if (response.error) return Swal.fire(response.error);
-            likeBtn.html(`<i class="fa-solid fa-thumbs-up"></i> ${response.likes || 0}`);
+            likeBtn.html(`<i class="fa-solid fa-thumbs-up"></i> ${post.likes + 1}`);
         });
 
         reportBtn.on("click", async () => {
@@ -176,7 +176,7 @@ async function renderPosts(posts, skip = 0) {
             });
 
             if (!response.success) return Swal.fire(response.error);
-            reportBtn.html(`<i class="fa-solid fa-warning"></i> ${response.reports || 0}`);
+            reportBtn.html(`<i class="fa-solid fa-warning"></i> ${post.reports + 1}`);
         });
 
         commentBtn.on("click", async () => {
@@ -219,7 +219,7 @@ async function renderPosts(posts, skip = 0) {
                 });
 
                 if (!response.success) return Swal.fire(response.error);
-                commentBtn.html(`<i class="fa-solid fa-comment"></i> ${response.comments || 0}`);
+                commentBtn.html(`<i class="fa-solid fa-comment"></i> ${post.comments + 1}`);
                 Swal.fire("Success", "Your comment has been added!", "success");
                 commentsData = await NS.fetch({
                     url: "api/get/posts/comments/",

@@ -85,7 +85,8 @@ header i:hover {
 #user-posts-container,
 #user-bookmarks-container,
 #user-pinned-posts-container,
-#user-private-posts-container {
+#user-private-posts-container,
+#user-post-analytics-container {
     max-height: 400px;
     overflow: auto;
 }
@@ -133,7 +134,8 @@ textarea {
 }
 
 /* Buttons */
-button {
+button,
+.analytics-item {
     border-radius: 100px;
     background-color: rgb(63, 62, 62);
     color: white;
@@ -146,7 +148,8 @@ button {
     white-space: nowrap;
 }
 
-button:hover {
+button:hover,
+.analytics-item:hover {
     background-color: #222;
 }
 
@@ -301,7 +304,8 @@ button:hover {
     color: #aaa;
 }
 
-.count-text-wrapper, .forget-password {
+.count-text-wrapper,
+.forget-password {
     text-align: right;
     color: gray;
     font-size: 14px;
@@ -384,7 +388,8 @@ button:hover {
 }
 
 /* Taskbar */
-.taskbar, .card-generator-preview-skill-cell {
+.taskbar,
+.card-generator-preview-skill-cell {
     background-color: #ccc;
     white-space: nowrap;
     padding: 10px;
@@ -449,6 +454,21 @@ button:hover {
     left: 10px;
     z-index: 9999;
     border: 2px solid #eee;
+}
+
+/* Analytics bar */
+.analytics-likes-bar {
+    width: 100%;
+    background-color: gray;
+    margin-top: 20px;
+    border-radius: 20px;
+}
+
+.analytics-likes-bar-fill {
+    background-color: gold;
+    border-radius: 20px;
+    width: 0%;
+    height: 20px;
 }
 
 /* Others */
