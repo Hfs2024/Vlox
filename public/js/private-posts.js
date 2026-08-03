@@ -28,7 +28,6 @@ privatePostsBtn.on("click", async function () {
         if (!response.posts.length || response.posts.length <= 0) {
             const noPrivatePostFound = NS.createEl("h2", container, {
                 className: "nothing-found",
-                style: "text-align: center"
             });
             noPrivatePostFound.textContent = "No private posts yet.";
             return;

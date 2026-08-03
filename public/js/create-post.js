@@ -62,7 +62,7 @@ async function showBookMarks() {
         title: "Your bookmarks: ",
         html: `
           <div id='user-bookmarks-container' class='user-container'></div>
-          <div class='group'>
+          <div class='center'>
             <button id='user-bookmarks-prev-btn'> 
                <i class='fas fa-caret-left'></i>
             </button>
@@ -82,7 +82,6 @@ async function showBookMarks() {
         if (!bookmarksPosts.posts || bookmarksPosts.posts.length <= 0) {
             const noBookmarksFound = NS(NS.createEl("h2", container, {
                 className: "nothing-found",
-                style: "text-align: center"
             })).setText("You don't have any bookmarks yet.");
             return;
         }

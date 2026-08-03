@@ -69,7 +69,7 @@ function cleanHTML(html) {
 
 // Post links
 function generatePostLink(postId) {
-    return `${window.location.href}?id=${postId}`;
+    return `http://localhost:3000/?id=${postId}`;
 }
 
 // Preview and spoilers

@@ -15,8 +15,7 @@ async function renderPosts(posts, skip = 0) {
 
     if (!posts || posts.length === 0) {
         const noPostFound = NS.createEl("h2", container, {
-            className: "nothing-found",
-            style: "text-align: center"
+            className: "nothing-found"
         });
         noPostFound.textContent = "No posts yet. Be the first one to post!";
         return;

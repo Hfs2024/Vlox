@@ -120,7 +120,7 @@ async function renderProfilePost({
                   </div>
                   <div id="edit-preview-container" class="post-preview"></div>
                   <div class='space-between'>
-                    <div class='group'>
+                    <div class='center'>
                       <i id="edit-spoilers-btn" class="fa-solid fa-circle-exclamation helper-icon" role="button" tabindex="0" title="Spoilers"></i>
                       <i id="edit-preview-mode" class="fas fa-columns helper-icon" role="button" tabindex="0" title="Peview toggle"></i>
                     </div>                    

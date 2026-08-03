@@ -191,12 +191,14 @@ button:hover,
     border: 2px solid #eee;
 }
 
-.delete-btn, .show-spoliers-btn {
+.delete-btn,
+.show-spoliers-btn {
     background-color: red;
     width: 100%;
 }
 
-.delete-btn:hover, .show-spoliers-btn:hover {
+.delete-btn:hover,
+.show-spoliers-btn:hover {
     background-color: darkred;
 }
 
@@ -214,6 +216,10 @@ button:hover,
     transition: transform 0.3s ease;
 }
 
+.nothing-found {
+    text-align: center;
+}
+
 .post-header-group-icon {
     font-size: 20px;
     color: #07E;
@@ -225,8 +231,7 @@ button:hover,
     color: #0055b3;
 }
 
-.post p,
-.nothing-found p {
+.post p {
     white-space: pre-wrap;
     width: 100%;
     overflow-wrap: break-word;

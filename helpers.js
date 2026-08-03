@@ -6,17 +6,15 @@ const bcrypt = require("bcrypt");
 // Check auth
 async function checkAuth(req, res, next) {
     try {
-        if (!req.session.isLoggedIn || !req.session.userId) {
-            return res.status(400).json({ error: "You are not logged in!" });
-        }
-
+        if (!req.session.isLoggedIn || !req.session.userId) return res.status(400).json({ error: "You are not logged in!" });
         const foundUser = await schemas.Users.findById(req.session.userId);
         if (!foundUser) return res.status(401).json({ error: "Can't find your account right now!" });
-        if (foundUser.banned)  return res.status(403).json({ error: "Your account is banned." });
+        if (foundUser.banned) return res.status(403).json({ error: "Your account is banned." });
 
         req.currentUser = foundUser;
         next();
-    } catch (err) {
+    } catch (e) {
+        console.log("Error:", e);
         return res.status(500).json({ error: "Something went wrong!" });
     }
 }
@@ -36,7 +34,7 @@ async function createErrorMessage(e, userId, errorRoute) {
 }
 
 // Check valid ID
-async function checkValidID(req, res, next) {
+function checkValidID(req, res, next) {
     const id = req.params.id;
     if (!id || !mongoose.isValidObjectId(id)) return res.status(400).json({ error: "This ID is not valid!" });
     next();

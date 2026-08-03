@@ -38,7 +38,7 @@ async function showProfile(data) {
 
           <div class='taskbar-panel taskbar-panel-chosen'>
             <div id='user-posts-container' class='user-container'></div>
-            <div class='group'>
+            <div class='center'>
               <button id='user-posts-prev-btn'> 
                 <i class='fas fa-caret-left'></i>
               </button>
@@ -81,8 +81,7 @@ async function showProfile(data) {
     const renderPinnedPosts = () => {
         if (!data.pinnedPosts || data.pinnedPosts.length === 0) {
             const noPinnedPostFound = NS.createEl("h2", NS("#user-pinned-posts-container"), {
-                className: "nothing-found",
-                style: "text-align: center"
+                className: ""
             });
             noPinnedPostFound.textContent = "No pinned posts yet.";
             return;

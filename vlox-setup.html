@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Page</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 15px;
+        }
+
+        pre {
+            background-color: #eee;
+            overflow: auto;
+            border-radius: 20px;
+            padding: 15px;
+        }
+
+        blockquote {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 5px solid #3b82f6;
+            border-radius: 0 8px 8px 0;
+            font-family: 'Georgia', serif;
+            font-size: 20px;
+            font-style: italic;
+            color: #334155;
+        }
+
+        img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        th,
+        td {
+            border-bottom: 2px solid #eee;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>The Vlox Setup Handbook</h1>
+    <p><strong>Deploy Your Own Social Platform in 15 Minutes</strong></p>
+    <hr>
+    <h2>Chapter 1: What is Vlox?</h2>
+    <p>Vlox is a complete, open-source social media platform built from the ground up for simplicity and performance. It
+        features user authentication, comments, reactions (likes/reports), a unique card generator and more. It uses my
+        custom DOM library, <strong>NanoScript</strong>, on the frontend and a powerful Node.js/Express/MongoDB stack on
+        the backend.</p>
+    <blockquote>
+        <p><strong>Note</strong>: To clone the repository, you will need a GitHub account (it's free to create). If you
+            don't have one, you can sign up at github.com before you begin. Alternatively, you can skip the account and
+            download the ZIP file directly using Option 2.</p>
+    </blockquote>
+    <p><strong>Why You'd Want It:</strong></p>
+    <ul>
+        <li>You get a <strong>fully functional social network</strong> in a box.</li>
+        <li>It is <strong>built to be simple</strong> and easy to customize.</li>
+        <li>It uses a modern, efficient tech stack.</li>
+        <li>You own your data and your community.</li>
+    </ul>
+    <h2>Chapter 2: Prerequisites</h2>
+    <p>Before you start, make sure you have these installed on your computer:</p>
+    <ul>
+        <li><strong>Node.js</strong> (v16 or higher)</li>
+        <li><strong>Git or GitHub Account</strong> (to clone the repository)</li>
+        <li><strong>MongoDB Compass</strong> (to set up and view your database)</li>
+        <li>A text editor (like VS Code)</li>
+    </ul>
+    <h2>Chapter 3: Installing Node.js (If You Don't Have It)</h2>
+    <p>Node.js is the runtime that runs Vlox. If you don't have it installed:</p>
+    <ol>
+        <li>Go to <a href="https://nodejs.org">nodejs.org</a>.</li>
+        <li>Download the <strong>LTS (Long-Term Support)</strong> version (the one recommended for most users).</li>
+        <li>Run the installer and follow the default steps.</li>
+        <li>To verify it is installed, open your terminal and run:</li>
+    </ol>
+    <pre><code class="language-bash">   node -v
+</code></pre>
+    <p>You should see a version number like v16.x.x or higher.</p>
+    <h2>Chapter 4: Getting the Code</h2>
+    <h3>Option 1: Clone the repository (Recommended)</h3>
+    <p>Open your terminal, then run this command:</p>
+    <pre><code class="language-bash">git clone https://github.com/Hfs2024/Vlox.git
+</code></pre>
+    <p>Enter the project folder:</p>
+    <pre><code class="language-bash">cd Vlox
+</code></pre>
+    <h3>Option 2: Download as a ZIP (Alternative)</h3>
+    <ol>
+        <li>
+            <p>Go to the Vlox GitHub page: <a
+                    href="https://github.com/Hfs2024/Vlox">https://github.com/Hfs2024/Vlox</a>.</p>
+        </li>
+        <li>
+            <p>Click the green "Code" button, then "Download ZIP".</p>
+        </li>
+        <li>
+            <p>Extract the ZIP file and open that folder in your terminal.</p>
+        </li>
+    </ol>
+    <h2>Chapter 5: Installing Dependencies</h2>
+    <p>Once inside the Vlox folder, run this command to install all the necessary libraries:</p>
+    <pre><code class="language-bash">npm install
+</code></pre>
+    <p>This will install Express, Mongoose, and all other dependencies.</p>
+    <h2>Chapter 6: Setting Up MongoDB (Your Database)</h2>
+    <p>You need a database to store users, posts, and comments. Here is the simplest way to set it up locally:</p>
+    <p>Download and Install MongoDB Compass. This is a visual tool to manage your database.</p>
+    <ol>
+        <li>Open MongoDB Compass. Click the "New Connection" button.</li>
+        <li>Name Your Connection. You can call it <strong>Vlox-Database</strong> as an example.</li>
+        <li>Save and Connect. Just click the "Save &amp; Connect" button. Compass will use the default local settings.
+        </li>
+        <li>Get Your Connection String. After connecting, Compass will show you a string that looks like
+            mongodb://localhost:27017. This is your MONGO_URI.</li>
+    </ol>
+    <blockquote>
+        <p><strong>Note:</strong> You can also use your MongoDB Atlas cloud connection string here</p>
+    </blockquote>
+    <h2>Chapter 7: Setting Up Your Environment Variables (.env File)</h2>
+    <p>This file keeps your configuration safe.</p>
+    <p>In the Vlox folder, create a new file and name it exactly: <strong>.env</strong></p>
+    <p>Open that file in a text editor and paste in the following template:</p>
+    <pre><code class="language-bash">PORT=3000
+MONGO_URI=your_mongodb_connection_string
+SESSION_SECRET=your_super_secret_key
+# Change this to production when deploying
+NODE_ENV=development
+</code></pre>
+    <p>Now, fill in the values:</p>
+    <ul>
+        <li>PORT: You can leave this as 3000.</li>
+        <li>MONGO_URI: Paste the connection string you got from Compass (mongodb://localhost:27017).</li>
+        <li>SESSION_SECRET: This is for security. Type a long, random string of letters and numbers (e.g.,
+            aF3d8G7hJ9kL2zX1cVbN5mQwE6rT4yU).</li>
+        <li>NODE_ENV: Leave this as development for testing.</li>
+    </ul>
+    <h2>Chapter 8: Running Your Vlox Server</h2>
+    <p>You are now ready to start your platform!</p>
+    <p>In your terminal (inside the Vlox folder), run this command:</p>
+    <pre><code class="language-bash">npm start
+</code></pre>
+    <p>or</p>
+    <pre><code class="language-bash">node server.js
+</code></pre>
+    <p>If everything is set up correctly, you will see this message in your terminal: </p>
+    <pre><code>Clean Engine live on port 3000
+MongoDB connected
+</code></pre>
+    <p><strong>Final Step</strong>: Open your web browser and go to <a
+            href="http://localhost:3000">http://localhost:3000</a>. Your Vlox instance is now live! You can sign up and
+        start using it immediately.</p>
+    <h2>Chapter 9: Next Steps &amp; Customization</h2>
+    <p><strong>Congratulations! You have successfully deployed Vlox.</strong></p>
+    <h3>You can now:</h3>
+    <ul>
+        <li>
+            <p><strong>Explore the Code</strong>: Look at server.js for backend logic and schemas.js for the database
+                structure.</p>
+        </li>
+        <li>
+            <p><strong>Customize the Look</strong>: Edit the CSS files in the public folder.</p>
+        </li>
+        <li>
+            <p><strong>Add Features</strong>: Vlox is modular. You can easily add new routes and frontend features</p>
+        </li>
+        <li>
+            <p><strong>Learn NanoScript</strong>: Vlox uses my custom library. It is lightweight, jQuery-like and easy
+                to learn. You can find more info on the GitHub repo at <a
+                    href="https://github.com/Hfs2024/NanoScript">https://github.com/Hfs2024/NanoScript</a>.</p>
+        </li>
+    </ul>
+    <h3>Where can you host it?</h3>
+    <p>You can host your application for free on several modern cloud platforms:</p>
+    <ul>
+        <li><strong>Bonto</strong>: Currently used at <a href="https://vlox.bonto.run">https://vlox.bonto.run</a> and
+            excellent because it perfectly supports your Vlox's architecture at no cost.</li>
+        <li><strong>Render</strong>: Offers a free tier for web services, though it may require a credit card
+            verification to activate.</li>
+    </ul>
+    <blockquote>
+        <p><strong>Note:</strong> You should avoid Vercel, Netlify, or any other serverless hosting service because Vlox
+            is not compatible with serverless architecture.</p>
+    </blockquote>
+    <hr>
+    <p><strong>Thanks for reading!</strong> </p>
+    <p><em>Built with 💙 by Seif Ahmed</em></p>
+</body>
+
+</html>
