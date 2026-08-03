@@ -26,15 +26,38 @@ async function renderPosts(posts, skip = 0) {
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
         NS(NS.createEl("h2", postHeader, {})).setText(post.title);
         const postHeaderIconsGroup = NS.createEl("div", postHeader, { className: "center" });
-        if (!post.forkerId) NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark post-header-group-icon" })).on("click", async function () {
-            const bookmarkResponse = await NS.fetch({
-                url: `/api/v1/bookmark/post/${post._id}`,
-                method: "POST"
+        if (!post.forkerId) {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-paste post-header-group-icon" })).on("click", function () {
+                NS.copy({
+                    text: post.content,
+                    onSuccess: () => {
+                        Swal.fire({
+                            title: "Success", 
+                            text: "Copied! Click OK to open PasteDB!",
+                            icon: "success",
+                            showCancelButton: true,
+                            confirmButtonText: "OK",
+                            cancelButtonText: "Cancel"
+                        }).then(result => {
+                            if (result.isConfirmed) window.open("https://pastedb.netlify.app/", "_blank");
+                        });
+                    },
+                    onFailure: () => {
+                        Swal.fire("Error", "Failed to copy. Try again later", "error");
+                    }
+                });
             });
 
-            if (!bookmarkResponse.success) return Swal.fire(bookmarkResponse.error);
-            Swal.fire("Succcess", "Post bookmarked!", "success");
-        }); else {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark post-header-group-icon" })).on("click", async function () {
+                const bookmarkResponse = await NS.fetch({
+                    url: `/api/v1/bookmark/post/${post._id}`,
+                    method: "POST"
+                });
+
+                if (!bookmarkResponse.success) return Swal.fire(bookmarkResponse.error);
+                Swal.fire("Success", "Post bookmarked!", "success");
+            });
+        } else {
             NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-clock-rotate-left post-header-group-icon" })).on("click", async function () {
                 const postResponse = await NS.fetch({
                     url: `/api/v1/get/post/${post.rootId}`
@@ -44,7 +67,7 @@ async function renderPosts(posts, skip = 0) {
                 renderPosts(Array.isArray(postResponse.posts) ? postResponse.posts : [postResponse.posts], skip);
                 Swal.fire("Success", "Successfully loaded the root post!", "success");
             });
-            
+
             NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-trash post-header-group-icon" })).on("click", async function () {
                 Swal.fire({
                     title: "Are you sure you want to delete the fork?",
