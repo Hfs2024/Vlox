@@ -69,7 +69,7 @@ function cleanHTML(html) {
 
 // Post links
 function generatePostLink(postId) {
-    return `http://localhost:3000/?id=${postId}`;
+    return `https://vlox.containers.snapdeploy.app/?id=${postId}`;
 }
 
 // Preview and spoilers
