@@ -9,6 +9,7 @@ const createPreviewBtn = NS("#create-preview-mode");
 const createSpoilersBtn = NS("#create-spoilers-btn");
 const createContainer = NS("#create-container");
 const previewContainer = NS("#create-preview-container");
+const bookmarksBtn = NS("#post-bookmarks-btn");
 const prevBtn = NS("#prev-btn");
 const nextBtn = NS("#next-btn");
 let isSearching = false;
@@ -158,7 +159,7 @@ async function showBookMarks() {
     renderBookmarks();
 }
 
-NS("#post-bookmarks-btn").on("click", function () {
+bookmarksBtn.on("click", function () {
     showBookMarks();
 });
 
@@ -177,15 +178,9 @@ function clearGhostState() {
 }
 
 NS.getGhostState();
-NS.ghostState({
-    selector: "#create-post-title"
-});
-NS.ghostState({
-    selector: "#create-post-content"
-});
-NS.ghostState({
-    selector: "#create-post-keywords"
-});
+NS.ghostState({selector: "#create-post-title"});
+NS.ghostState({selector: "#create-post-content"});
+NS.ghostState({selector: "#create-post-keywords"});
 NS("#clear-post-content-btn").on("click", function () {
     clearGhostState();
     Swal.fire("Success!", "Draft cleared!", "success");
@@ -228,6 +223,7 @@ createPostBtn.on("click", async function () {
     createSpoilersBtn.removeClass("on");
 });
 
+// Create posts function
 async function createPost({ title, content, keywords, boost = false, spoilers = false } = {}) {
     const maxPostContentCharsLength = window.currentUserQuickInfo.maxPostContentCharsLength || 2000;
     if (title.length > 20 || content.length > maxPostContentCharsLength) return Swal.fire(`Title must be less than 20 chars and content should not exceed ${maxPostContentCharsLength} chars`);
@@ -255,6 +251,7 @@ async function createPost({ title, content, keywords, boost = false, spoilers = 
     }
 }
 
+// Navigation
 prevBtn.on("click", () => {
     if (skip <= 0) return;
     skip -= 50;

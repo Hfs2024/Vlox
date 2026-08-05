@@ -254,10 +254,10 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req,
                 }
             ]
         });
-
+        
         if (!postExists) return res.status(400).json({ error: "Post not found or you don't have permission to access!" });
         const result = await schemas.Comments.updateOne({
-            _id: id,
+            for: id,
             by: req.session.userId
         }, {
             $set: {

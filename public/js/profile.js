@@ -168,11 +168,7 @@ async function showProfile(data) {
             });
 
             if (!updateEmojidata) return Swal.fire(updateEmojidata.error);
-            return Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: "Emoji successfully changed!"
-            });
+            return Swal.fire("Success", "Emoji successfully changed!", "success");
         });
     });
 

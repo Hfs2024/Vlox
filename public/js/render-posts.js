@@ -21,6 +21,43 @@ async function renderPosts(posts, skip = 0) {
         return;
     }
 
+    const inputComment = (title = "", commentInputId = "", commentCountId = "", onSubmit) => {
+        Swal.fire({
+            title: title || "Add comment",
+            showCancelButton: true,
+            html: `
+                  <input type='text' id="${commentInputId}" placeholder='Type your comment here...' />
+                  <p class="count-text-wrapper">
+                    Count:
+                    <span class="count" id="${commentCountId}">0/200</span>
+                  </p>
+                `,
+            didOpen: () => {
+                NS.liveCounter({
+                    selector: `#${commentInputId}`,
+                    counterElement: `#${commentCountId}`,
+                    showCounter: true,
+                    max: 200,
+                    visualFeedback: [
+                        { value: 100, class: "count-orange", addTo: [`#${commentInputId}`] },
+                        { value: 170, class: "count-red", addTo: [`#${commentInputId}`] },
+                    ]
+                });
+
+                NS(`#${commentInputId}`).focus();
+            },
+
+            preConfirm: () => {
+                const comment = Swal.getPopup().querySelector(`#${commentInputId}`).value;
+                if (!comment) Swal.showValidationMessage("Comment cannot be empty!");
+            }
+        }).then(async result => {
+            if (!result.isConfirmed) return;
+            const content = NS(`#${commentInputId}`).getVal()[0];
+            if (typeof onSubmit === "function") return onSubmit(content);
+        });
+    }
+
     posts.forEach(async (post, index) => {
         const postCard = NS.createEl("div", container, { className: "post" });
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
@@ -32,7 +69,7 @@ async function renderPosts(posts, skip = 0) {
                     text: post.content,
                     onSuccess: () => {
                         Swal.fire({
-                            title: "Copied!", 
+                            title: "Copied!",
                             text: "Click OK to open PasteDB if you want to share the copied text quickly!",
                             icon: "success",
                             showCancelButton: true,
@@ -169,48 +206,16 @@ async function renderPosts(posts, skip = 0) {
                         e.preventDefault();
                         if (comment.by.username !== window.currentUserQuickInfo.username) return;
 
-                        Swal.fire({
-                            title: "Update comment: ",
-                            showCancelButton: true,
-                            html: `
-                  <input type='text' id="update-comment-input" placeholder='Type your comment here...' />
-                  <p class="count-text-wrapper">
-                    Count:
-                    <span class="count" id="update-comment-count">0/200</span>
-                  </p>
-                `,
-                            didOpen: () => {
-                                NS.liveCounter({
-                                    selector: "#update-comment-input",
-                                    counterElement: "#update-comment-count",
-                                    showCounter: true,
-                                    max: 200,
-                                    visualFeedback: [
-                                        { value: 100, class: "count-orange", addTo: ["#update-comment-input"] },
-                                        { value: 170, class: "count-red", addTo: ["#update-comment-input"] },
-                                    ]
-                                });
+                        inputComment("Update comment:", "update-comment-input", "update-comment-count", async (content) => {
+                            const updateCommentResponse = await NS.fetch({
+                                url: `/api/v1/edit/post/comment/${comment.for}/`,
+                                method: "PUT",
+                                body: { newComment: content }
+                            });
 
-                                NS("#update-comment-input").focus();
-                            },
-
-                            preConfirm: () => {
-                                const comment = Swal.getPopup().querySelector("#update-comment-input").value;
-                                if (!comment) Swal.showValidationMessage("Comment cannot be empty!");
-                            }
-                        }).then(async result => {
-                            if (result.isConfirmed) {
-                                const newComment = NS("#update-comment-input").getVal()[0];
-                                const updateCommentResponse = await NS.fetch({
-                                    url: `/api/v1/edit/post/comment/${comment.for}/`,
-                                    method: "PUT",
-                                    body: { newComment: newComment }
-                                });
-
-                                if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
-                                Swal.fire("Success", "Comment updated!", "success");
-                                NS(commentItem.get(".comment-item-content")[0]).setText(newComment);
-                            }
+                            if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
+                            Swal.fire("Success", "Comment updated!", "success");
+                            NS(commentItem.get(".comment-item-content")[0]).setText(content);
                         });
                     });
 
@@ -276,7 +281,7 @@ async function renderPosts(posts, skip = 0) {
         }
 
         // Actions
-        likeBtn.on("click", async () => {
+        likeBtn.on("click", async function () {
             const response = await NS.fetch({
                 url: `api/v1/like/post/${post._id}`,
                 method: "POST"
@@ -287,7 +292,7 @@ async function renderPosts(posts, skip = 0) {
             likeBtn.html(`<i class="fa-solid fa-thumbs-up"></i> ${newLikes.toLocaleString()}`);
         });
 
-        reportBtn.on("click", async () => {
+        reportBtn.on("click", async function () {
             const response = await NS.fetch({
                 url: `api/v1/report/post/${post._id}`,
                 method: "POST"
@@ -298,45 +303,15 @@ async function renderPosts(posts, skip = 0) {
             reportBtn.html(`<i class="fa-solid fa-warning"></i> ${newReports.toLocaleString()}`);
         });
 
-        commentBtn.on("click", async () => {
-            const comment = await Swal.fire({
-                title: "Add a comment",
-                html: `
-                  <input type='text' id="create-comment-input" placeholder='Type your comment here...' />
-                  <p class="count-text-wrapper">
-                    Count:
-                    <span class="count" id="create-comment-count">0/200</span>
-                  </p>
-                `,
-                didOpen: () => {
-                    NS.liveCounter({
-                        selector: "#create-comment-input",
-                        counterElement: "#create-comment-count",
-                        showCounter: true,
-                        max: 200,
-                        visualFeedback: [
-                            { value: 100, class: "count-orange", addTo: ["#create-comment-input"] },
-                            { value: 170, class: "count-red", addTo: ["#create-comment-input"] },
-                        ]
-                    });
-
-                    NS("#create-comment-input").focus();
-                },
-                showCancelButton: true,
-                confirmButtonText: "Submit",
-                preConfirm: () => {
-                    const comment = Swal.getPopup().querySelector("#create-comment-input").value;
-                    if (!comment) Swal.showValidationMessage("Comment cannot be empty!");
-                }
-            }).then(async (result) => {
-                if (!result.isConfirmed) return;
-                const response = await NS.fetch({
+        commentBtn.on("click", function () {
+            inputComment("Add a comment:", "create-comment-input", "create-comment-count", async () => {
+                const commentResponse = await NS.fetch({
                     url: `api/v1/comment/post/${post._id}`,
                     method: "POST",
                     body: { comment: NS("#create-comment-input").getVal()[0] }
                 });
 
-                if (!response.success) return Swal.fire(response.error);
+                if (!commentResponse.success) return Swal.fire(commentResponse.error);
                 const newComments = Number(commentBtn.getText()[0]) + 1;
                 commentBtn.html(`<i class="fa-solid fa-comment"></i> ${newComments.toLocaleString()}`);
                 Swal.fire("Success", "Your comment has been added!", "success");

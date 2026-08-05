@@ -120,7 +120,7 @@ cardGeneratorBtn.on("click", async function () {
     showCancelButton: true,
     confirmButtonText: "Download",
   }).then(result => {
-    const targetEl = NS("#card-generator-image-preview")[0];
+    const targetEl = NS("#card-generator-image-preview")[0];;
 
     if (!result.isConfirmed) return;
     Swal.fire({
@@ -143,11 +143,18 @@ cardGeneratorBtn.on("click", async function () {
     });
   });
 
+  // Elements
+  const colorInput = NS("#card-generator-color-input");
+  const bgColorInput = NS("#card-generator-bg-color-input");
+  const fontSelect = NS("#card-generator-font-select");
+  const borderRadius = NS("#card-generator-border-radius-input");
+  const preview = NS("#card-generator-image-preview");
+  const customImageInput = NS("#card-generator-custom-bg-image-upload");
+  const selectedElementText = NS("#card-generator-selected-element");
+  let selectedElement = NS("#card-generator-image-preview")[0];
+
   // Username
   NS("#card-generator-username").setText(`${window.currentUserQuickInfo.emoji} ${capitalizeFirstLtter(window.currentUserQuickInfo.username) || "User"}`);
-
-  // Selected element
-  let selectedElement = NS("#card-generator-image-preview")[0];
 
   // Styles and preview
   NS(".card-generator-input").each(input => {
@@ -158,28 +165,28 @@ cardGeneratorBtn.on("click", async function () {
     });
   });
 
-  NS("#card-generator-color-input").on("change", function (e) {
-    NS(selectedElement).css({ color: NS("#card-generator-color-input").getVal()[0] });
+  colorInput.on("change", function (e) {
+    NS(selectedElement).css({ color: colorInput.getVal()[0] });
   });
 
-  NS("#card-generator-bg-color-input").on("change", function (e) {
-    NS(selectedElement).css({ backgroundColor: NS("#card-generator-bg-color-input").getVal()[0] });
+  bgColorInput.on("change", function (e) {
+    NS(selectedElement).css({ backgroundColor: bgColorInput.getVal()[0] });
   });
 
-  NS("#card-generator-font-select").on("change", function () {
-    NS(selectedElement).css({ fontFamily: NS("#card-generator-font-select").getVal()[0] });
+  fontSelect.on("change", function () {
+    NS(selectedElement).css({ fontFamily: fontSelect.getVal()[0] });
   });
 
-  NS("#card-generator-border-radius-input").on("input", function () {
-    NS("#card-generator-image-preview").css({ borderRadius: `${NS("#card-generator-border-radius-input").getVal()[0]}px` });
+  borderRadius.on("input", function () {
+    NS(selectedElement).css({ borderRadius: `${borderRadius.getVal()[0]}px` });
   });
 
   // Custom image background
-  NS("#card-generator-image-preview").on("contextmenu", function (e) {
+  preview.on("contextmenu", function (e) {
     e.preventDefault();
-    NS("#card-generator-custom-bg-image-upload").click();
+    customImageInput.click();
   }).on("dblclick", function () {
-    NS("#card-generator-image-preview").css({
+    preview.css({
       backgroundImage: "",
       backgroundPosition: "",
       backgroundRepeat: "",
@@ -187,16 +194,16 @@ cardGeneratorBtn.on("click", async function () {
     });
   }).on("click", function () {
     selectedElement = this;
-    NS("#card-generator-selected-element").setText("Styles will apply to preview card");
+    selectedElementText.setText("Styles will apply to preview card");
   });
 
-  NS("#card-generator-custom-bg-image-upload").on("change", function (e) {
+  customImageInput.on("change", function (e) {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
-      NS("#card-generator-image-preview").css({
+      preview.css({
         backgroundImage: `url(${reader.result})`,
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -207,14 +214,14 @@ cardGeneratorBtn.on("click", async function () {
     reader.readAsDataURL(file);
   });
 
-  // Custom color styles
+  // Specific element styles
   NS("#card-generator-image-preview .card-generator-preview-item").each(item => {
     item = NS(item);
     item.on("click", function (e) {
       e.preventDefault();
       e.stopPropagation();
       selectedElement = this;
-      NS("#card-generator-selected-element").setText(`Styles will apply to ${item.getDataSetItem("type")}`);
+      selectedElementText.setText(`Styles will apply to ${item.getDataSetItem("type")}`);
     });
   });
 
@@ -226,7 +233,7 @@ cardGeneratorBtn.on("click", async function () {
       status.css({ color: "red" }).setText(error);
     }
 
-    if (!input.getVal()[0]) return;
+    if (!input.getVal()[0]) return setStatusError("You didn't enter any skill!");
     if (input.getVal()[0].length > 10) return setStatusError("Skill can be 10 chars only!")
     if (NS(".card-generator-preview-skill-cell").length >= 3) return setStatusError("You can only have 3 skills!");
 

@@ -62,7 +62,7 @@ function changePostVisibility({
     });
 }
 
-// Cleaning HTML
+// Clean HTML
 function cleanHTML(html) {
     return DOMPurify.sanitize(marked.parseInline(html));
 }
