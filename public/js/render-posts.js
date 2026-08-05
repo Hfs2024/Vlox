@@ -27,13 +27,13 @@ async function renderPosts(posts, skip = 0) {
         NS(NS.createEl("h2", postHeader, {})).setText(post.title);
         const postHeaderIconsGroup = NS.createEl("div", postHeader, { className: "center" });
         if (!post.forkerId) {
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-paste post-header-group-icon" })).on("click", function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-paste post-icon" })).on("click", function () {
                 NS.copy({
                     text: post.content,
                     onSuccess: () => {
                         Swal.fire({
-                            title: "Success", 
-                            text: "Copied! Click OK to open PasteDB!",
+                            title: "Copied!", 
+                            text: "Click OK to open PasteDB if you want to share the copied text quickly!",
                             icon: "success",
                             showCancelButton: true,
                             confirmButtonText: "OK",
@@ -48,7 +48,7 @@ async function renderPosts(posts, skip = 0) {
                 });
             });
 
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark post-header-group-icon" })).on("click", async function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark post-icon" })).on("click", async function () {
                 const bookmarkResponse = await NS.fetch({
                     url: `/api/v1/bookmark/post/${post._id}`,
                     method: "POST"
@@ -58,7 +58,7 @@ async function renderPosts(posts, skip = 0) {
                 Swal.fire("Success", "Post bookmarked!", "success");
             });
         } else {
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-clock-rotate-left post-header-group-icon" })).on("click", async function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-clock-rotate-left post-icon" })).on("click", async function () {
                 const postResponse = await NS.fetch({
                     url: `/api/v1/get/post/${post.rootId}`
                 });
@@ -68,7 +68,7 @@ async function renderPosts(posts, skip = 0) {
                 Swal.fire("Success", "Successfully loaded the root post!", "success");
             });
 
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-trash post-header-group-icon" })).on("click", async function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-trash post-icon" })).on("click", async function () {
                 Swal.fire({
                     title: "Are you sure you want to delete the fork?",
                     showCancelButton: true
@@ -86,7 +86,7 @@ async function renderPosts(posts, skip = 0) {
             });
         };
 
-        NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-link post-header-group-icon" })).on("click", async function () {
+        NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-link post-icon" })).on("click", async function () {
             NS.copy({
                 text: generatePostLink(post._id),
                 onSuccess: () => {
@@ -142,15 +142,19 @@ async function renderPosts(posts, skip = 0) {
 
             if (comments && comments.length > 0) {
                 comments.forEach(comment => {
-                    const commentItem = NS(NS.createEl("div", commentsList, { className: "comment-item" }));
+                    const commentItem = NS(NS.createEl("div", commentsList, { className: "comment-item space-between" }));
                     const commentContent = cleanHTML(comment.content);
                     commentItem.html(`
-                        <span class='comment-item-author'>
-                           ${comment.by.username === post.by.username ? "<span class='fas fa-medal' title='Author'></span>" : comment.by.emoji}
-                           ${capitalizeFirstLtter(comment.by.username)}:
-                        </span>
-                        ${commentContent || "No content found"}`
-                    ).on("click", function () {
+                        <div class='center' style='gap: 5px'>
+                          <div class='comment-item-author'>
+                            ${comment.by.username === post.by.username ? "<i class='fas fa-medal' title='Author'></i>" : comment.by.emoji}
+                            ${capitalizeFirstLtter(comment.by.username)}:
+                            </div>
+                          <div class='comment-item-content'></div>
+                        </div>
+
+                        <i class='fas fa-reply post-icon reply-comment-btn' role='button' tabindex='0'></i>
+                    `).on("click", function () {
                         NS.copy({
                             text: commentContent || "No content found",
                             onSuccess: () => {
@@ -196,17 +200,24 @@ async function renderPosts(posts, skip = 0) {
                             }
                         }).then(async result => {
                             if (result.isConfirmed) {
+                                const newComment = NS("#update-comment-input").getVal()[0];
                                 const updateCommentResponse = await NS.fetch({
-                                    url: `/api/v1/edit/post/comment/${comment._id}/`,
+                                    url: `/api/v1/edit/post/comment/${comment.for}/`,
                                     method: "PUT",
-                                    body: { newComment: NS("#update-comment-input").getVal()[0] }
+                                    body: { newComment: newComment }
                                 });
 
                                 if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
                                 Swal.fire("Success", "Comment updated!", "success");
-                                commentItem.html(`<span style='color: green'>${comment.by.emoji} ${capitalizeFirstLtter(comment.by.username)}</span>: ${cleanHTML(updateCommentResponse.updatedDoc.content)}`);
+                                NS(commentItem.get(".comment-item-content")[0]).setText(newComment);
                             }
                         });
+                    });
+
+                    NS(commentItem.get(".comment-item-content")[0]).setText(commentContent || "No content found");
+                    NS(".reply-comment-btn").on("click", function (e) {
+                        e.stopPropagation();
+                        Swal.fire("Not implemented!");
                     });
                 });
             } else {
@@ -367,6 +378,8 @@ async function renderPosts(posts, skip = 0) {
 
         renderComments();
     });
+
+    runAccessibility();
 }
 
 async function getPosts() {

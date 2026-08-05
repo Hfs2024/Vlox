@@ -56,7 +56,7 @@ async function renderProfilePost({
     const postCard = NS.createEl("div", NS(container), { className: "post" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
     NS(NS.createEl("h2", postHeader, {})).setText(post.title);;
-    NS(NS.createEl("i", postHeader, { className: "fas fa-link post-header-group-icon" })).on("click", async function () {
+    NS(NS.createEl("i", postHeader, { className: "fas fa-link post-icon" })).on("click", async function () {
         NS.copy({
             text: generatePostLink(post._id),
             onSuccess: () => {

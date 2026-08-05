@@ -102,11 +102,11 @@ app.post("/api/v1/get/posts/comments", async (req, res) => {
             const isPublic = await schemas.Posts.findOne({
                 _id: ids,
                 $or: [
-                    { forkerId: null, receiverId: null },
+                    { forkerId: null, receiverId: null, private: false },
                     { forkerId: req.session.userId },
-                    { receiverId: req.session.userId }
-                ],
-                private: false
+                    { receiverId: req.session.userId },
+                    { by: req.session.userId }
+                ]
             });
 
             if (!isPublic) return res.status(400).json({ error: "You don't have permissions to do this action." });
@@ -127,11 +127,11 @@ app.post("/api/v1/get/posts/comments", async (req, res) => {
             const isPublic = await schemas.Posts.findOne({
                 _id: id,
                 $or: [
-                    { forkerId: null, receiverId: null },
+                    { forkerId: null, receiverId: null, private: false },
                     { forkerId: req.session.userId },
-                    { receiverId: req.session.userId }
-                ],
-                private: false
+                    { receiverId: req.session.userId },
+                    { by: req.session.userId }
+                ]
             });
 
             if (!isPublic) throw new Error('ILLEGAL_BATCH'); 
@@ -365,11 +365,11 @@ app.get("/api/v1/get/post/:id", checkValidID, async (req, res) => {
         const foundPost = await schemas.Posts.findOne({
             _id: req.params.id,
             $or: [
-                { forkerId: null, receiverId: null },
+                { forkerId: null, receiverId: null, private: false },
                 { forkerId: req.session.userId },
-                { receiverId: req.session.userId }
-            ],
-            private: false
+                { receiverId: req.session.userId },
+                { by: req.session.userId }
+            ]
         }).populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount")
             .populate("forkerId", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount")
             .populate("receiverId", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount");

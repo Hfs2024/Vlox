@@ -220,14 +220,14 @@ button:hover,
     text-align: center;
 }
 
-.post-header-group-icon {
+.post-icon {
     font-size: 20px;
     color: #07E;
     cursor: pointer;
     transition: color 0.3s ease;
 }
 
-.post-header-group-icon:hover {
+.post-icon:hover {
     color: #0055b3;
 }
 
@@ -294,6 +294,10 @@ button:hover,
     transition: background-color 0.3s ease;
 }
 
+.comment-item {
+    position: relative;
+}
+
 .comment-item:hover,
 .no-comments:hover {
     background-color: rgb(175, 199, 214);
@@ -301,6 +305,11 @@ button:hover,
 
 .comment-item-author {
     color: green;
+}
+
+.reply-comment-btn {
+    position: sticky;
+    right: 5px;
 }
 
 /* Emojis */

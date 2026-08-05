@@ -238,14 +238,8 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req,
         if (!newComment) return res.status(400).json({ error: "Comment content cannot be empty." });
         if (newComment.length > 200) return res.status(400).json({ error: "Comment cannot exceed 200 characters" });
         const id = req.params.id;
-        const comment = await schemas.Comments.findOne({
-            _id: id,
-            by: req.session.userId
-        });
-
-        if (!comment) return res.status(400).json({ error: "Comment not found or it's not your comment!" });
         const postExists = await schemas.Posts.findOne({
-            _id: comment.for,
+            _id: id,
             $or: [
                 {
                     forkerId: null,
@@ -261,20 +255,18 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req,
             ]
         });
 
-        if (!postExists) return res.status(400).json({ error: "Post not found or you don't have permission!" });
-        const result = await schemas.Comments.findOneAndUpdate({
+        if (!postExists) return res.status(400).json({ error: "Post not found or you don't have permission to access!" });
+        const result = await schemas.Comments.updateOne({
             _id: id,
             by: req.session.userId
         }, {
             $set: {
                 content: newComment
             }
-        }, {
-            new: true
         });
 
         if (!result) return res.status(400).json({ error: "Comment not found or it's not your comment!" });
-        return res.status(200).json({ success: true, updatedDoc: result });
+        return res.status(200).json({ success: true });
     } catch (e) {
         console.log("Error: " + e.message);
         createErrorMessage(e, req.session.userId, req.originalUrl);
