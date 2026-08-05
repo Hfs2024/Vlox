@@ -23,7 +23,7 @@ When planning my next platform, **Vlox**, I evaluated my frontend options:
 I decided to take the best parts of each and engineer my own solution. I built **NanoScript**—a modern, ultra-lightweight JavaScript library designed for fluent DOM manipulation via a fast, method-chaining API. To make it even more powerful, I engineered custom plugins for it, including a live counter and **Ghost State** (which automatically saves what you type so you never lose a draft).
 
 ### Bringing Vlox to Life 
-With NanoScript handling the frontend, I built **Vlox** as a clean, high-performance Minimum Viable Product (MVP). It features a robust Node.js/Express backend, MongoDB database storage, secure bcrypt hashing, XSS sanitization, and an optimized Sharp image processing pipeline. 
+With NanoScript handling the frontend, I built **Vlox** as a clean, high-performance Minimum Viable Product (MVP). It features a robust Node.js/Express backend, MongoDB database storage, secure bcrypt hashing, XSS sanitization, and more. 
 
 Thanks to NanoScript, the frontend architecture is finally in a state that I can easily scale without hitting a wall of messy code.
 
