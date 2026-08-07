@@ -126,13 +126,9 @@ async function renderPosts(posts, skip = 0) {
         NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-link post-icon" })).on("click", async function () {
             NS.copy({
                 text: generatePostLink(post._id),
-                onSuccess: () => {
-                    Swal.fire("Success", "Copied!", "success")
-                },
+                onSuccess: () => { Swal.fire("Success", "Copied!", "success") },
 
-                onFailure: () => {
-                    Swal.fire("Error", "Failed to copy. Try again later", "error");
-                }
+                onFailure: () => { Swal.fire("Error", "Failed to copy. Try again later", "error") }
             });
         });
 
@@ -180,7 +176,6 @@ async function renderPosts(posts, skip = 0) {
             if (comments && comments.length > 0) {
                 comments.forEach(comment => {
                     const commentItem = NS(NS.createEl("div", commentsList, { className: "comment-item space-between" }));
-                    const commentContent = cleanHTML(comment.content);
                     commentItem.html(`
                         <div class='center' style='gap: 5px'>
                           <div class='comment-item-author'>
@@ -190,10 +185,13 @@ async function renderPosts(posts, skip = 0) {
                           <div class='comment-item-content'></div>
                         </div>
 
-                        <i class='fas fa-reply post-icon reply-comment-btn' role='button' tabindex='0'></i>
+                        <div class='center comment-item-icons'>
+                           <i class='fas fa-reply post-icon reply-comment-btn' role='button' tabindex='0'></i>
+                           <i class='fas fa-eye post-icon view-reply-btn' role='button' tabindex='0'></i>
+                        </div>
                     `).on("click", function () {
                         NS.copy({
-                            text: commentContent || "No content found",
+                            text: NS(commentItem.get(".comment-item-content")[0]).getText()[0] || "No content found",
                             onSuccess: () => {
                                 Swal.fire("Success", "Copied comment content!", "success")
                             },
@@ -215,14 +213,25 @@ async function renderPosts(posts, skip = 0) {
 
                             if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
                             Swal.fire("Success", "Comment updated!", "success");
-                            NS(commentItem.get(".comment-item-content")[0]).setText(content);
+                            NS(commentItem.get(".comment-item-content")[0]).setText(content || "No content found");
                         });
                     });
 
-                    NS(commentItem.get(".comment-item-content")[0]).setText(commentContent || "No content found");
+                    NS(commentItem.get(".comment-item-content")[0]).setText(comment.content || "No content found");
                     NS(".reply-comment-btn").on("click", function (e) {
                         e.stopPropagation();
-                        Swal.fire("Not implemented!");
+                        Swal.fire("Reply comments is not implemented yet.")
+                    });
+
+                    NS(".view-reply-btn").on("click", async function (e) {
+                        e.stopPropagation();
+                        const viewRepliesResponse = await NS.fetch({
+                            url: `/api/v1/get/comment/replies/${comment._id}/`,
+                            method: "GET"
+                        });
+
+                        if (!viewRepliesResponse.success) return Swal.fire(viewRepliesResponse.error);
+                        Swal.fire("View replies not implemented yet.");
                     });
                 });
             } else {
@@ -306,7 +315,7 @@ async function renderPosts(posts, skip = 0) {
         commentBtn.on("click", function () {
             inputComment("Add a comment:", "create-comment-input", "create-comment-count", async () => {
                 const commentResponse = await NS.fetch({
-                    url: `api/v1/comment/post/${post._id}`,
+                    url: `/api/v1/comment/post/${post._id}`,
                     method: "POST",
                     body: { comment: NS("#create-comment-input").getVal()[0] }
                 });

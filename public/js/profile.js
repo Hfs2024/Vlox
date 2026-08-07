@@ -23,7 +23,7 @@ async function showProfile(data) {
           <h2 class='user-profile-bio'></h2>
           <div class='center-overflow'>
             <button id='reset-password-recovery-codes'>Reset Password Recovery Codes</button>
-            <button id='change-account-visibility'>Make account ${data.private ? "public" : "private"}</button>
+            <button id='change-account-visibility'>Make Account ${data.private ? "Public" : "Private"}</button>
           </div></br></br>
           <hr>
           ` : `<hr><h2 class='user-profile-bio'></h2>`
@@ -97,7 +97,7 @@ async function showProfile(data) {
         });
     }
 
-    // Make account private
+    // Account visibility
     NS("#change-account-visibility").on("click", async function () {
         const result = await NS.fetch({
             url: "/api/v1/change-visibility/user-profile",

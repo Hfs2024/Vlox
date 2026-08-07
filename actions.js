@@ -1,5 +1,5 @@
 const schemas = require("./schemas.js");
-const { checkAuth, createErrorMessage, checkValidID } = require("./helpers.js");
+const { checkAuth, createErrorMessage, checkValidID, hotQueries } = require("./helpers.js");
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
@@ -18,12 +18,7 @@ router.post("/api/v1/change-visibility/:item/", checkAuth, async (req, res) => {
             if (!id || !mongoose.isValidObjectId(id)) return res.status(400).json({ error: "This ID is not valid!" });
             const isPinned = await schemas.Users.findOne({ username: req.currentUser.username, pinnedPosts: id });
             if (isPinned) return res.status(400).json({ error: "You can't make a pinned post private! Unpin it first!" });
-            query = {
-                by: req.session.userId,
-                _id: id,
-                forkerId: null,
-                receiverId: null
-            };
+            query = hotQueries.find_user_unforked_post(id, req.session.userId);
         }
         if (modelToUpdate === "Users") query._id = req.session.userId;
 
@@ -48,11 +43,8 @@ router.post("/api/v1/pin/post/:id", checkAuth, checkValidID, async function (req
     try {
         const id = req.params.id;
         const isUserPost = await schemas.Posts.findOne({
-            _id: id,
-            by: req.session.userId,
-            private: false,
-            forkerId: null,
-            receiverId: null
+            ...hotQueries.find_user_unforked_post(id, req.session.userId),
+            private: false
         });
         if (!isUserPost) return res.status(400).json({ error: "Seems like this is not your post!" });
 
@@ -110,12 +102,7 @@ router.post("/api/v1/unpin/post/:id", checkAuth, checkValidID, async function (r
 router.delete("/api/v1/delete/post/:id", checkAuth, checkValidID, async function (req, res) {
     try {
         const id = req.params.id;
-        const result = await schemas.Posts.deleteOne({
-            _id: id,
-            by: req.session.userId, // Is this your post?
-            receiverId: null,
-            forkerId: null
-        });
+        const result = await schemas.Posts.deleteOne(hotQueries.find_user_unforked_post(id, req.session.userId));
 
         if (result.deletedCount === 0) return res.status(404).json({ error: "Post not found!" });
         await schemas.Users.updateOne({
@@ -185,27 +172,14 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
         const newComment = new schemas.Comments({
             content: comment,
             for: id,
-            by: req.session.userId
+            by: req.session.userId,
+            rootId: null,
+            repliesCount: 0
         });
 
         await newComment.save();
 
-        const result = await schemas.Posts.updateOne({
-            _id: id,
-            $or: [
-                {
-                    forkerId: null,
-                    receiverId: null,
-                    private: false
-                },
-                {
-                    $or: [
-                        { forkerId: req.session.userId },
-                        { receiverId: req.session.userId }
-                    ],
-                }
-            ]
-        },
+        const result = await schemas.Posts.updateOne(hotQueries.find_user_post(id, req.session.userId),
             {
                 $inc: {
                     comments: 1
@@ -214,7 +188,6 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
 
         if (result.matchedCount === 0) {
             await schemas.Comments.deleteOne({
-                for: id,
                 by: req.session.userId,
                 _id: newComment._id
             });
@@ -238,23 +211,8 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req,
         if (!newComment) return res.status(400).json({ error: "Comment content cannot be empty." });
         if (newComment.length > 200) return res.status(400).json({ error: "Comment cannot exceed 200 characters" });
         const id = req.params.id;
-        const postExists = await schemas.Posts.findOne({
-            _id: id,
-            $or: [
-                {
-                    forkerId: null,
-                    receiverId: null,
-                    private: false
-                },
-                {
-                    $or: [
-                        { forkerId: req.session.userId },
-                        { receiverId: req.session.userId }
-                    ],
-                }
-            ]
-        });
-        
+        const postExists = await schemas.Posts.findOne(hotQueries.find_user_post(id, req.session.userId));
+
         if (!postExists) return res.status(400).json({ error: "Post not found or you don't have permission to access!" });
         const result = await schemas.Comments.updateOne({
             for: id,
@@ -274,7 +232,23 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req,
     }
 });
 
-// Edit
+// Create reply
+router.post("/api/v1/reply/comment/:id", checkAuth, checkValidID, async (req, res) => {
+    try {
+        const { reply, rootId } = req.body;
+        const id = req.params.id;
+        
+        console.log(id);
+
+        return res.status(200).json({ success: true })
+    } catch (e) {
+        console.log("Error: " + e.message);
+        createErrorMessage(e, req.session.userId, req.originalUrl);
+        return res.status(500).json({ error: "Server error" });
+    }
+});
+
+// Edit post
 router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) => {
     try {
         let { newContent, newTitle, newKeywords, newSpoilers } = req.body;
@@ -286,12 +260,7 @@ router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) =>
         if (newTitle.length > 20) return res.status(400).json({ error: "Title cannot exceed 20 chars!" });
         if (newContent.length > req.currentUser.maxPostContentCharsLength) return res.status(400).json({ error: `Content cannot exceed ${req.currentUser.maxPostContentCharsLength} characters!` });
 
-        const result = await schemas.Posts.updateOne({
-            _id: id,
-            by: req.session.userId,
-            receiverId: null,
-            forkerId: null
-        }, {
+        const result = await schemas.Posts.updateOne(hotQueries.find_user_unforked_post(id, req.session.userId), {
             $set: {
                 content: newContent,
                 title: newTitle,
@@ -309,54 +278,7 @@ router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) =>
     }
 });
 
-// Redeem 
-router.post("/api/v1/redeem/post/:id", checkAuth, checkValidID, async (req, res) => {
-    try {
-        if (req.currentUser.maxPostContentCharsLength >= 4000) return res.status(400).json({ error: "Seems you have the max post chars content!" });
-        const remaining = 4000 - req.currentUser.maxPostContentCharsLength;
-        let inc = 100;
-        if (remaining < 100) inc = remaining;
-
-        const id = req.params.id;
-        const postResult = await schemas.Posts.updateOne({
-            _id: id,
-            likes: { $gte: 100 },
-            redeemed: false,
-            by: req.session.userId,
-            receiverId: null,
-            forkerId: null
-        }, {
-            $set: {
-                redeemed: true
-            }
-        });
-
-        if (postResult.matchedCount === 0) return res.status(400).json({ error: "Still needs more likes or already redeemed!" });
-        else {
-            const userResult = await schemas.Users.updateOne({
-                username: req.currentUser.username,
-                maxPostContentCharsLength: { $lt: 4000 }
-            }, {
-                $inc: {
-                    maxPostContentCharsLength: inc
-                }
-            });
-
-            if (userResult.matchedCount === 0) {
-                await schemas.Posts.updateOne({ _id: id, by: req.session.userId, redeemed: true }, { $set: { redeemed: false } });
-                return res.status(400).json({ error: "Could not apply reward. Limit reached. You can still redeem later." });
-            }
-        }
-
-        return res.status(200).json({ success: true, inc: inc });
-    } catch (e) {
-        console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Failed to redeem. Try again later." });
-    }
-});
-
-// Fork
+// Fork post
 router.post("/api/v1/fork/post/:id", checkAuth, checkValidID, async (req, res) => {
     try {
         const id = req.params.id;
@@ -388,59 +310,96 @@ router.post("/api/v1/fork/post/:id", checkAuth, checkValidID, async (req, res) =
     }
 });
 
-// Likes and reports
+// Redeem post
+router.post("/api/v1/redeem/post/:id", checkAuth, checkValidID, async (req, res) => {
+    try {
+        const remaining = 4000 - req.currentUser.maxPostContentCharsLength;
+        let inc = 100;
+        if (remaining < 100) inc = remaining;
+        const id = req.params.id;
+        const session = await mongoose.startSession();
+
+        try {
+            await session.withTransaction(async () => {
+                const postResult = await schemas.Posts.updateOne({
+                    ...hotQueries.find_user_unforked_post(id, req.session.userId),      
+                    likes: { $gte: 100 },
+                    redeemed: false,
+                }, {
+                    $set: {
+                        redeemed: true
+                    }
+                }, { session });
+
+                if (postResult.matchedCount === 0) throw new Error("POST_UPDATE_FAILED");
+
+                const userResult = await schemas.Users.updateOne({
+                    username: req.currentUser.username,
+                    maxPostContentCharsLength: { $lt: 4000 }
+                }, {
+                    $inc: {
+                        maxPostContentCharsLength: inc
+                    }
+                }, { session });
+
+                if (userResult.matchedCount === 0) throw new Error("USER_UPDATE_FAILED");
+            });
+        } catch (txError) {
+            if (["POST_UPDATE_FAILED", "USER_UPDATE_FAILED"].includes(txError.message)) return res.status(400).json({ error: "Could not redeem post. Try again later." });
+            console.log("Error: " + txError.message);
+            return res.status(400).json({ error: "Something went wrong. Try again." });
+        } finally {
+            await session.endSession();
+        }
+
+        return res.status(200).json({ success: true, inc: inc });
+    } catch (e) {
+        console.log("Error: " + e.message);
+        createErrorMessage(e, req.session.userId, req.originalUrl);
+        return res.status(500).json({ error: "Failed to redeem. Try again later." });
+    }
+});
+
+// Likes/Report post
 router.post("/api/v1/:action/post/:id", checkAuth, checkValidID, async (req, res) => {
     try {
         const action = req.params.action;
         const id = req.params.id;
         if (!["like", "report"].includes(action)) return res.status(400).json({ error: "Invalid action type. Try again." });
+        const session = await mongoose.startSession();
 
-        // Create the reaction
-        const newReaction = new schemas.Reactions({
-            by: req.currentUser.username,
-            for: id,
-            type: action
-        });
+        try {
+            await session.withTransaction(async () => {
+                const newReaction = new schemas.Reactions({
+                    by: req.currentUser.username,
+                    for: id,
+                    type: action
+                });
 
-        await newReaction.save();
+                await newReaction.save({ session });
 
-        const result = await schemas.Posts.updateOne({
-            _id: id,
-            $or: [
-                {
-                    forkerId: null,
-                    receiverId: null,
-                    private: false
-                },
-                {
-                    $or: [
-                        { forkerId: req.session.userId },
-                        { receiverId: req.session.userId }
-                    ],
-                }
-            ]
-        },
-            {
-                $inc: {
-                    likes: action === "like" ? 1 : 0,
-                    reports: action === "report" ? 1 : 0
-                }
+                const result = await schemas.Posts.updateOne(hotQueries.find_user_post(id, req.session.userId),
+                    {
+                        $inc: {
+                            likes: action === "like" ? 1 : 0,
+                            reports: action === "report" ? 1 : 0
+                        }
+                    }, {
+                    session
+                });
+
+                if (result.matchedCount === 0) throw new Error("USER_UPDATE_FAILED");
             });
-
-        // Nothing found? Delete the reaction
-        if (result.matchedCount === 0) {
-            await schemas.Reactions.deleteOne({
-                by: req.currentUser.username,
-                for: id,
-                type: action
-            });
-
-            return res.status(404).json({ error: "Post not found." });
+        } catch (txError) {
+            if (txError.code === 11000) return res.status(400).json({ error: "You already did this action!" });
+            if (!["USER_UPDATE_FAILED"].includes(txError.message)) console.log(txError);
+            return res.status(400).json({ error: "Something went wrong. Try again." });
+        } finally {
+            await session.endSession();
         }
 
         return res.status(200).json({ success: true });
     } catch (e) {
-        if (e.code === 11000) return res.status(400).json({ error: "You already did this action!" });
         console.log("Error: " + e.message);
         createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Server error. Try again later." });

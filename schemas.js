@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const globalDbConnection = mongoose.connection;
 
 const usersSchema = new mongoose.Schema({
@@ -60,8 +60,10 @@ postsSchema.index(
 
 const commentsSchema = new mongoose.Schema({
     content: String,
-    for: mongoose.Schema.Types.ObjectId,
-    by: { type: mongoose.Schema.Types.ObjectId, ref: "Users" }
+    for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts" },
+    by: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
+    rootId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    repliesCount: Number
 }, { timestamps: true });
 
 const errorLogsSchema = new mongoose.Schema({

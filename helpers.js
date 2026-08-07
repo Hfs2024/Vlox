@@ -59,4 +59,55 @@ async function generateRecoveryCodes(count = 3) {
     };
 }
 
-module.exports = { checkAuth, createErrorMessage, checkValidID, generateRecoveryCodes };
+// Hot queries
+const hotQueries = {
+    find_user_unforked_post: (postId, userId) => {
+        return {
+            by: userId,
+            _id: postId,
+            forkerId: null,
+            receiverId: null
+        }
+    },
+
+    find_user_post: (postId, userId) => {
+        return {
+            _id: postId,
+            $or: [
+                {
+                    forkerId: null,
+                    receiverId: null,
+                    private: false
+                },
+                {
+                    $or: [
+                        { forkerId: userId },
+                        { receiverId: userId }
+                    ],
+                    private: false
+                }
+            ]
+        }
+    },
+
+    find_public_post: (postIds, userId) => {
+        return {
+            _id: postIds,
+            $or: [
+                { forkerId: null, receiverId: null, private: false },
+                { forkerId: userId },
+                { receiverId: userId },
+                { by: userId, forkerId: null, receiverId: null }
+            ]
+        }
+    }
+}
+
+// Export
+module.exports = {
+    checkAuth,
+    createErrorMessage,
+    checkValidID,
+    generateRecoveryCodes,
+    hotQueries
+};

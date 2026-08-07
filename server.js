@@ -6,17 +6,19 @@ const path = require("path");
 const session = require("express-session");
 const rateLimit = require("express-rate-limit");
 const bcrypt = require("bcrypt");
+const { checkAuth, createErrorMessage, checkValidID, generateRecoveryCodes, hotQueries } = require("./helpers.js");
 const mongoose = require("mongoose");
-const { checkAuth, createErrorMessage, checkValidID, generateRecoveryCodes } = require("./helpers.js");
 const schemas = require("./schemas.js");
 const MongoStore = require("connect-mongo");
 const bookmarksRouter = require("./bookmarks.js").router;
 const actionsRouter = require("./actions.js").router;
+const authRouter = require("./auth.js").router;
 const app = express();
 
+// Connect MonogDB
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("MongoDB connected"))
-    .catch(err => console.error("MongoDB connection error:", err));
+    .then(() => console.log("MongoDB connected!"))
+    .catch(err => console.log(`Failed to connect MongoDB: ${err.message}`));
 
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
 app.use(express.json({ limit: "10mb" }));
@@ -53,13 +55,13 @@ const limiter = rateLimit({
 app.use(limiter);
 app.use("/", bookmarksRouter);
 app.use("/", actionsRouter);
+app.use("/", authRouter);
 
 // Main route
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-// Post, delete, and put routes
 // Posts
 app.post("/api/v1/posts", checkAuth, async (req, res) => {
     try {
@@ -99,19 +101,10 @@ app.post("/api/v1/get/posts/comments", async (req, res) => {
         const skip = parseInt(req.body.skip) || 0;
         const customId = req.body.customId ? true : false;
         if (customId) {
-            const isPublic = await schemas.Posts.findOne({
-                _id: ids,
-                $or: [
-                    { forkerId: null, receiverId: null, private: false },
-                    { forkerId: req.session.userId },
-                    { receiverId: req.session.userId },
-                    { by: req.session.userId }
-                ]
-            });
-
+            const isPublic = await schemas.Posts.findOne(hotQueries.find_public_post(ids, req.session.userId));
             if (!isPublic) return res.status(400).json({ error: "You don't have permissions to do this action." });
 
-            const comments = await schemas.Comments.find({ for: ids }) // It's already a string id
+            const comments = await schemas.Comments.find({ for: ids, rootId: null }) // It's already a string id
                 .sort({ createdAt: -1, _id: -1 })
                 .skip(skip)
                 .limit(10)
@@ -123,20 +116,12 @@ app.post("/api/v1/get/posts/comments", async (req, res) => {
         }
 
         if (!Array.isArray(ids)) return res.status(400).json({ error: "Invalid request. 'ids' must be an array." });
-        const commentPromises = ids.map(async id => {            
-            const isPublic = await schemas.Posts.findOne({
-                _id: id,
-                $or: [
-                    { forkerId: null, receiverId: null, private: false },
-                    { forkerId: req.session.userId },
-                    { receiverId: req.session.userId },
-                    { by: req.session.userId }
-                ]
-            });
+        const commentPromises = ids.map(async id => {
+            const isPublic = await schemas.Posts.findOne(hotQueries.find_public_post(id, req.session.userId));
 
-            if (!isPublic) throw new Error('ILLEGAL_BATCH'); 
+            if (!isPublic) throw new Error('ILLEGAL_BATCH');
 
-            const found = await schemas.Comments.find({ for: id })
+            const found = await schemas.Comments.find({ for: id, rootId: null })
                 .sort({ createdAt: -1, _id: -1 })
                 .limit(10)
                 .select("for content by")
@@ -157,219 +142,12 @@ app.post("/api/v1/get/posts/comments", async (req, res) => {
     }
 });
 
-app.get("/api/v1/search/posts", async (req, res) => {
-    try {
-        const query = req.query.q.toLowerCase().trim();
-        const foundPosts = await schemas.Posts.find({
-            keywords: { $regex: query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), $options: "i" },
-            private: false,
-            forkerId: null,
-            receiverId: null
-        }).sort({
-            likes: -1,
-            createdAt: -1,
-            _id: -1
-        }).limit(100).populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount");
-
-        return res.status(200).json({ success: true, posts: foundPosts });
-    } catch (e) {
-        console.error("Search Posts Break: ", e.message);
-        return res.status(500).json({ error: "Could not search posts. Try again later." });
-    }
-})
-
-// User
-app.post("/api/v1/get/user-private-posts", checkAuth, async (req, res) => {
-    try {
-        const skip = parseInt(req.query.skip) || 0;
-        const foundPosts = await schemas.Posts.find({
-            by: req.session.userId,
-            private: true,
-            forkerId: null,
-            receiverId: null
-        })
-            .sort({ createdAt: -1, _id: -1 })
-            .skip(skip)
-            .limit(10)
-            .lean();
-
-        return res.json({ success: true, posts: foundPosts });
-    } catch (e) {
-        console.error("Fetch Private Posts Break: ", e.message);
-        return res.status(500).json({ error: "Could not retrieve your private posts" });
-    }
-});
-
-app.post("/api/v1/get/user-pinned-posts", checkAuth, async (req, res) => {
-    try {
-        const ids = req.body.ids;
-        if (!Array.isArray(ids)) return res.status(400).json({ erorr: "Invalid request. 'ids' must be a type of array" });
-        const postPromises = ids.map(id => schemas.Posts.findOne({
-            _id: id,
-            private: false,
-            forkerId: null,
-            receiverId: null
-        }).lean());
-        const pinnedPosts = await Promise.all(postPromises);
-
-        return res.status(200).json({ success: true, foundPinnedPosts: pinnedPosts });
-    } catch (e) {
-        console.error("Failed To Get Pinned Post ", e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Something went wrong. Try again." });
-    }
-});
-
-app.post("/api/v1/login", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        if (req.session.isLoggedIn === true) return res.status(400).json({ error: "You are already logged in!" });
-        if (!username || !password) return res.status(400).json({ error: "Username and password are required" });
-        const user = await schemas.Users.findOne({ username: username });
-        if (!user) return res.status(400).json({ error: "Invalid username or password" });
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ error: "Invalid username or password" });
-
-        req.session.isLoggedIn = true;
-        req.session.userId = user._id;
-        req.session.save((err) => {
-            if (err) {
-                console.error("Login Session Save Failure: ", err.message);
-                return res.status(500).json({ error: "Session initialization failed" });
-            }
-            return res.status(200).json({ success: true });
-        });
-    } catch (e) {
-        console.error("Login Failure: ", e.message);
-        return res.status(500).json({ error: "Internal server error" });
-    }
-});
-
-app.post("/api/v1/signup", async (req, res) => {
-    try {
-        let { username, password, email, bio } = req.body;
-        if (req.session.isLoggedIn) return res.status(400).json({ error: "You are already logged in!" });
-        username = String(username).trim();
-        password = String(password).trim();
-        email = String(email).trim();
-        bio = String(bio).trim();
-        if (!username || !password || !email) return res.status(400).json({ error: "Username, email, and password are required" });
-        if (username.length < 3 || username.length > 10) return res.status(400).json({ error: "Username must be between 3 and 10 chars." });
-        if (password.length < 6 || password.length > 12) return res.status(400).json({ error: "Password must be between 6 and 12 chars." });
-        if (bio && bio.length > 20) return res.status(400).json({ error: "Bio must be less than 20 chars" });
-
-        const existingUser = await schemas.Users.findOne({
-            $or: [
-                { username: username },
-                { email: email }
-            ]
-        });
-        if (existingUser) return res.status(409).json({ error: "Username already exists" });
-
-        const recoveryCodes = await generateRecoveryCodes();
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const newUser = new schemas.Users({
-            username: username,
-            email: req.body.email.toLowerCase().trim(),
-            password: hashedPassword,
-            bio: bio || "",
-            recoveryCodes: recoveryCodes.hashed
-        });
-
-        await newUser.save();
-
-        req.session.isLoggedIn = true;
-        req.session.userId = newUser._id;
-        req.session.save((err) => {
-            if (err) {
-                console.error("Signup Session Save Failure: ", err.message);
-                return res.status(500).json({ error: "Session creation failed" });
-            }
-            return res.status(201).json({ success: true, recoveryCodes: recoveryCodes.raw });
-        });
-    } catch (e) {
-        console.error("Signup Failure: ", e.message);
-        return res.status(500).json({ error: "Failed to create new user. Try again." });
-    }
-});
-
-app.put("/api/v1/update/user-bio", checkAuth, async (req, res) => {
-    try {
-        const { newBio } = req.body;
-        if (!newBio) return res.status(400).json({ error: "You didn't enter a bio!" });
-        if (newBio.length > 20) return res.status(400).json({ error: "Bio should be less than 20 chars!" });
-
-        const result = await schemas.Users.updateOne({
-            username: req.currentUser.username
-        }, {
-            $set: {
-                bio: newBio
-            }
-        });
-
-        if (result.matchedCount === 0) return res.status(400).json({ error: "Could not find your account right now" });
-        return res.status(200).json({ success: true });
-    } catch (e) {
-        console.error(`Bio Update Failure: ${e.message}. User ID: ${req.userId}`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Failed to update bio. Try again." });
-    }
-});
-
-app.put("/api/v1/update/emoji", checkAuth, async (req, res) => {
-    try {
-        const emoji = req.body.emoji ? req.body.emoji.normalize("NFC") : null;
-        const result = await schemas.Users.updateOne({
-            username: req.currentUser.username
-        }, {
-            $set: {
-                emoji: emoji
-            }
-        }, {
-            runValidators: true
-        });
-
-        if (result.matchedCount === 0) return res.status(400).json({ error: "Can't find your account right now!" });
-
-        return res.status(200).json({ success: true });
-    } catch (e) {
-        console.error(`Emoji Update Failure: ${e.message}. User ID: ${req.session.userId}`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Failed to update emoji. Try again." });
-    }
-});
-
-app.delete("/api/v1/signout", checkAuth, async (req, res) => {
-    try {
-        req.session.destroy(err => {
-            if (err) {
-                console.log("Error: " + err.message);
-                return res.status(500).json({ error: "Server Error" });
-            }
-
-            res.clearCookie('connect.sid');
-            return res.status(200).json({ success: true });
-        });
-    } catch (e) {
-        console.error("Signout Failure: ", e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Failed to signout. Try again." });
-    }
-});
-
-// Get routes
-// Posts
 app.get("/api/v1/get/post/:id", checkValidID, async (req, res) => {
     try {
+        const id = req.params.id;
         const foundPost = await schemas.Posts.findOne({
-            _id: req.params.id,
-            $or: [
-                { forkerId: null, receiverId: null, private: false },
-                { forkerId: req.session.userId },
-                { receiverId: req.session.userId },
-                { by: req.session.userId }
-            ]
+            ...hotQueries.find_public_post(id, req.session.userId),
+            private: false
         }).populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount")
             .populate("forkerId", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount")
             .populate("receiverId", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount");
@@ -407,76 +185,36 @@ app.get("/api/v1/get/posts", async (req, res) => {
     }
 });
 
-// User
-app.get("/api/v1/get/current-user-quick-info", checkAuth, async (req, res) => {
+app.get("/api/v1/search/posts", async (req, res) => {
     try {
-        return res.status(200).json({ success: true, username: req.currentUser.username, emoji: req.currentUser.emoji, bio: req.currentUser.bio, maxPostContentCharsLength: req.currentUser.maxPostContentCharsLength });
-    } catch (e) {
-        console.error(`Failed To Get Username: ${e.message}. User ID: ${req.session.userId}`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Could not get your username. Try again." });
-    }
-});
-
-app.get("/api/v1/get/user-profile/:name", checkAuth, async function (req, res) {
-    try {
-        const skip = parseInt(req.query.skip) || 0;
-        const user = await schemas.Users.findOne({ username: req.params.name, private: false });
-        if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
+        const query = req.query.q.toLowerCase().trim();
         const foundPosts = await schemas.Posts.find({
-            by: user._id,
+            keywords: { $regex: query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), $options: "i" },
             private: false,
             forkerId: null,
             receiverId: null
-        }).sort({ createdAt: -1, _id: -1 })
-            .skip(skip)
-            .limit(10)
-            .populate("by", "-password -recoveryCodes -email")
-            .lean();
+        }).sort({
+            likes: -1,
+            createdAt: -1,
+            _id: -1
+        }).limit(100).populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount");
 
-        return res.status(200).json({ success: true, posts: foundPosts, username: user.username, emoji: user.emoji, pinnedPosts: user.pinnedPosts, bio: user.bio });
+        return res.status(200).json({ success: true, posts: foundPosts });
     } catch (e) {
-        console.error(`Failed To Get User: ${e.message}. User ID: ${req.session.userId}`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Could not find your account right now" });
+        console.error("Search Posts Break: ", e.message);
+        return res.status(500).json({ error: "Could not search posts. Try again later." });
     }
 });
 
-app.get("/api/v1/get/user-profile", checkAuth, async (req, res) => {
+app.get("/api/v1/get/comment/replies/:id", checkAuth, checkValidID, async (req, res) => {
     try {
-        const skip = parseInt(req.query.skip) || 0;
-        const foundPosts = await schemas.Posts.find({
-            by: req.session.userId,
-            forkerId: null,
-            receiverId: null
-        }).sort({ createdAt: -1, _id: -1 })
-            .skip(skip)
-            .limit(10)
-            .populate("by", "-password -recoveryCodes -email")
-            .lean();
-
-        return res.status(200).json({
-            success: true,
-            posts: foundPosts,
-            username: req.currentUser.username,
-            emoji: req.currentUser.emoji,
-            pinnedPosts: req.currentUser.pinnedPosts,
-            bio: req.currentUser.bio,
-            private: req.currentUser.private
-        });
+        const id = req.params.id;
+        console.log(id);
+        return res.status(200).json({ success: true });
     } catch (e) {
-        console.error(`Failed To Get User: ${e.message}. User ID: ${req.session.userId}`);
+        console.error("Fetch Replies Break: ", e.message);
         createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Could not find your account right now" });
-    }
-});
-
-app.get("/api/v1/get/user-status", async function (req, res) {
-    try {
-        return res.status(200).json({ success: true, loggedIn: req?.session?.isLoggedIn ? true : false }); // Ensure it's a boolean
-    } catch (e) {
-        console.error(`Failed To Get User Status: ${e.message}. User ID: ${req.session.userId} `);
-        return res.status(500).json({ error: "Could not find your status right now" });
+        return res.status(500).json({ error: "Could not fetch replies. Try again later." });
     }
 });
 

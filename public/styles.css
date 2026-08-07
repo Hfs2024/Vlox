@@ -288,7 +288,7 @@ button:hover,
     padding: 10px;
     background-color: ghostwhite;
     color: black;
-    border-radius: 20px;
+    border-radius: 30px;
     margin-top: 10px;
     cursor: pointer;
     transition: background-color 0.3s ease;
@@ -307,9 +307,12 @@ button:hover,
     color: green;
 }
 
-.reply-comment-btn {
+.comment-item-icons {
     position: sticky;
-    right: 5px;
+    right: 0;
+    background-color: ghostwhite;
+    padding: 5px;
+    border-radius: 20px;
 }
 
 /* Emojis */
@@ -510,7 +513,7 @@ button:hover,
     color: darkred;
 }
 
-/* Responsiveness */
+/* Responsiveness and clean design */
 @media (max-width: 768px) {
     .container {
         display: block;
@@ -527,4 +530,23 @@ button:hover,
         max-height: 400px;
         overflow: auto;
     }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
 }
