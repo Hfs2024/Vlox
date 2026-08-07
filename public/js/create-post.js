@@ -53,7 +53,7 @@ setUpSpoilers(createSpoilersBtn);
 // Bookmarks
 async function showBookMarks() {
     let bookmarksPosts = await NS.fetch({
-        url: "/api/v1/get/bookmarks/posts",
+        url: "/api/v1/get/bookmarks",
         method: "POST"
     });
     if (!bookmarksPosts.success) return Swal.fire(bookmarksPosts.error);
@@ -89,9 +89,9 @@ async function showBookMarks() {
 
         bookmarksPosts.posts.forEach(bookmark => {
             const bookmarkCard = NS.createEl("div", container, { className: "bookmark" });
-            NS(NS.createEl("h2", bookmarkCard, {})).setText(capitalizeFirstLtter(bookmark.bookmarkTitle) || `Bookmark ${index + 1}`);
+            NS(NS.createEl("h2", bookmarkCard, {})).setText(capitalizeFirstLtter(bookmark.title) || `Bookmark ${index + 1}`);
             const buttonGroup = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
-            NS(NS.createEl("button", buttonGroup, {})).setText("Delete bookmark").addClass("delete-btn").on("click", async function () {
+            NS(NS.createEl("button", buttonGroup, { className: "delete-btn" })).setText("Delete bookmark").on("click", async function () {
                 const deleteResponse = await NS.fetch({
                     url: `/api/v1/delete/bookmark/${bookmark._id}`,
                     method: "DELETE"
@@ -101,7 +101,7 @@ async function showBookMarks() {
                 Swal.fire("Success", "Bookmark deleted!", "success");
             });
 
-            NS(NS.createEl("button", buttonGroup, {})).setText("Rename bookmark").css({ width: "100%" }).on("click", function () {
+            NS(NS.createEl("button", buttonGroup, { style: "width: 100%" })).setText("Rename bookmark").on("click", function () {
                 Swal.fire({
                     title: "Enter new title: ",
                     input: "text",
@@ -124,9 +124,13 @@ async function showBookMarks() {
                 });
             });
 
-            NS(NS.createEl("button", buttonGroup, {})).setText("View bookmark").css({ width: "100%" }).on("click", function () {
-                if (!bookmark) return Swal.fire("Failure", "Something went wrong or post deleted", "error");
-                renderPosts([bookmark]);
+            NS(NS.createEl("button", buttonGroup, { style: "width: 100%" })).setText("View bookmark").on("click", async function () {
+                const postResponse = await NS.fetch({
+                    url: `/api/v1/get/post/${bookmark.for}`
+                });
+
+                if (!postResponse.success) return Swal.fire(postResponse.error);
+                renderPosts(Array.isArray(postResponse.posts) ? postResponse.posts : [postResponse.posts], skip);
                 Swal.clickConfirm();
             });
         });
@@ -166,21 +170,18 @@ bookmarksBtn.on("click", function () {
 // Ghost state (Auto save)
 function clearGhostState() {
     NS("#create-post-content-count").setText(`0/${window.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
-    NS.clearGhostState("#create-post-title", () => {
-        createPostTitle.setVal("");
-    });
-    NS.clearGhostState("#create-post-content", () => {
-        createPostContent.setVal("");
-    });
-    NS.clearGhostState("#create-post-keywords", () => {
-        createPostKeywords.setVal("");
-    });
+    NS.clearGhostState("#create-post-title");
+    NS.clearGhostState("#create-post-content");
+    NS.clearGhostState("#create-post-keywords");
+    createPostTitle.setVal("");
+    createPostContent.setVal("");
+    createPostKeywords.setVal("");
 }
 
 NS.getGhostState();
-NS.ghostState({selector: "#create-post-title"});
-NS.ghostState({selector: "#create-post-content"});
-NS.ghostState({selector: "#create-post-keywords"});
+NS.ghostState({ selector: "#create-post-title", resave: 500 });
+NS.ghostState({ selector: "#create-post-content", resave: 500 });
+NS.ghostState({ selector: "#create-post-keywords", resave: 500 });
 NS("#clear-post-content-btn").on("click", function () {
     clearGhostState();
     Swal.fire("Success!", "Draft cleared!", "success");

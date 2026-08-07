@@ -206,18 +206,6 @@ app.get("/api/v1/search/posts", async (req, res) => {
     }
 });
 
-app.get("/api/v1/get/comment/replies/:id", checkAuth, checkValidID, async (req, res) => {
-    try {
-        const id = req.params.id;
-        console.log(id);
-        return res.status(200).json({ success: true });
-    } catch (e) {
-        console.error("Fetch Replies Break: ", e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Could not fetch replies. Try again later." });
-    }
-});
-
 // Password recovery
 const passwordRecoveryHourLimit = rateLimit({
     windowMs: 60 * 60 * 1000,
@@ -273,7 +261,7 @@ app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryHourLimit, che
     try {
         const newCodes = await generateRecoveryCodes(3);
         const result = await schemas.Users.updateOne({
-            username: req.currentUser.username
+            _id: req.session.userId,
         }, {
             $set: {
                 recoveryCodes: newCodes.hashed

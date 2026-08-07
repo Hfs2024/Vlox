@@ -23,7 +23,7 @@ const usersSchema = new mongoose.Schema({
 
 const reactionsSchema = new mongoose.Schema({
     type: String,
-    by: String,
+    by: mongoose.Schema.Types.ObjectId,
     for: mongoose.Schema.Types.ObjectId,
 }, { timestamps: true });
 reactionsSchema.index({ by: 1, for: 1, type: 1 }, { unique: true });
@@ -79,11 +79,11 @@ const errorLogsSchema = new mongoose.Schema({
 
 
 const bookmarksSchema = new mongoose.Schema({
-    postId: mongoose.Schema.Types.ObjectId,
-    by: String,
+    for: mongoose.Schema.Types.ObjectId,
+    by: mongoose.Schema.Types.ObjectId,
     title: String
 }, { timestamps: true });
-bookmarksSchema.index({ postId: 1, by: 1 }, { unique: true });
+bookmarksSchema.index({ for: 1, by: 1 }, { unique: true });
 
 module.exports = {
     Users: mongoose.model("Users", usersSchema, "users"),

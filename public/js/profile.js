@@ -80,10 +80,9 @@ async function showProfile(data) {
 
     const renderPinnedPosts = () => {
         if (!data.pinnedPosts || data.pinnedPosts.length === 0) {
-            const noPinnedPostFound = NS.createEl("h2", NS("#user-pinned-posts-container"), {
-                className: ""
-            });
-            noPinnedPostFound.textContent = "No pinned posts yet.";
+            const noPinnedPostFound = NS(NS.createEl("h2", NS("#user-pinned-posts-container"), {
+                className: "nothing-found"
+            })).setText("No pinned posts yet.");
             return;
         }
 

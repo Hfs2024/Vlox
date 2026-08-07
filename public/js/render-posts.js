@@ -134,7 +134,9 @@ async function renderPosts(posts, skip = 0) {
 
         const chattingWith = post?.forkerId?.username === window.currentUserQuickInfo.username ? `${post?.receiverId?.emoji} ${post?.receiverId?.username}` : `${post?.forkerId?.emoji} ${post?.forkerId?.username}`;
         const content = cleanHTML(post.content) || "Not content found";
-        const contentEl = NS(NS.createEl("div", postCard, {})).html(post.spoilers ? "<button class='show-spoliers-btn'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>" : content);
+        const contentEl = NS(NS.createEl("div", postCard, {
+            style: 'overflow: auto'
+        })).html(post.spoilers ? "<button class='show-spoliers-btn'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>" : content);
         NS(".show-spoliers-btn").on("click", function () {
             contentEl.html(content);
         });
@@ -225,12 +227,6 @@ async function renderPosts(posts, skip = 0) {
 
                     NS(".view-reply-btn").on("click", async function (e) {
                         e.stopPropagation();
-                        const viewRepliesResponse = await NS.fetch({
-                            url: `/api/v1/get/comment/replies/${comment._id}/`,
-                            method: "GET"
-                        });
-
-                        if (!viewRepliesResponse.success) return Swal.fire(viewRepliesResponse.error);
                         Swal.fire("View replies not implemented yet.");
                     });
                 });

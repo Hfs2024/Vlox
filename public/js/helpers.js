@@ -18,7 +18,7 @@ async function getQuickInfo() {
     window.currentUserQuickInfo = quickInfo;
     const maxPostContentCharsLength = window.currentUserQuickInfo?.maxPostContentCharsLength;
     NS("#create-post-content-count").setText(`${NS("#create-post-content").getVal()[0].length}/${maxPostContentCharsLength || 2000}`);
-    setUpLiveCounter("#create-post-content", "#create-post-content-count", window.maxPostContentCharsLength);
+    setUpLiveCounter("#create-post-content", "#create-post-content-count", window.currentUserQuickInfo.maxPostContentCharsLength);
 
     return quickInfo;
 }
@@ -64,7 +64,7 @@ function changePostVisibility({
 
 // Clean HTML
 function cleanHTML(html) {
-    return DOMPurify.sanitize(marked.parseInline(html));
+    return DOMPurify.sanitize(marked.parse(html));
 }
 
 // Post links

@@ -7,7 +7,9 @@ async function viewAnalytics(post) {
 
     const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "post" });
     const titleEl = NS(NS.createEl("h2", postCard, {})).setText(post.title);
-    const contentEl = NS(NS.createEl("div", postCard, {})).html(cleanHTML(post.content) || "Not content found");
+    const contentEl = NS(NS.createEl("div", postCard, {
+        style: "overflow: auto"
+    })).html(cleanHTML(post.content) || "Not content found");
     const panelAnalyticsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
     let likesPercent = 10;
     if (post.likes === 0) likesPercent = 0;
@@ -43,7 +45,7 @@ async function viewAnalytics(post) {
         });
 
         if (!redeemResponse.success) return Swal.fire(redeemResponse.error);
-        Swal.fire("Success", `Redeemed successfully for ${redeemResponse.inc} extra post content chars!`, "success");
+        Swal.fire("Success", `Redeemed successfully for ${redeemResponse.inc} extra post content chars. You must refresh the page for your new changes to apply.`, "success");
     });
 }
 
@@ -68,7 +70,9 @@ async function renderProfilePost({
             }
         });
     });
-    NS(NS.createEl("div", postCard, {})).html(cleanHTML(post.content) || "Not content found");
+    NS(NS.createEl("div", postCard, {
+        style: "overflow: auto"
+    })).html(cleanHTML(post.content) || "Not content found");
 
     if (isUsernameMatch) {
         const visibilityEl = NS(NS.createEl("p", postCard, {
@@ -148,7 +152,7 @@ async function renderProfilePost({
                     NS("#edit-post-content").setVal(post.content);
                     NS("#edit-post-keywords").setVal(post.keywords.join(", "));
                     NS("#edit-post-content-count").setText(`${NS("#edit-post-content").getVal()[0].length}/${window.maxPostContentCharsLength || 2000}`);
-                    setUpLiveCounter("#edit-post-content", "#edit-post-content-count", window.maxPostContentCharsLength);
+                    setUpLiveCounter("#edit-post-content", "#edit-post-content-count", window.currentUserQuickInfo.maxPostContentCharsLength);
                 },
                 showCancelButton: true,
                 preConfirm: () => {

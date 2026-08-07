@@ -16,7 +16,7 @@ router.post("/api/v1/change-visibility/:item/", checkAuth, async (req, res) => {
         if (!modelToUpdate) return res.status(400).json({ error: "Unknown model. Try again." });
         if (modelToUpdate === "Posts") {
             if (!id || !mongoose.isValidObjectId(id)) return res.status(400).json({ error: "This ID is not valid!" });
-            const isPinned = await schemas.Users.findOne({ username: req.currentUser.username, pinnedPosts: id });
+            const isPinned = await schemas.Users.findOne({ _id: req.session.userId, pinnedPosts: id });
             if (isPinned) return res.status(400).json({ error: "You can't make a pinned post private! Unpin it first!" });
             query = hotQueries.find_user_unforked_post(id, req.session.userId);
         }
@@ -49,7 +49,7 @@ router.post("/api/v1/pin/post/:id", checkAuth, checkValidID, async function (req
         if (!isUserPost) return res.status(400).json({ error: "Seems like this is not your post!" });
 
         const result = await schemas.Users.updateOne({
-            username: req.currentUser.username,
+            _id: req.session.userId,
             pinnedPostsCount: { $lt: 10 }
         }, {
             $push: {
@@ -62,7 +62,6 @@ router.post("/api/v1/pin/post/:id", checkAuth, checkValidID, async function (req
         });
 
         if (result.matchedCount === 0) return res.status(400).json({ error: "Seems you have more than 10 pinned posts!" })
-
         return res.status(200).json({ success: true });
     } catch (e) {
         console.error("Failed To Pin Post: " + e.message);
@@ -75,7 +74,7 @@ router.post("/api/v1/unpin/post/:id", checkAuth, checkValidID, async function (r
     try {
         const id = req.params.id;
         const result = await schemas.Users.updateOne({
-            username: req.currentUser.username,
+            _id: req.session.userId,
             pinnedPosts: id,
             pinnedPostsCount: { $gt: 0 }
         }, {
@@ -102,28 +101,38 @@ router.post("/api/v1/unpin/post/:id", checkAuth, checkValidID, async function (r
 router.delete("/api/v1/delete/post/:id", checkAuth, checkValidID, async function (req, res) {
     try {
         const id = req.params.id;
-        const result = await schemas.Posts.deleteOne(hotQueries.find_user_unforked_post(id, req.session.userId));
+        const session = await mongoose.startSession();
+        try {
+            await session.withTransaction(async () => {
+                const result = await schemas.Posts.deleteOne(hotQueries.find_user_unforked_post(id, req.session.userId), { session });
+                if (result.deletedCount === 0) throw new Error("POST_DELETE_FAILED");
 
-        if (result.deletedCount === 0) return res.status(404).json({ error: "Post not found!" });
-        await schemas.Users.updateOne({
-            username: req.currentUser.username,
-            pinnedPosts: id
-        }, {
-            $inc: {
-                pinnedPostsCount: -1
-            },
+                await schemas.Users.updateOne({
+                    _id: req.session.userId,
+                    pinnedPosts: id
+                }, {
+                    $inc: {
+                        pinnedPostsCount: -1
+                    },
 
-            $pull: {
-                pinnedPosts: id
-            }
-        });
+                    $pull: {
+                        pinnedPosts: id
+                    }
+                }, { session });
 
-        await schemas.Reactions.deleteMany({
-            for: id
-        });
-        await schemas.Comments.deleteMany({
-            for: id
-        });
+                await schemas.Reactions.deleteMany({
+                    for: id
+                }, { session });
+                await schemas.Comments.deleteMany({
+                    for: id
+                }, { session });
+            });
+        } catch (txError) {
+            if (!["POST_DELETE_FAILED"].includes(txError)) console.log("Error:" + txError);
+            return res.status(400).json({ error: "Something went wrong!" });
+        } finally {
+            await session.endSession();
+        }
 
         return res.status(200).json({ success: true });
     } catch (e) {
@@ -136,21 +145,32 @@ router.delete("/api/v1/delete/post/:id", checkAuth, checkValidID, async function
 router.delete("/api/v1/delete/fork/:id", checkAuth, async (req, res) => {
     try {
         const id = req.params.id;
-        const result = await schemas.Posts.deleteOne({
-            _id: id,
-            $or: [
-                { forkerId: req.session.userId },
-                { receiverId: req.session.userId }
-            ] // Are you the receiver or the forker of the post?
-        });
+        const session = await mongoose.startSession();
+        try {
+            await session.withTransaction(async () => {
+                const result = await schemas.Posts.deleteOne({
+                    _id: id,
+                    $or: [
+                        { forkerId: req.session.userId },
+                        { receiverId: req.session.userId }
+                    ] // Are you the receiver or the forker of the post?
+                }, { session });
 
-        if (result.deletedCount === 0) return res.status(404).json({ error: "Post not found!" });;
-        await schemas.Reactions.deleteMany({
-            for: id
-        });
-        await schemas.Comments.deleteMany({
-            for: id
-        });
+                if (result.deletedCount === 0) throw new Error("FORK_DELETE_FAILED");
+
+                await schemas.Reactions.deleteMany({
+                    for: id
+                });
+                await schemas.Comments.deleteMany({
+                    for: id
+                });
+            });
+        } catch (e) {
+            if (!["FORK_DELETE_FAILED"].includes(txError)) console.log(txError);
+            return res.status(400).json({ error: "Somehting went wrong. Try again later" });
+        } finally {
+            await session.endSession();
+        }
 
         return res.status(200).json({ success: true });
     } catch (e) {
@@ -168,31 +188,33 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
         comment = String(comment).trim();
         if (!comment) return res.status(400).json({ error: "You didn't enter a comment!" });
         if (comment.length > 200) return res.status(400).json({ error: "Comment cannot exceed 200 characters!" });
+        const session = await mongoose.startSession();
+        try {
+            await session.withTransaction(async () => {
+                const newComment = new schemas.Comments({
+                    content: comment,
+                    for: id,
+                    by: req.session.userId,
+                    rootId: null,
+                    repliesCount: 0
+                });
 
-        const newComment = new schemas.Comments({
-            content: comment,
-            for: id,
-            by: req.session.userId,
-            rootId: null,
-            repliesCount: 0
-        });
+                await newComment.save({ session });
 
-        await newComment.save();
+                const result = await schemas.Posts.updateOne(hotQueries.find_user_post(id, req.session.userId), {
+                    $inc: {
+                        comments: 1
+                    }
+                }, { session });
 
-        const result = await schemas.Posts.updateOne(hotQueries.find_user_post(id, req.session.userId),
-            {
-                $inc: {
-                    comments: 1
-                }
+                if (result.matchedCount === 0) throw new Error("COMMENT_UPDATE_FAILED");
             });
-
-        if (result.matchedCount === 0) {
-            await schemas.Comments.deleteOne({
-                by: req.session.userId,
-                _id: newComment._id
-            });
-
-            return res.status(400).json({ error: "Post not found or you don't have permission to comment." });
+        } catch (txError) {
+            if (["COMMENT_UPDATE_FAILED"].includes(txError)) return res.status(400).json({ error: "Seems you don't have permission to comment on this post!" });
+            console.log("Error: " + txError);
+            return res.status(400).json({ error: "Something went wrong. Try again later" });
+        } finally {
+            await session.endSession();
         }
 
         return res.status(200).json({ success: true });
@@ -229,22 +251,6 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req,
         console.log("Error: " + e.message);
         createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Failed to update comment. Try again." });
-    }
-});
-
-// Create reply
-router.post("/api/v1/reply/comment/:id", checkAuth, checkValidID, async (req, res) => {
-    try {
-        const { reply, rootId } = req.body;
-        const id = req.params.id;
-        
-        console.log(id);
-
-        return res.status(200).json({ success: true })
-    } catch (e) {
-        console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Server error" });
     }
 });
 
@@ -322,7 +328,7 @@ router.post("/api/v1/redeem/post/:id", checkAuth, checkValidID, async (req, res)
         try {
             await session.withTransaction(async () => {
                 const postResult = await schemas.Posts.updateOne({
-                    ...hotQueries.find_user_unforked_post(id, req.session.userId),      
+                    ...hotQueries.find_user_unforked_post(id, req.session.userId),
                     likes: { $gte: 100 },
                     redeemed: false,
                 }, {
@@ -334,7 +340,7 @@ router.post("/api/v1/redeem/post/:id", checkAuth, checkValidID, async (req, res)
                 if (postResult.matchedCount === 0) throw new Error("POST_UPDATE_FAILED");
 
                 const userResult = await schemas.Users.updateOne({
-                    username: req.currentUser.username,
+                    _id: req.session.userId,
                     maxPostContentCharsLength: { $lt: 4000 }
                 }, {
                     $inc: {
@@ -371,7 +377,7 @@ router.post("/api/v1/:action/post/:id", checkAuth, checkValidID, async (req, res
         try {
             await session.withTransaction(async () => {
                 const newReaction = new schemas.Reactions({
-                    by: req.currentUser.username,
+                    by: req.session.userId,
                     for: id,
                     type: action
                 });

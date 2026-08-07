@@ -30,13 +30,12 @@ router.post("/api/v1/get/user-pinned-posts", checkAuth, async (req, res) => {
     try {
         const ids = req.body.ids;
         if (!Array.isArray(ids)) return res.status(400).json({ erorr: "Invalid request. 'ids' must be a type of array" });
-        const postPromises = ids.map(id => schemas.Posts.findOne({
-            _id: id,
+        const pinnedPosts = await schemas.Posts.find({
+            _id: { $in: ids },
             private: false,
             forkerId: null,
             receiverId: null
-        }).lean());
-        const pinnedPosts = await Promise.all(postPromises);
+        }).lean();
 
         return res.status(200).json({ success: true, foundPinnedPosts: pinnedPosts });
     } catch (e) {
@@ -90,7 +89,7 @@ router.post("/api/v1/signup", async (req, res) => {
                 { email: email }
             ]
         });
-        if (existingUser) return res.status(409).json({ error: "Username already exists" });
+        if (existingUser) return res.status(400).json({ error: "Username already exists" });
 
         const recoveryCodes = await generateRecoveryCodes();
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -127,7 +126,7 @@ router.put("/api/v1/update/user-bio", checkAuth, async (req, res) => {
         if (newBio.length > 20) return res.status(400).json({ error: "Bio should be less than 20 chars!" });
 
         const result = await schemas.Users.updateOne({
-            username: req.currentUser.username
+            _id: req.session.userId
         }, {
             $set: {
                 bio: newBio
@@ -147,7 +146,7 @@ router.put("/api/v1/update/emoji", checkAuth, async (req, res) => {
     try {
         const emoji = req.body.emoji ? req.body.emoji.normalize("NFC") : null;
         const result = await schemas.Users.updateOne({
-            username: req.currentUser.username
+            _id: req.session.userId
         }, {
             $set: {
                 emoji: emoji
@@ -191,7 +190,7 @@ router.get("/api/v1/get/current-user-quick-info", checkAuth, async (req, res) =>
     } catch (e) {
         console.error(`Failed To Get Username: ${e.message}. User ID: ${req.session.userId}`);
         createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Could not get your username. Try again." });
+        return res.status(500).json({ error: "Could not get your quick info. Try again." });
     }
 });
 
@@ -250,7 +249,7 @@ router.get("/api/v1/get/user-profile", checkAuth, async (req, res) => {
 
 router.get("/api/v1/get/user-status", async function (req, res) {
     try {
-        return res.status(200).json({ success: true, loggedIn: req?.session?.isLoggedIn ? true : false }); // Ensure it's a boolean
+        return res.status(200).json({ success: true, loggedIn: req.session.isLoggedIn }); 
     } catch (e) {
         console.error(`Failed To Get User Status: ${e.message}. User ID: ${req.session.userId} `);
         return res.status(500).json({ error: "Could not find your status right now" });

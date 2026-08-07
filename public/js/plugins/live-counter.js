@@ -44,9 +44,10 @@ NS.liveCounter = ({
             pasted = pasted.replaceAll(new RegExp(`[${excludeChars.join('')}]`, 'g'), "");
         }
 
+        const length = element.value.length;
         const newLength = length + pasted.length;
         const remain = max - length;
-
+        
         if (newLength > max) {
             e.preventDefault();
             const length = element.value.length;
