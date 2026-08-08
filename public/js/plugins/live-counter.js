@@ -44,16 +44,14 @@ NS.liveCounter = ({
             pasted = pasted.replaceAll(new RegExp(`[${excludeChars.join('')}]`, 'g'), "");
         }
 
-        const length = element.value.length;
-        const newLength = length + pasted.length;
-        const remain = max - length;
+        const newLength = element.value.length + pasted.length;
+        const remain = max - element.value.length;
         
         if (newLength > max) {
             e.preventDefault();
-            const length = element.value.length;
             element.value += pasted.slice(0, remain);
-            if (showCounter && foundCounter) foundCounter.textContent = `${length}/${max}`;
-            if (showRemaining && foundRemaining) foundRemaining.textContent = max - length;
+            if (showCounter && foundCounter) foundCounter.textContent = `${element.value.length}/${max}`;
+            if (showRemaining && foundRemaining) foundRemaining.textContent = max - element.value.length;
 
             if (typeof onLimit === "function") onLimit();
         }

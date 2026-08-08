@@ -222,7 +222,7 @@ async function renderPosts(posts, skip = 0) {
                     NS(commentItem.get(".comment-item-content")[0]).setText(comment.content || "No content found");
                     NS(".reply-comment-btn").on("click", function (e) {
                         e.stopPropagation();
-                        Swal.fire("Reply comments is not implemented yet.")
+                        Swal.fire("Reply comments not implemented yet.");
                     });
 
                     NS(".view-reply-btn").on("click", async function (e) {
@@ -282,13 +282,14 @@ async function renderPosts(posts, skip = 0) {
                 createPostTitle.setVal("[BOOST]");
                 createPostKeywords.setVal("boost");
                 createPostContent.setVal(`View ${generatePostLink(post._id)}`);
+                createPostContentCount.setText(`${createPostContent.getVal()[0].length}/${window.currentUserQuickInfo.maxPostContentCharsLength}`);
             });
         }
 
         // Actions
         likeBtn.on("click", async function () {
             const response = await NS.fetch({
-                url: `api/v1/like/post/${post._id}`,
+                url: `/api/v1/react/like/post/${post._id}`,
                 method: "POST"
             });
 
@@ -299,7 +300,7 @@ async function renderPosts(posts, skip = 0) {
 
         reportBtn.on("click", async function () {
             const response = await NS.fetch({
-                url: `api/v1/report/post/${post._id}`,
+                url: `/api/v1/react/report/post/${post._id}`,
                 method: "POST"
             });
 

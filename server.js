@@ -231,7 +231,8 @@ app.post("/api/v1/reset/password", passwordRecoveryHourLimit, async (req, res) =
 
             if (isValid) {
                 await schemas.Users.updateOne({
-                    username: username
+                    username: username,
+                    recoveryCodes: code
                 }, {
                     $set: {
                         password: await bcrypt.hash(newPassword, 10)

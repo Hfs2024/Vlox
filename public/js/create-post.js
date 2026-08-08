@@ -1,5 +1,6 @@
 const createPostBtn = NS("#create-post-btn");
 const createPostContent = NS("#create-post-content");
+const createPostContentCount = NS("#create-post-content-count");
 const createPostKeywords = NS("#create-post-keywords");
 const createPostTitle = NS("#create-post-title");
 const copyPostContentBtn = NS("#copy-post-content-btn");
@@ -169,7 +170,7 @@ bookmarksBtn.on("click", function () {
 
 // Ghost state (Auto save)
 function clearGhostState() {
-    NS("#create-post-content-count").setText(`0/${window.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
+    createPostContentCount.setText(`0/${window.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
     NS.clearGhostState("#create-post-title");
     NS.clearGhostState("#create-post-content");
     NS.clearGhostState("#create-post-keywords");

@@ -4,7 +4,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
 
-// User and posts
+// Users and posts
 // Change visibility
 router.post("/api/v1/change-visibility/:item/", checkAuth, async (req, res) => {
     try {
@@ -97,89 +97,6 @@ router.post("/api/v1/unpin/post/:id", checkAuth, checkValidID, async function (r
     }
 });
 
-// Delete post and forks
-router.delete("/api/v1/delete/post/:id", checkAuth, checkValidID, async function (req, res) {
-    try {
-        const id = req.params.id;
-        const session = await mongoose.startSession();
-        try {
-            await session.withTransaction(async () => {
-                const result = await schemas.Posts.deleteOne(hotQueries.find_user_unforked_post(id, req.session.userId), { session });
-                if (result.deletedCount === 0) throw new Error("POST_DELETE_FAILED");
-
-                await schemas.Users.updateOne({
-                    _id: req.session.userId,
-                    pinnedPosts: id
-                }, {
-                    $inc: {
-                        pinnedPostsCount: -1
-                    },
-
-                    $pull: {
-                        pinnedPosts: id
-                    }
-                }, { session });
-
-                await schemas.Reactions.deleteMany({
-                    for: id
-                }, { session });
-                await schemas.Comments.deleteMany({
-                    for: id
-                }, { session });
-            });
-        } catch (txError) {
-            if (!["POST_DELETE_FAILED"].includes(txError)) console.log("Error:" + txError);
-            return res.status(400).json({ error: "Something went wrong!" });
-        } finally {
-            await session.endSession();
-        }
-
-        return res.status(200).json({ success: true });
-    } catch (e) {
-        console.error(`Delete Post Failue: ${e.message}.`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Failed to delete post. Try again." });
-    }
-});
-
-router.delete("/api/v1/delete/fork/:id", checkAuth, async (req, res) => {
-    try {
-        const id = req.params.id;
-        const session = await mongoose.startSession();
-        try {
-            await session.withTransaction(async () => {
-                const result = await schemas.Posts.deleteOne({
-                    _id: id,
-                    $or: [
-                        { forkerId: req.session.userId },
-                        { receiverId: req.session.userId }
-                    ] // Are you the receiver or the forker of the post?
-                }, { session });
-
-                if (result.deletedCount === 0) throw new Error("FORK_DELETE_FAILED");
-
-                await schemas.Reactions.deleteMany({
-                    for: id
-                });
-                await schemas.Comments.deleteMany({
-                    for: id
-                });
-            });
-        } catch (e) {
-            if (!["FORK_DELETE_FAILED"].includes(txError)) console.log(txError);
-            return res.status(400).json({ error: "Somehting went wrong. Try again later" });
-        } finally {
-            await session.endSession();
-        }
-
-        return res.status(200).json({ success: true });
-    } catch (e) {
-        console.error(`Delete Fork Failue: ${e.message}.`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Failed to delete fork. Try again." });
-    }
-});
-
 // Create comment
 router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res) => {
     try {
@@ -222,65 +139,6 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
         console.log("Error: " + e.message);
         createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Server Error" });
-    }
-});
-
-// Edit comment
-router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req, res) => {
-    try {
-        let { newComment } = req.body;
-        newComment = String(newComment).trim();
-        if (!newComment) return res.status(400).json({ error: "Comment content cannot be empty." });
-        if (newComment.length > 200) return res.status(400).json({ error: "Comment cannot exceed 200 characters" });
-        const id = req.params.id;
-        const postExists = await schemas.Posts.findOne(hotQueries.find_user_post(id, req.session.userId));
-
-        if (!postExists) return res.status(400).json({ error: "Post not found or you don't have permission to access!" });
-        const result = await schemas.Comments.updateOne({
-            for: id,
-            by: req.session.userId
-        }, {
-            $set: {
-                content: newComment
-            }
-        });
-
-        if (!result) return res.status(400).json({ error: "Comment not found or it's not your comment!" });
-        return res.status(200).json({ success: true });
-    } catch (e) {
-        console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Failed to update comment. Try again." });
-    }
-});
-
-// Edit post
-router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) => {
-    try {
-        let { newContent, newTitle, newKeywords, newSpoilers } = req.body;
-        const id = req.params.id;
-        newContent = String(newContent).trim();
-        newTitle = String(newTitle).trim();
-        newKeywords = newKeywords?.filter(Boolean)?.map(kw => kw.toLowerCase().trim()); // You give me a falsy value? Say goodbye to it
-        if (!newContent || !newTitle) return res.status(400).json({ error: "You must enter a title and content!" });
-        if (newTitle.length > 20) return res.status(400).json({ error: "Title cannot exceed 20 chars!" });
-        if (newContent.length > req.currentUser.maxPostContentCharsLength) return res.status(400).json({ error: `Content cannot exceed ${req.currentUser.maxPostContentCharsLength} characters!` });
-
-        const result = await schemas.Posts.updateOne(hotQueries.find_user_unforked_post(id, req.session.userId), {
-            $set: {
-                content: newContent,
-                title: newTitle,
-                keywords: (Array.isArray(newKeywords) && newKeywords.length <= 5) ? newKeywords : [],
-                spoilers: newSpoilers ? true : false
-            }
-        });
-
-        if (result.matchedCount === 0) return res.status(400).json({ error: "Post not found!" });
-        return res.status(200).json({ success: true });
-    } catch (e) {
-        console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Failed to update. Try again later." });
     }
 });
 
@@ -367,7 +225,7 @@ router.post("/api/v1/redeem/post/:id", checkAuth, checkValidID, async (req, res)
 });
 
 // Likes/Report post
-router.post("/api/v1/:action/post/:id", checkAuth, checkValidID, async (req, res) => {
+router.post("/api/v1/react/:action/post/:id", checkAuth, checkValidID, async (req, res) => {
     try {
         const action = req.params.action;
         const id = req.params.id;
@@ -409,6 +267,148 @@ router.post("/api/v1/:action/post/:id", checkAuth, checkValidID, async (req, res
         console.log("Error: " + e.message);
         createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Server error. Try again later." });
+    }
+});
+
+// Edit comment
+router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req, res) => {
+    try {
+        let { newComment } = req.body;
+        newComment = String(newComment).trim();
+        if (!newComment) return res.status(400).json({ error: "Comment content cannot be empty." });
+        if (newComment.length > 200) return res.status(400).json({ error: "Comment cannot exceed 200 characters" });
+        const id = req.params.id;
+        const postExists = await schemas.Posts.findOne(hotQueries.find_user_post(id, req.session.userId));
+
+        if (!postExists) return res.status(400).json({ error: "Post not found or you don't have permission to access!" });
+        const result = await schemas.Comments.updateOne({
+            for: id,
+            by: req.session.userId
+        }, {
+            $set: {
+                content: newComment
+            }
+        });
+
+        if (!result) return res.status(400).json({ error: "Comment not found or it's not your comment!" });
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.log("Error: " + e.message);
+        createErrorMessage(e, req.session.userId, req.originalUrl);
+        return res.status(500).json({ error: "Failed to update comment. Try again." });
+    }
+});
+
+// Edit post
+router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) => {
+    try {
+        let { newContent, newTitle, newKeywords, newSpoilers } = req.body;
+        const id = req.params.id;
+        newContent = String(newContent).trim();
+        newTitle = String(newTitle).trim();
+        newKeywords = newKeywords?.filter(Boolean)?.map(kw => kw.toLowerCase().trim()); // You give me a falsy value? Say goodbye to it
+        if (!newContent || !newTitle) return res.status(400).json({ error: "You must enter a title and content!" });
+        if (newTitle.length > 20) return res.status(400).json({ error: "Title cannot exceed 20 chars!" });
+        if (newContent.length > req.currentUser.maxPostContentCharsLength) return res.status(400).json({ error: `Content cannot exceed ${req.currentUser.maxPostContentCharsLength} characters!` });
+
+        const result = await schemas.Posts.updateOne(hotQueries.find_user_unforked_post(id, req.session.userId), {
+            $set: {
+                content: newContent,
+                title: newTitle,
+                keywords: (Array.isArray(newKeywords) && newKeywords.length <= 5) ? newKeywords : [],
+                spoilers: newSpoilers ? true : false
+            }
+        });
+
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Post not found!" });
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.log("Error: " + e.message);
+        createErrorMessage(e, req.session.userId, req.originalUrl);
+        return res.status(500).json({ error: "Failed to update. Try again later." });
+    }
+});
+
+// Delete post and forks
+router.delete("/api/v1/delete/post/:id", checkAuth, checkValidID, async function (req, res) {
+    try {
+        const id = req.params.id;
+        const session = await mongoose.startSession();
+        try {
+            await session.withTransaction(async () => {
+                const result = await schemas.Posts.deleteOne(hotQueries.find_user_unforked_post(id, req.session.userId), { session });
+                if (result.deletedCount === 0) throw new Error("POST_DELETE_FAILED");
+
+                await schemas.Users.updateOne({
+                    _id: req.session.userId,
+                    pinnedPosts: id
+                }, {
+                    $inc: {
+                        pinnedPostsCount: -1
+                    },
+
+                    $pull: {
+                        pinnedPosts: id
+                    }
+                }, { session });
+
+                await schemas.Reactions.deleteMany({
+                    for: id
+                }, { session });
+                await schemas.Comments.deleteMany({
+                    for: id
+                }, { session });
+            });
+        } catch (txError) {
+            if (!["POST_DELETE_FAILED"].includes(txError)) console.log("Error:" + txError);
+            return res.status(400).json({ error: "Something went wrong!" });
+        } finally {
+            await session.endSession();
+        }
+
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.error(`Delete Post Failue: ${e.message}.`);
+        createErrorMessage(e, req.session.userId, req.originalUrl);
+        return res.status(500).json({ error: "Failed to delete post. Try again." });
+    }
+});
+
+router.delete("/api/v1/delete/fork/:id", checkAuth, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const session = await mongoose.startSession();
+        try {
+            await session.withTransaction(async () => {
+                const result = await schemas.Posts.deleteOne({
+                    _id: id,
+                    $or: [
+                        { forkerId: req.session.userId },
+                        { receiverId: req.session.userId }
+                    ] // Are you the receiver or the forker of the post?
+                }, { session });
+
+                if (result.deletedCount === 0) throw new Error("FORK_DELETE_FAILED");
+
+                await schemas.Reactions.deleteMany({
+                    for: id
+                });
+                await schemas.Comments.deleteMany({
+                    for: id
+                });
+            });
+        } catch (e) {
+            if (!["FORK_DELETE_FAILED"].includes(txError)) console.log(txError);
+            return res.status(400).json({ error: "Somehting went wrong. Try again later" });
+        } finally {
+            await session.endSession();
+        }
+
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.error(`Delete Fork Failue: ${e.message}.`);
+        createErrorMessage(e, req.session.userId, req.originalUrl);
+        return res.status(500).json({ error: "Failed to delete fork. Try again." });
     }
 });
 
