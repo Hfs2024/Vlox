@@ -21,39 +21,45 @@ async function renderPosts(posts, skip = 0) {
         return;
     }
 
-    const inputComment = (title = "", commentInputId = "", commentCountId = "", onSubmit) => {
+    const inputComment = ({
+        title = "",
+        inputId = "",
+        countId = "",
+        value = "",
+        onSubmit
+    }) => {
         Swal.fire({
             title: title || "Add comment",
             showCancelButton: true,
             html: `
-                  <input type='text' id="${commentInputId}" placeholder='Type your comment here...' />
-                  <p class="count-text-wrapper">
+                  <input type='text' id='${inputId}' placeholder='Type your comment here...' value='${value}' />
+                  <p class='count-text-wrapper'>
                     Count:
-                    <span class="count" id="${commentCountId}">0/200</span>
+                    <span class='count' id='${countId}'>0/200</span>
                   </p>
                 `,
             didOpen: () => {
                 NS.liveCounter({
-                    selector: `#${commentInputId}`,
-                    counterElement: `#${commentCountId}`,
+                    selector: `#${inputId}`,
+                    counterElement: `#${countId}`,
                     showCounter: true,
                     max: 200,
                     visualFeedback: [
-                        { value: 100, class: "count-orange", addTo: [`#${commentInputId}`] },
-                        { value: 170, class: "count-red", addTo: [`#${commentInputId}`] },
+                        { value: 100, class: "count-orange", addTo: [`#${inputId}`] },
+                        { value: 170, class: "count-red", addTo: [`#${inputId}`] },
                     ]
                 });
 
-                NS(`#${commentInputId}`).focus();
+                NS(`#${inputId}`).focus();
             },
 
             preConfirm: () => {
-                const comment = Swal.getPopup().querySelector(`#${commentInputId}`).value;
-                if (!comment) Swal.showValidationMessage("Comment cannot be empty!");
+                const comment = Swal.getPopup().querySelector(`#${inputId}`).value;
+                if (!comment) Swal.showValidationMessage("This field cannot be empty!");
             }
         }).then(async result => {
             if (!result.isConfirmed) return;
-            const content = NS(`#${commentInputId}`).getVal()[0];
+            const content = NS(`#${inputId}`).getVal()[0];
             if (typeof onSubmit === "function") return onSubmit(content);
         });
     }
@@ -206,28 +212,106 @@ async function renderPosts(posts, skip = 0) {
                         e.preventDefault();
                         if (comment.by.username !== window.currentUserQuickInfo.username) return;
 
-                        inputComment("Update comment:", "update-comment-input", "update-comment-count", async (content) => {
-                            const updateCommentResponse = await NS.fetch({
-                                url: `/api/v1/edit/post/comment/${comment.for}/`,
-                                method: "PUT",
-                                body: { newComment: content }
-                            });
+                        inputComment({
+                            title: "Update comment:",
+                            value: NS(commentItem.get(".comment-item-content")[0]).getText()[0],
+                            inputId: "update-comment-input",
+                            countId: "update-comment-count",
+                            onSubmit: async (content) => {
+                                const updateCommentResponse = await NS.fetch({
+                                    url: `/api/v1/edit/post/comment/${comment.for}/`,
+                                    method: "PUT",
+                                    body: { newComment: content, commentId: comment._id }
+                                });
 
-                            if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
-                            Swal.fire("Success", "Comment updated!", "success");
-                            NS(commentItem.get(".comment-item-content")[0]).setText(content || "No content found");
+                                if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
+                                Swal.fire("Success", "Comment updated!", "success");
+                                NS(commentItem.get(".comment-item-content")[0]).setText(content || "No content found");
+                            }
                         });
                     });
 
                     NS(commentItem.get(".comment-item-content")[0]).setText(comment.content || "No content found");
                     NS(".reply-comment-btn").on("click", function (e) {
                         e.stopPropagation();
-                        Swal.fire("Reply comments not implemented yet.");
+                        inputComment({
+                            title: "Add reply:",
+                            inputId: "reply-comment-input",
+                            countId: "reply-comment-count",
+                            onSubmit: async (content) => {
+                                const replyCommentResponse = await NS.fetch({
+                                    url: `/api/v1/reply/comment/post/${post._id}`,
+                                    method: "POST",
+                                    body: { reply: content, rootCommentId: comment._id }
+                                });
+
+                                if (!replyCommentResponse.success) return Swal.fire(replyCommentResponse.error);
+                                Swal.fire("Success", "Reply added!", "success");
+                            }
+                        });
                     });
 
                     NS(".view-reply-btn").on("click", async function (e) {
                         e.stopPropagation();
-                        Swal.fire("View replies not implemented yet.");
+                        const viewRepliesResponse = await NS.fetch({
+                            url: `/api/v1/get/post/replies/${post._id}`,
+                            method: "POST",
+                            body: { rootCommentId: comment._id }
+                        });
+
+                        if (!viewRepliesResponse.success) return Swal.fire(viewRepliesResponse.error);
+                        if (viewRepliesResponse.replies.length <= 0) return Swal.fire("No replies yet");
+                        Swal.fire({
+                            title: "Replies",
+                            html: "<div id='replies-container' class='scroll-container'></div>",
+                            confirmButtonText: "Close"
+                        });
+
+                        const repliesContainer = NS("#replies-container");
+                        viewRepliesResponse.replies.forEach(reply => {
+                            const replyItem = NS(NS.createEl("div", repliesContainer, { className: "comment-item center", style: 'gap: 5px; justify-content: flex-start' }));
+                            replyItem.html(`
+                          <div class='comment-item-author'>
+                            ${reply.by.username === post.by.username ? "<i class='fas fa-medal' title='Author'></i>" : reply.by.emoji}
+                            ${capitalizeFirstLtter(reply.by.username)}:
+                          </div>
+                          <div class='reply-item-content'></div>
+                    `).on("click", function () {
+                                NS.copy({
+                                    text: NS(replyItem.get(".reply-item-content")[0]).getText()[0] || "No content found",
+                                    onSuccess: () => {
+                                        Swal.fire("Success", "Copied reply content!", "success")
+                                    },
+
+                                    onFailure: () => {
+                                        Swal.fire("Error", "Failed to copy. Try again later", "error");
+                                    }
+                                });
+                            }).on("contextmenu", function (e) {
+                                e.preventDefault();
+                                if (reply.by.username !== window.currentUserQuickInfo.username) return;
+
+                                inputComment({
+                                    title: "Update reply:",
+                                    value: NS(replyItem.get(".reply-item-content")[0]).getText()[0],
+                                    inputId: "update-reply-input",
+                                    countId: "update-reply-count",
+                                    onSubmit: async (content) => {
+                                        const updateReplyResponse = await NS.fetch({
+                                            url: `/api/v1/edit/post/comment/${reply.for}/`,
+                                            method: "PUT",
+                                            body: { newComment: content, commentId: reply._id }
+                                        });
+
+                                        if (!updateReplyResponse.success) return Swal.fire(updateReplyResponse.error);
+                                        Swal.fire("Success", "Reply updated!", "success");
+                                        NS(replyItem.get(".reply-item-content")[0]).setText(content || "No content found");
+                                    }
+                                });
+                            });
+
+                            NS(replyItem.get(".reply-item-content")[0]).setText(reply.content);
+                        })
                     });
                 });
             } else {
@@ -310,24 +394,29 @@ async function renderPosts(posts, skip = 0) {
         });
 
         commentBtn.on("click", function () {
-            inputComment("Add a comment:", "create-comment-input", "create-comment-count", async () => {
-                const commentResponse = await NS.fetch({
-                    url: `/api/v1/comment/post/${post._id}`,
-                    method: "POST",
-                    body: { comment: NS("#create-comment-input").getVal()[0] }
-                });
+            inputComment({
+                title: "Add a comment:",
+                inputId: "create-comment-input",
+                countId: "create-comment-count",
+                onSubmit: async () => {
+                    const commentResponse = await NS.fetch({
+                        url: `/api/v1/comment/post/${post._id}`,
+                        method: "POST",
+                        body: { comment: NS("#create-comment-input").getVal()[0] }
+                    });
 
-                if (!commentResponse.success) return Swal.fire(commentResponse.error);
-                const newComments = Number(commentBtn.getText()[0]) + 1;
-                commentBtn.html(`<i class="fa-solid fa-comment"></i> ${newComments.toLocaleString()}`);
-                Swal.fire("Success", "Your comment has been added!", "success");
-                commentsData = await NS.fetch({
-                    url: "/api/v1/get/posts/comments/",
-                    method: "POST",
-                    body: { ids: postsIds }
-                });
+                    if (!commentResponse.success) return Swal.fire(commentResponse.error);
+                    const newComments = Number(commentBtn.getText()[0]) + 1;
+                    commentBtn.html(`<i class="fa-solid fa-comment"></i> ${newComments.toLocaleString()}`);
+                    Swal.fire("Success", "Your comment has been added!", "success");
+                    commentsData = await NS.fetch({
+                        url: "/api/v1/get/posts/comments/",
+                        method: "POST",
+                        body: { ids: postsIds }
+                    });
 
-                renderComments();
+                    renderComments();
+                }
             });
         });
 

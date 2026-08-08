@@ -1,7 +1,7 @@
 async function viewAnalytics(post) {
     Swal.fire({
         title: "Post analytics",
-        html: "<div id='user-post-analytics-container' class='user-container'></div>",
+        html: "<div id='user-post-analytics-container' class='scroll-container'></div>",
         confirmButtonText: "Close"
     });
 

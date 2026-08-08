@@ -63,7 +63,7 @@ async function showBookMarks() {
     Swal.fire({
         title: "Your bookmarks: ",
         html: `
-          <div id='user-bookmarks-container' class='user-container'></div>
+          <div id='user-bookmarks-container' class='scroll-container'></div>
           <div class='center'>
             <button id='user-bookmarks-prev-btn'> 
                <i class='fas fa-caret-left'></i>

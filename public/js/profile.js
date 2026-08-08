@@ -37,7 +37,7 @@ async function showProfile(data) {
           <h2>Posts: </h2>
 
           <div class='taskbar-panel taskbar-panel-chosen'>
-            <div id='user-posts-container' class='user-container'></div>
+            <div id='user-posts-container' class='scroll-container'></div>
             <div class='center'>
               <button id='user-posts-prev-btn'> 
                 <i class='fas fa-caret-left'></i>
@@ -49,7 +49,7 @@ async function showProfile(data) {
           </div>
           
           <div class='taskbar-panel'>
-            <div id='user-pinned-posts-container' class='user-container'></div>
+            <div id='user-pinned-posts-container' class='scroll-container'></div>
           </div>
         `,
         confirmButtonText: "Close"

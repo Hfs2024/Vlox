@@ -5,6 +5,7 @@
 ## Link to Code
 - **Vlox:** [Source Code on Github](https://github.com/Hfs2024/Vlox)
 - **NanoScript:** [Source Code on Github](https://github.com/Hfs2024/NanoScript)
+- **Try Vlox:** [https://vlox.containers.snapdeploy.app/](https://vlox.containers.snapdeploy.app/) or [https://vlox.bonto.run](https://vlox.bonto.run)
 
 ## How I Built It: Breaking the Vanilla JS Wall
 I am an experienced web developer, and my journey into full-stack development started when I wanted to build a private social media platform called *PixUp*. I built it using pure Vanilla JavaScript. Soon, the codebase became heavily bloated, messy, and completely unmaintainable. 

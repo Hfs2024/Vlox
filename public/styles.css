@@ -82,7 +82,7 @@ header i:hover {
     overflow: auto;
 }
 
-.user-container {
+.scroll-container {
     max-height: 400px;
     overflow: auto;
 }

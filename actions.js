@@ -127,7 +127,7 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
                 if (result.matchedCount === 0) throw new Error("COMMENT_UPDATE_FAILED");
             });
         } catch (txError) {
-            if (["COMMENT_UPDATE_FAILED"].includes(txError)) return res.status(400).json({ error: "Seems you don't have permission to comment on this post!" });
+            if (txError.message === "COMMENT_UPDATE_FAILED") return res.status(400).json({ error: "Seems you don't have permission to comment on this post!" });
             console.log("Error: " + txError);
             return res.status(400).json({ error: "Something went wrong. Try again later" });
         } finally {
@@ -141,6 +141,62 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
         return res.status(500).json({ error: "Server Error" });
     }
 });
+
+// Create reply
+router.post("/api/v1/reply/comment/post/:id", checkAuth, checkValidID, async (req, res) => {
+    try {
+        const id = req.params.id;
+        let { reply, rootCommentId } = req.body;
+        reply = String(reply).trim();
+        if (!reply) return res.status(400).json({ error: "Reply can't be empty!" });
+        if (reply.length > 200) return res.status(400).json({ error: "Reply cannot exceed 200 chars!" });
+        const session = await mongoose.startSession();
+
+        try {
+            await session.withTransaction(async () => {
+                // Find post
+                const post = await schemas.Posts.findOne(hotQueries.find_user_post(id, req.session.userId));
+                if (!post) throw new Error("POST_NOT_FOUND");
+
+                // Add reply
+                const newReply = new schemas.Comments({
+                    content: reply,
+                    rootId: rootCommentId,
+                    for: id,
+                    by: req.session.userId
+                });
+
+                await newReply.save({ session });
+
+                // Inc comments
+                const result = await schemas.Comments.updateOne({
+                    _id: rootCommentId,
+                    repliesCount: { $lt: 10 },
+                    rootId: null
+                }, {
+                    $inc: {
+                        repliesCount: 1
+                    }
+                }, { session });
+
+                if (result.matchedCount === 0) throw new Error("COMMENT_UPDATE_FAILED");
+            });
+        } catch (txError) {
+            if (txError.message === "POST_NOT_FOUND") return res.status(400).json({ error: "Post not found or you don't have permissions to see it!" });
+            if (txError.message === "COMMENT_UPDATE_FAILED") return res.status(400).json({ error: "You can't reply to this comment!" });
+            console.log("Error: " + txError.message);
+            return res.status(400).json({ error: "Failed to reply. Try again." });
+        } finally {
+            session.endSession();
+        }
+
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.log("Error: " + e.message);
+        createErrorMessage(e, req.session.userId, req.originalUrl);
+        return res.status(400).json({ error: "Server error" });
+    }
+})
 
 // Fork post
 router.post("/api/v1/fork/post/:id", checkAuth, checkValidID, async (req, res) => {
@@ -273,16 +329,17 @@ router.post("/api/v1/react/:action/post/:id", checkAuth, checkValidID, async (re
 // Edit comment
 router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req, res) => {
     try {
-        let { newComment } = req.body;
+        let { newComment, commentId } = req.body;
         newComment = String(newComment).trim();
         if (!newComment) return res.status(400).json({ error: "Comment content cannot be empty." });
         if (newComment.length > 200) return res.status(400).json({ error: "Comment cannot exceed 200 characters" });
         const id = req.params.id;
-        const postExists = await schemas.Posts.findOne(hotQueries.find_user_post(id, req.session.userId));
+        const post = await schemas.Posts.findOne(hotQueries.find_user_post(id, req.session.userId));
+        if (!post) return res.status(400).json({ error: "Post not found or you don't have permission to access!" });
 
-        if (!postExists) return res.status(400).json({ error: "Post not found or you don't have permission to access!" });
         const result = await schemas.Comments.updateOne({
             for: id,
+            _id: commentId,
             by: req.session.userId
         }, {
             $set: {

@@ -142,6 +142,29 @@ app.post("/api/v1/get/posts/comments", async (req, res) => {
     }
 });
 
+app.post("/api/v1/get/post/replies/:id", checkAuth, checkValidID, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { rootCommentId } = req.body;
+
+        // Do you have permissions to access this post?
+        const post = await schemas.Posts.find(hotQueries.find_user_post(id, req.session.userId));
+        if (!post) return res.status(400).json({ error: "Post not found or you don't have permissions to see it!" });
+
+        // Find replies
+        const replies = await schemas.Comments.find({
+            for: id,
+            rootId: rootCommentId
+        })
+            .populate("by", "-password -recoveryCodes -pinnedPosts -email -pinnedPostsCount");
+
+        return res.status(200).json({ success: true, replies: replies });
+    } catch (e) {
+        console.error("Fetch Replies Break: ", e.message);
+        return res.status(500).json({ error: "Could not retrieve replies." });
+    }
+});
+
 app.get("/api/v1/get/post/:id", checkValidID, async (req, res) => {
     try {
         const id = req.params.id;

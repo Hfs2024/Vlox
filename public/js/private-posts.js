@@ -9,7 +9,7 @@ privatePostsBtn.on("click", async function () {
     Swal.fire({
         title: "Your private posts: ",
         html: `
-          <div id='user-private-posts-container' class='user-container'></div>
+          <div id='user-private-posts-container' class='scroll-container'></div>
           <div class='group'>
             <button id='user-private-posts-prev-btn'> 
               <i class='fas fa-caret-left'></i>
