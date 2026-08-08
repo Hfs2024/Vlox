@@ -282,7 +282,7 @@ async function renderPosts(posts, skip = 0) {
                 createPostTitle.setVal("[BOOST]");
                 createPostKeywords.setVal("boost");
                 createPostContent.setVal(`View ${generatePostLink(post._id)}`);
-                createPostContentCount.setText(`${createPostContent.getVal()[0].length}/${window.currentUserQuickInfo.maxPostContentCharsLength}`);
+                createPostContentCount.setText(`${createPostContent.getVal()[0].length}/${window.currentUserQuickInfo.maxPostContentCharsLength || 2000}`);
             });
         }
 
