@@ -1,0 +1,70 @@
+#card-generator-image-preview {
+    background-color: #eee;
+    padding: 10px;
+    border-radius: 20px;
+    font-family: "Merriweather", serif;
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+}
+
+#card-generator-username {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#card-generator-age {
+    color: rgb(174, 137, 89);
+}
+
+#card-generator-bio {
+    color: #0055b3;
+}
+
+#card-generator-website {
+    text-decoration: underline;
+    color: blue;
+}
+
+.card-generator-preview-skills-container {
+    display: flex;
+    overflow: hideen;
+    align-items: center;
+    max-width: 100%;
+    gap: 10px;
+}
+
+.card-generator-export-image-type-btn {
+    width: 100%;
+}
+
+#card-generator-skills-status-message {
+    font-size: 20px;
+    color: black;
+}
+
+.taskbar,
+.card-generator-preview-skill-cell {
+    background-color: #ccc;
+    white-space: nowrap;
+    padding: 10px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-generator-preview-skill-cell {
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    overflow: auto;
+}
+
+.card-generator-preview-skill-cell:hover {
+    background-color: #aaa;
+}

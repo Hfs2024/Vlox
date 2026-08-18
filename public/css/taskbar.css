@@ -1,0 +1,12 @@
+.taskbar-button {
+    width: 100%;
+    margin-top: 0;
+}
+
+.taskbar-panel {
+    display: none;
+}
+
+.taskbar-panel-chosen {
+    display: block;
+}
