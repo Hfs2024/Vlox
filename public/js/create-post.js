@@ -215,7 +215,6 @@ createPostBtn.on("click", async function () {
         title: title,
         content: content,
         keywords: keywords,
-        boost: title.toUpperCase().trim() === "[BOOST]" ? true : false,
         spoilers: createSpoilersBtn.hasClass("on-color")
     });
 
@@ -229,7 +228,7 @@ createPostBtn.on("click", async function () {
 });
 
 // Create posts function
-async function createPost({ title, content, keywords, boost = false, spoilers = false } = {}) {
+async function createPost({ title, content, keywords, spoilers = false } = {}) {
     const data = await NS.fetch({
         url: "/api/v1/posts",
         method: "POST",
@@ -237,7 +236,6 @@ async function createPost({ title, content, keywords, boost = false, spoilers = 
             title,
             content,
             keywords,
-            boost: boost ? true : false,
             spoilers: spoilers ? true : false
         }
     });

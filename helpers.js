@@ -2,6 +2,7 @@ const schemas = require("./schemas.js");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
+const rateLimit = require("express-rate-limit");
 
 // Check auth
 async function checkAuth(req, res, next) {
@@ -103,11 +104,31 @@ const hotQueries = {
     }
 }
 
+// Create limiter
+function createLimiter(windowMs = 900000, limit = 1000, options = {}, error = "Too Many Requests. Please try again later.") {
+    if (typeof options !== 'object' || options === null) return false;
+    if (typeof error !== "string") return false;
+    if (!Number.isInteger(limit) || !Number.isInteger(windowMs)) return false;
+
+    return rateLimit({
+        windowMs: windowMs,
+        limit: limit,
+        message: {
+            status: 429,
+            error: error,
+        },
+        standardHeaders: true,
+        legacyHeaders: false,
+        ...options
+    });
+}
+
 // Export
 module.exports = {
     checkAuth,
     createErrorMessage,
     checkValidID,
     generateRecoveryCodes,
-    hotQueries
+    createLimiter,
+    hotQueries,
 };
