@@ -6,11 +6,9 @@ async function viewAnalytics(post) {
     });
 
     const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "post" });
-    const titleEl = NS(NS.createEl("h2", postCard, {})).setText(post.title);
-    const contentEl = NS(NS.createEl("div", postCard, {
-        style: "overflow: auto"
-    })).html(cleanHTML(post.content) || "Not content found");
-    copyCode(contentEl);
+    NS(NS.createEl("h2", postCard, { className: "overflow-text" })).setText(post.title);
+    const contentEl = NS(NS.createEl("div", postCard, { className: "overflow-text" })).html(cleanHTML(post.content) || "Not content found");
+    setUpCopyCode(contentEl);
     const panelAnalyticsGroup = NS.createEl("div", postCard, { className: "overflow" });
     let likesPercent = 10;
     if (post.likes === 0) likesPercent = 0;
@@ -28,16 +26,14 @@ async function viewAnalytics(post) {
     NS(NS.createEl("p", postCard, { style: "text-align: center" }))
         .html(
             barFilled ?
-                `You filled the bar! You are a <span style='color: goldenrod'><b>LEGEND!!</b></span>`
+                `You filled the bar! You're a <span style='color: goldenrod'><b>LEGEND!!</b></span>`
                 : `Fill the bar with 100 likes and be a LEGEND!`
         );
 
     // Likes bar
     NS(NS.createEl("div", postCard, { className: "analytics-likes-bar" }))
         .html("<div class='analytics-likes-bar-fill'></div>");
-    NS(".analytics-likes-bar-fill").css({
-        width: `${likesPercent}%`
-    });
+    NS(".analytics-likes-bar-fill").css("width", `${likesPercent}%`);
 
     if (!post.redeemed && barFilled) NS(NS.createEl("button", postCard, { style: "width: 100%" })).setText("One time redeem!").on("click", async function () {
         const redeemResponse = await NS.fetch({
@@ -56,7 +52,7 @@ async function renderProfilePost({
     if (!post) return;
     const postCard = NS.createEl("div", NS(container), { className: "post" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-    NS(NS.createEl("h2", postHeader, {})).setText(post.title);
+    NS(NS.createEl("h2", postHeader, { className: "overflow-text" })).setText(post.title);
     NS(NS.createEl("i", postHeader, { className: "fas fa-link post-icon", role: "button", tabIndex: "0" })).on("click", async function () {
         NS.copy({
             text: generatePostLink(post._id),
@@ -69,20 +65,18 @@ async function renderProfilePost({
             }
         });
     });
-    const contentEl = NS(NS.createEl("div", postCard, {
-        style: "overflow: auto"
-    })).html(cleanHTML(post.content) || "Not content found");
-    copyCode(contentEl);
+    const contentEl = NS(NS.createEl("div", postCard, { className: "overflow-text" })).html(cleanHTML(post.content) || "Not content found");
 
     if (isUsernameMatch) {
-        const visibilityEl = NS(NS.createEl("p", postCard, {
+        NS(NS.createEl("p", postCard, {
             style: "font-size: 15px;"
         })).html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
 
-        const buttonGroup = NS.createEl("div", postCard, { className: "overflow" });
-        const buttonGroup2 = NS.createEl("div", postCard, { className: "overflow" });
+        const primaryButtonsGroup = NS.createEl("div", postCard, { className: "overflow" });
+        const secondaryButtonsGroup = NS.createEl("div", postCard, { className: "overflow" });
 
-        NS(NS.createEl("button", buttonGroup, {
+        // Primary buttons
+        NS(NS.createEl("button", primaryButtonsGroup, {
             id: "delete-user-post-btn",
             className: "delete-btn w-full"
         })).setText("Delete").on("click", async function () {
@@ -95,22 +89,7 @@ async function renderProfilePost({
             Swal.fire("Success", "Post deleted!", "success");
         });
 
-        NS(NS.createEl("button", buttonGroup, {
-            id: "pin-user-post-btn",
-            style: "width: 100%"
-        })).setText(post.pinned ? "Unpin" : "Pin").on("click", async function () {
-            const pinData = await NS.fetch({
-                url: `/api/v1/pin/post/${post._id}`,
-                method: "POST",
-                body: { value: !post.pinned }
-            });
-
-            if (!pinData.success) return Swal.fire(pinData.error);
-            getQuickInfo();
-            Swal.fire("Success", `Post ${post.pinned ? "unpinned" : "pinned"}!`, "success");
-        });
-
-        NS(NS.createEl("button", buttonGroup, {
+        NS(NS.createEl("button", primaryButtonsGroup, {
             id: "edit-user-post-btn",
             style: "width: 100%"
         })).setText("Edit").on("click", async function () {
@@ -161,6 +140,7 @@ async function renderProfilePost({
                     const keywords = Swal.getPopup().querySelector("#edit-post-keywords").value.split(",");
                     const maxPostContentCharsLength = window.currentUserQuickInfo.maxPostContentCharsLength || 2000;
                     if (!title || !content) return Swal.showValidationMessage("Don't forget the title and content!");
+                    if (title.length > 20) return Swal.showValidationMessage("Title must be less than 20 chars!");
                     if (content.length > maxPostContentCharsLength) return Swal.showValidationMessage(`Content must be less than ${maxPostContentCharsLength} chars!`);
                     if (keywords.length > 5) return Swal.showValidationMessage("Keywords count should be less than 5!");
                 }
@@ -188,20 +168,37 @@ async function renderProfilePost({
             });
         });
 
-        changePostVisibility({
-            value: !post.private,
-            buttonText: "Change visibility",
-            container: buttonGroup2,
-            postId: post._id
+        if (!post.private) NS(NS.createEl("button", primaryButtonsGroup, {
+            id: "pin-user-post-btn",
+            style: "width: 100%"
+        })).setText(post.pinned ? "Unpin" : "Pin").on("click", async function () {
+            const pinData = await NS.fetch({
+                url: `/api/v1/pin/post/${post._id}`,
+                method: "POST",
+                body: { value: !post.pinned }
+            });
+
+            if (!pinData.success) return Swal.fire(pinData.error);
+            getQuickInfo();
+            Swal.fire("Success", `Post ${post.pinned ? "unpinned" : "pinned"}!`, "success");
         });
 
-        NS(NS.createEl("button", buttonGroup2, {
+        // Secondary buttons
+        NS(NS.createEl("button", secondaryButtonsGroup, {
             id: "view-mini-analytics-post-btn",
-            style: "width: 100%"
+            className: "w-full"
         })).setText("View mini analytics").on("click", async function () {
             viewAnalytics(post);
         });
+
+        if (!post.pinned) changePostVisibility({
+            value: !post.private,
+            buttonText: "Change visibility",
+            container: secondaryButtonsGroup,
+            postId: post._id
+        });
     }
 
+    setUpCopyCode(contentEl);
     runAccessibility();
 }

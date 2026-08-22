@@ -1,9 +1,8 @@
 const mongoose = require('mongoose');
-const globalDbConnection = mongoose.connection;
 
 const usersSchema = new mongoose.Schema({
-    username: { type: String, required: true, trim: true, lowercase: true, unique: true },
-    password: { type: String, required: true, unique: true },
+    username: { type: String, required: true, trim: true, lowercase: true },
+    password: { type: String, required: true },
     banned: { type: Boolean, default: false },
     bio: { type: String, required: true, trim: true },
     emoji: {
@@ -20,8 +19,11 @@ const usersSchema = new mongoose.Schema({
     private: { type: Boolean, default: false }
 }, { timestamps: true });
 
+usersSchema.index({ username: 1 }, { unique: true });
+usersSchema.index({ email: 1 }, { unique: true });
+
 const reactionsSchema = new mongoose.Schema({
-    type: String,
+    type: { type: String, enum: ["like", "report"] },
     by: mongoose.Schema.Types.ObjectId,
     for: mongoose.Schema.Types.ObjectId,
 }, { timestamps: true });
@@ -67,18 +69,6 @@ const commentsSchema = new mongoose.Schema({
 }, { timestamps: true });
 commentsSchema.index({ for: 1, rootId: 1 });
 
-const errorLogsSchema = new mongoose.Schema({
-    errorType: String,
-    errorMessage: String,
-    errorRoute: String,
-    userId: mongoose.Schema.Types.ObjectId,
-    createdAt: {
-        type: Date,
-        expires: "7d"
-    }
-}, { timestamps: true });
-
-
 const bookmarksSchema = new mongoose.Schema({
     for: mongoose.Schema.Types.ObjectId,
     by: mongoose.Schema.Types.ObjectId,
@@ -91,6 +81,5 @@ module.exports = {
     Reactions: mongoose.model("Reactions", reactionsSchema, "reactions"),
     Posts: mongoose.model("Posts", postsSchema, "posts"),
     Comments: mongoose.model("Comments", commentsSchema, "comments"),
-    ErrorLogs: mongoose.model("ErrorLogs", errorLogsSchema, "error_logs"),
     Bookmarks: mongoose.model("Bookmarks", bookmarksSchema, "bookmarks")
 };

@@ -129,7 +129,7 @@ async function showProfile(data) {
                 if (!Array.isArray(posts)) throw new Error("INVALID_DATA");
                 if (posts.length > 10) throw new Error("MAX_LENGTH_EXCEEDED");
                 const insertManyPostsData = await NS.fetch({
-                    url: "/api/v1/insert-many-posts",
+                    url: "/api/v1/posts/bulk",
                     method: "POST",
                     body: { posts: posts }
                 });
@@ -160,7 +160,7 @@ async function showProfile(data) {
             showCancelButton: true,
             preConfirm: result => {
                 if (!result) return Swal.showValidationMessage("You must enter a new bio!");
-                if (result.length > 20) return Swal.showValidationMessage("Bio must be less than 20 chars!");
+                if (result.length < 5 || result.length > 20) return Swal.showValidationMessage("Bio must be between 5 and 20 chars!");
             }
         }).then(async result => {
             if (result.value && result.isConfirmed) {
@@ -187,6 +187,7 @@ async function showProfile(data) {
             showCancelButton: true,
             preConfirm: result => {
                 if (!result) return Swal.showValidationMessage("You must enter a new email!");
+                if (result.length > 100) return Swal.showValidationMessage("Email must be less than or equal to 100 chars!");
             }
         }).then(async result => {
             if (result.value && result.isConfirmed) {
@@ -206,11 +207,11 @@ async function showProfile(data) {
     NS("#user-profile-visibility-toggle").on("click", async function () {
         const result = await NS.fetch({
             url: "/api/v1/change-visibility/user-profile",
-            method: "POST",
+            method: "PUT",
             body: { value: !data.private }
         });
 
-        if (!result.success) return Swal.fire(resizeTo.error);
+        if (!result.success) return Swal.fire(result.error);
         Swal.fire("Sucess", `Account is ${data.private ? "public" : "private"}`, "success");
     });
 
