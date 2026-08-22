@@ -1,31 +1,35 @@
 const schemas = require("./schemas.js");
 const express = require("express");
-const { checkAuth, createErrorMessage, checkValidID } = require("./helpers.js");
+const { body, param, query } = require("express-validator");
+const { checkAuth, validateResult } = require("./helpers.js");
 const router = express.Router();
 
 // Post, delete and put routes
-router.post("/api/v1/get/bookmarks", checkAuth, async (req, res) => {
+router.post("/api/v1/get/bookmarks", checkAuth, [
+    query("skip").exists().isInt({ min: 0 })
+], validateResult, async (req, res) => {
     try {
-        const skip = parseInt(req.query.skip) || 0;
+        const skip = req.cleanData.skip;
         const bookmarks = await schemas.Bookmarks.find({
             by: req.session.userId
         })
             .sort({ createdAt: -1, _id: -1 })
-            .skip(skip)
+            .skip(parseInt(skip))
             .limit(10)
             .lean();
 
         return res.status(200).json({ success: true, posts: bookmarks });
     } catch (e) {
         console.error("Fetch Bookmarks Break: ", e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Could not retrieve bookmark posts" });
     }
 });
 
-router.post("/api/v1/bookmark/post/:id", checkAuth, checkValidID, async (req, res) => {
+router.post("/api/v1/bookmark/post/:id", checkAuth, [
+    param("id").exists().isMongoId()
+], validateResult, async (req, res) => {
     try {
-        const id = req.params.id;
+        const id = req.cleanData.id;
         const isValidPost = await schemas.Posts.findOne({
             _id: id,
             private: false,
@@ -44,18 +48,16 @@ router.post("/api/v1/bookmark/post/:id", checkAuth, checkValidID, async (req, re
         return res.status(200).json({ success: true });
     } catch (e) {
         console.error(`Bookmark Post Failue: ${e.message}.`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "You already bookmarked this post!" });
     }
 });
 
-router.post("/api/v1/rename/bookmark/:id", checkAuth, checkValidID, async (req, res) => {
+router.put("/api/v1/rename/bookmark/:id", checkAuth, [
+    param("id").exists().isMongoId(),
+    body("title").exists().notEmpty().isString().isLength({ max: 20 }).trim()
+], validateResult, async (req, res) => {
     try {
-        const id = req.params.id;
-        let { title } = req.body;
-        title = String(title).trim();
-        if (!title) return res.status(400).json({ error: "You didn't enter a title!" });
-        if (title.length > 20) return res.status(400).json({ error: "Title cannot exceed 20 chars!" });
+        const { id, title } = req.cleanData;
 
         const result = await schemas.Bookmarks.updateOne({
             _id: id,
@@ -70,14 +72,15 @@ router.post("/api/v1/rename/bookmark/:id", checkAuth, checkValidID, async (req, 
         return res.status(200).json({ success: true });
     } catch (e) {
         console.error(`Bookmark Rename Failue: ${e.message}.`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Could not rename bookmark. Try again." });
     }
 });
 
-router.delete("/api/v1/delete/bookmark/:id", checkAuth, checkValidID, async (req, res) => {
+router.delete("/api/v1/delete/bookmark/:id", checkAuth, [
+    param("id").exists().isMongoId()
+], validateResult, async (req, res) => {
     try {
-        const id = req.params.id;
+        const id = req.cleanData.id;
         const result = await schemas.Bookmarks.deleteOne({
             _id: id,
             by: req.session.userId, // Is this your bookmark?
@@ -87,7 +90,6 @@ router.delete("/api/v1/delete/bookmark/:id", checkAuth, checkValidID, async (req
         return res.status(200).json({ success: true });
     } catch (e) {
         console.error(`Bookmark Delete Failue: ${e.message}.`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Could not delete bookmark. Try again." });
     }
 });

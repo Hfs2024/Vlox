@@ -2,37 +2,6 @@ const signUpBtn = NS("#signup-btn");
 const signOutBtn = NS("#signout-btn");
 const profileBtn = NS("#profile-btn");
 const loggedInGroup = NS("#loggedIn-group");
-const loginForm = `
-            <h2>Login</h2>
-            <input type="username" id="username" placeholder="Username"></br></br>
-            <div class='center password-input-container'>
-              <input type="password" class="password-input" id="password" placeholder="Password">
-              <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
-            </div>
-            <div class='forget-password'>
-               <p>Forgot your password?</p>
-            </div>
-            <div class="swal-toggle-text">
-                Need an account? <span class="swal-toggle-link" onclick="showSignUpModal()">Sign up</span>
-            </div>
-        `;
-const signupForm = `
-            <h2>Sign Up</h2>
-            <input type="text" id="username" placeholder="Username"></br></br>
-            <div class='center password-input-container'>
-              <input type="password" class="password-input" id="password" placeholder="Password">
-              <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
-            </div></br>
-            <input type="email" id="email" placeholder="Email"></br></br>
-            <input type="text" id="bio" placeholder="Bio (Max 20 chars)" autocomplete="off">
-            <p class="count-text-wrapper">
-                Count:
-                <span class="count" id="user-bio-content-count">0/20</span>
-            </p>           
-            <div class="swal-toggle-text">
-                Already have an account? <span class="swal-toggle-link" onclick="showLoginModal()">Log in</span>
-            </div>
-        `;
 
 function showResetPasswordModal() {
     Swal.fire({
@@ -52,7 +21,9 @@ function showResetPasswordModal() {
             const newPassword = Swal.getPopup().querySelector('#new-password').value;
             const recoveryCode = Swal.getPopup().querySelector('#recovery-code').value;
 
-            if (!username || !newPassword || !recoveryCode) return Swal.showValidationMessage("You must enter a username, password and one of your recovery code!")
+            if (!username || !newPassword || !recoveryCode) return Swal.showValidationMessage("You must enter a username, password and one of your recovery code!");
+            if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
+            if (newPassword.length < 6 || newPassword.length > 12) return Swal.showValidationMessage("Password must be between 6 and 12 chars!");
         }
     }).then(async result => {
         if (!result.isConfirmed) return;
@@ -73,35 +44,92 @@ function showResetPasswordModal() {
     setUpEyeIcon();
 }
 
-function showModal({
-    html,
-    type = "login",
-    onSuccess,
-}) {
+function showLoginModal() {
     Swal.fire({
-        html: html,
+        html: `<h2>Login</h2>
+            <input type="username" id="username" placeholder="Username"></br></br>
+            <div class='center password-input-container'>
+              <input type="password" class="password-input" id="password" placeholder="Password">
+              <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
+            </div>
+            <div class='forget-password'>
+               <p>Forgot your password?</p>
+            </div>
+            <div class="swal-toggle-text">
+                Need an account? <span class="swal-toggle-link" onclick="showSignUpModal()">Sign up</span>
+            </div>
+        `,
         showCancelButton: true,
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
-        focusConfirm: false,
-        didOpen: () => {
-            runAccessibility();
-        },
+        preConfirm: () => {
+            const username = Swal.getPopup().querySelector('#username').value;
+            const password = Swal.getPopup().querySelector('#password').value;
+
+            if (!username || !password) return Swal.showValidationMessage("You must enter a username and a password!");
+            if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
+            if (password.length < 6 || password.length > 12) return Swal.showValidationMessage("Password must be between 6 and 12 chars!");
+        }
+    }).then(async result => {
+        if (!result.isConfirmed) return;
+
+        const data = await NS.fetch({
+            url: `api/v1/login`,
+            method: "POST",
+            body: {
+                username: NS('#username').getVal()[0],
+                password: NS('#password').getVal()[0],
+            }
+        });
+
+        if (!data.success) return Swal.fire(data.error);
+        checkUserStatus();
+        getQuickInfo();
+        Swal.fire("Success", "Successfully logged in!", "success");
+    });
+
+    setUpEyeIcon();
+    runAccessibility();
+}
+
+function showSignUpModal() {
+    Swal.fire({
+        html: `<h2>Sign Up</h2>
+            <input type="text" id="username" placeholder="Username"></br></br>
+            <div class='center password-input-container'>
+              <input type="password" class="password-input" id="password" placeholder="Password">
+              <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
+            </div></br>
+            <input type="email" id="email" placeholder="Email"></br></br>
+            <input type="text" id="bio" placeholder="Bio (Max 20 chars)" autocomplete="off">
+            <p class="count-text-wrapper">
+                Count:
+                <span class="count" id="user-bio-content-count">0/20</span>
+            </p>           
+            <div class="swal-toggle-text">
+                Already have an account? <span class="swal-toggle-link" onclick="showLoginModal()">Log in</span>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Submit',
+        cancelButtonText: 'Cancel',
         preConfirm: () => {
             const username = Swal.getPopup().querySelector('#username').value;
             const password = Swal.getPopup().querySelector('#password').value;
             const email = Swal.getPopup().querySelector('#email')?.value;
             const bio = Swal.getPopup().querySelector("#bio")?.value;
 
-            if (type === "signup" && (!username || !password || !email || !bio)) return Swal.showValidationMessage(`Please enter username, email, bio and password`);
-            if (type === "signup" && !/.+\@.+\..+/.test(email)) return Swal.showValidationMessage("Invalid email!");
-            if (type === "login" && (!username || !password)) return Swal.showValidationMessage(`Please enter both username and password`);
+            if (!username || !password || !email || !bio) return Swal.showValidationMessage("You must enter a username, password, email and bio!");
+            if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
+            if (password.length < 6 || password.length > 12) return Swal.showValidationMessage("Password must be between 6 and 12 chars!");
+            if (email.length > 100 || !/.+\@.+\..+/.test(email)) return Swal.showValidationMessage("Email must valid and less than or equal to 100 chars!");
+            if (bio.length < 5) return Swal.showValidationMessage("Bio must be higher or equal to 5 chars!");
         }
     }).then(async result => {
         if (!result.isConfirmed) return;
 
         const data = await NS.fetch({
-            url: `api/v1/${type}`,
+            url: `api/v1/signup`,
             method: "POST",
             body: {
                 username: NS('#username').getVal()[0],
@@ -113,56 +141,18 @@ function showModal({
 
         if (!data.success) return Swal.fire(data.error);
         checkUserStatus();
-        if (typeof onSuccess === "function") onSuccess(data);
         getQuickInfo();
+        const blob = new Blob([data.recoveryCodes.join("\n")], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        NS(NS.createEl("a", {}, document.body))
+            .attr("href", url)
+            .attr("download", "recovery-codes.txt")
+            .click()
+            .remove();
+        URL.revokeObjectURL(url);
+        Swal.fire("Success", "Account created successfully!", "success");        
     });
 
-    // Password eye icon event
-    setUpEyeIcon();
-}
-
-function showLoginModal() {
-    showModal({
-        html: loginForm,
-        type: "login",
-        onSuccess: () => {
-            Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: "Logged in successfully!"
-            });
-        }
-    });
-
-    NS(".forget-password").on("click", function () {
-        showResetPasswordModal();
-    });
-}
-
-function showSignUpModal() {
-    showModal({
-        html: signupForm,
-        type: "signup",
-        onSuccess: data => {
-            Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: "Account created successfully!"
-            });
-
-            const link = document.createElement("a");
-            const blob = new Blob([data.recoveryCodes.join("\n")], { type: "text/plain" });
-            const url = URL.createObjectURL(blob);
-            document.body.appendChild(link);
-            link.href = url;
-            link.download = "recovery-codes.txt";
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
-        }
-    });
-
-    // Init live counter
     NS.liveCounter({
         selector: "#bio",
         counterElement: "#user-bio-content-count",
@@ -173,6 +163,8 @@ function showSignUpModal() {
             { value: 17, class: "count-red", elements: ["#bio"] },
         ]
     });
+    setUpEyeIcon();
+    runAccessibility();
 }
 
 // User status
@@ -190,11 +182,9 @@ async function checkUserStatus() {
     if (status.loggedIn) {
         signUpBtn.hide();
         loggedInGroup.show();
-        cardGeneratorBtn.show();
     } else {
         signUpBtn.show();
         loggedInGroup.hide();
-        cardGeneratorBtn.hide();
     }
 }
 
@@ -218,7 +208,7 @@ signOutBtn.on("click", async function () {
 
 profileBtn.on("click", async function () {
     const response = await NS.fetch({
-        url: "/api/v1/get/user-profile"
+        url: `/api/v1/get/user-profile/${window.currentUserQuickInfo._id}?skip=0`
     });
 
     if (!response.success) return Swal.fire(response.error);

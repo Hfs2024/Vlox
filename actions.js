@@ -1,52 +1,47 @@
 const schemas = require("./schemas.js");
-const { checkAuth, createErrorMessage, checkValidID, hotQueries } = require("./helpers.js");
+const { checkAuth, validateResult, hotQueries } = require("./helpers.js");
+const { body, query, param } = require("express-validator");
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
 
 // Change visibility
-router.post("/api/v1/change-visibility/:item/", checkAuth, async (req, res) => {
+router.put("/api/v1/change-visibility/post/:id", checkAuth, [
+    param("id").exists().isMongoId(),
+    body("value").exists().isIn([true, false])
+], validateResult, async (req, res) => {
     try {
-        const id = req.query.id;
-        const item = req.params.item;
-        const { value } = req.body;
-        let query = {};
-        const modelToUpdate = item === "post" ? "Posts" : item === "user-profile" ? "Users" : "";
-        if (!modelToUpdate) return res.status(400).json({ error: "Unknown model. Try again." });
-        if (modelToUpdate === "Posts") {
-            if (!id || !mongoose.isValidObjectId(id)) return res.status(400).json({ error: "This ID is not valid!" });
-            query = { ...hotQueries.find_user_unforked_post(id, req.session.userId), pinned: false }
-        }
-        if (modelToUpdate === "Users") query._id = req.session.userId;
-
-        const result = await schemas[modelToUpdate]?.updateOne(query, {
+        const { id, value } = req.cleanData;
+        const result = await schemas.Posts.updateOne({
+            ...hotQueries.modify_post(id, req.session.userId), pinned: false
+        }, {
             $set: {
-                private: value ? true : false
+                private: value
             }
         });
 
-        if (result?.matchedCount === 0) return res.status(400).json({ error: "Something went wrong. Try again." });
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Post not found or post is private!" });
         return res.status(200).json({ success: true });
     } catch (e) {
         console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Failed to change visibility. Try again." });
     }
 });
 
 // Pin and unpin
-router.post("/api/v1/pin/post/:id", checkAuth, checkValidID, async function (req, res) {
+router.post("/api/v1/pin/post/:id", checkAuth, [
+    param("id").exists().isMongoId(),
+    body("value").exists().isIn([true, false])
+], validateResult, async function (req, res) {
     const session = await mongoose.startSession();
 
     try {
-        let { value } = req.body;
-        const id = req.params.id;
-        value = value ? true : false; // Force a boolean!
+        const { id, value } = req.cleanData;
 
         await session.withTransaction(async () => {
             // Save
             const postUpdate = await schemas.Posts.updateOne({
-                ...hotQueries.find_user_unforked_post(id, req.session.userId),
+                ...hotQueries.modify_post(id, req.session.userId),
                 private: false,
                 pinned: value ? false : true // Opposite!
             }, { pinned: value }, { session });
@@ -67,10 +62,9 @@ router.post("/api/v1/pin/post/:id", checkAuth, checkValidID, async function (req
 
         return res.status(200).json({ success: true });
     } catch (e) {
-        if (e.message === "POST_UPDATE_FAILED") return res.status(400).json({ error: "Seems this isn't your post!" });
+        if (e.message === "POST_UPDATE_FAILED") return res.status(400).json({ error: "Post not found or post is private!" });
         if (e.message === "USER_UPDATE_FAILED") return res.status(400).json({ error: "Seems you have more than 10 pinned posts!" });
         console.error("Failed To Pin/Unpin Post: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Something went wrong. Try again." });
     } finally {
         session.endSession();
@@ -78,15 +72,14 @@ router.post("/api/v1/pin/post/:id", checkAuth, checkValidID, async function (req
 });
 
 // Create comment
-router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res) => {
+router.post("/api/v1/comment/post/:id", checkAuth, [
+    param("id").exists().isMongoId(),
+    body("comment").exists().notEmpty().isString().isLength({ max: 200 }).trim()
+], validateResult, async (req, res) => {
     const session = await mongoose.startSession();
 
     try {
-        let { comment } = req.body;
-        const id = req.params.id;
-        comment = String(comment).trim();
-        if (!comment) return res.status(400).json({ error: "You didn't enter a comment!" });
-        if (comment.length > 200) return res.status(400).json({ error: "Comment cannot exceed 200 characters!" });
+        const { id, comment } = req.cleanData;
 
         await session.withTransaction(async () => {
             // Insert comment
@@ -100,7 +93,7 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
             await newComment.save({ session });
 
             // Inc comments
-            const result = await schemas.Posts.updateOne(hotQueries.find_user_post(id, req.session.userId), {
+            const result = await schemas.Posts.updateOne(hotQueries.view_post(id, req.session.userId), {
                 $inc: {
                     comments: 1
                 }
@@ -113,7 +106,6 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
     } catch (e) {
         if (e.message === "COMMENT_UPDATE_FAILED") return res.status(400).json({ error: "Seems you don't have permission to comment on this post!" });
         console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Server Error" });
     } finally {
         await session.endSession();
@@ -121,19 +113,19 @@ router.post("/api/v1/comment/post/:id", checkAuth, checkValidID, async (req, res
 });
 
 // Create reply
-router.post("/api/v1/reply/comment/post/:id", checkAuth, checkValidID, async (req, res) => {
+router.post("/api/v1/reply/comment/post/:id", checkAuth, [
+    param("id").exists().isMongoId(),
+    body("rootId").exists().isMongoId(),
+    body("reply").exists().notEmpty().isString().isLength({ max: 200 }).trim()
+], validateResult, async (req, res) => {
     const session = await mongoose.startSession();
 
     try {
-        const id = req.params.id;
-        let { reply, rootId } = req.body;
-        reply = String(reply).trim();
-        if (!reply) return res.status(400).json({ error: "Reply can't be empty!" });
-        if (reply.length > 200) return res.status(400).json({ error: "Reply cannot exceed 200 chars!" });
+        const { id, reply, rootId } = req.cleanData;
 
         await session.withTransaction(async () => {
             // Find post
-            const post = await schemas.Posts.findOne(hotQueries.find_user_post(id, req.session.userId));
+            const post = await schemas.Posts.findOne(hotQueries.view_post(id, req.session.userId));
             if (!post) throw new Error("POST_NOT_FOUND");
 
             // Add reply
@@ -165,7 +157,6 @@ router.post("/api/v1/reply/comment/post/:id", checkAuth, checkValidID, async (re
         if (e.message === "POST_NOT_FOUND") return res.status(400).json({ error: "Post not found or you don't have permissions to see it!" });
         if (e.message === "COMMENT_UPDATE_FAILED") return res.status(400).json({ error: "You can't reply to this comment!" });
         console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(400).json({ error: "Server error" });
     } finally {
         await session.endSession();
@@ -173,14 +164,17 @@ router.post("/api/v1/reply/comment/post/:id", checkAuth, checkValidID, async (re
 });
 
 // Fork post
-router.post("/api/v1/fork/post/:id", checkAuth, checkValidID, async (req, res) => {
+router.post("/api/v1/fork/post/:id", checkAuth, [
+    param("id").exists().isMongoId(),
+    body("receiverUsername").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim()
+], validateResult, async (req, res) => {
     try {
         const id = req.params.id;
-        const { receiverId } = req.body;
+        const { receiverUsername } = req.body;
         // Does the user and post exist?
-        const user = await schemas.Users.findOne({ username: receiverId, private: false }); // All private accounts can't be a fork receiver
+        if (receiverUsername === req.currentUser.username) return res.status(400).json({ error: "You can't chat with yourself 😅" });
+        const user = await schemas.Users.findOne({ username: receiverUsername, private: false }); // All private accounts can't be a fork receiver
         if (!user) return res.status(400).json({ error: "User not found" });
-        if (user.username === req.currentUser.username) return res.status(400).json({ error: "You can't chat with yourself 😅" });
         const post = await schemas.Posts.findOne({ _id: id, boosted: false, private: false, receiverId: null, forkerId: null }); // All boosted/private posts can't be forked
         if (!post) return res.status(400).json({ error: "Post not found!" });
 
@@ -199,24 +193,25 @@ router.post("/api/v1/fork/post/:id", checkAuth, checkValidID, async (req, res) =
     } catch (e) {
         if (e.code === 11000) return res.status(400).json({ error: "You already forked this post with this user!" });
         console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
-        return res.status(500).json({ error: "Sever error. Try again later." });
+        return res.status(500).json({ error: "Sever Error" });
     }
 });
 
 // Redeem post
-router.post("/api/v1/redeem/post/:id", checkAuth, checkValidID, async (req, res) => {
+router.post("/api/v1/redeem/post/:id", checkAuth, [
+    param("id").exists().isMongoId()
+], validateResult, async (req, res) => {
     const session = await mongoose.startSession();
 
     try {
         const remaining = 4000 - req.currentUser.maxPostContentCharsLength;
         let inc = 100;
         if (remaining < 100) inc = remaining;
-        const id = req.params.id;
+        const id = req.cleanData.id;
 
         await session.withTransaction(async () => {
             const postResult = await schemas.Posts.updateOne({
-                ...hotQueries.find_user_unforked_post(id, req.session.userId),
+                ...hotQueries.modify_post(id, req.session.userId),
                 likes: { $gte: 100 },
                 redeemed: false,
             }, {
@@ -243,7 +238,6 @@ router.post("/api/v1/redeem/post/:id", checkAuth, checkValidID, async (req, res)
     } catch (e) {
         if (["POST_UPDATE_FAILED", "USER_UPDATE_FAILED"].includes(e.message)) return res.status(400).json({ error: "Could not redeem post. Try again later." });
         console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Failed to redeem. Try again later." });
     } finally {
         await session.endSession();
@@ -251,13 +245,14 @@ router.post("/api/v1/redeem/post/:id", checkAuth, checkValidID, async (req, res)
 });
 
 // Likes/Report post
-router.post("/api/v1/react/:action/post/:id", checkAuth, checkValidID, async (req, res) => {
+router.post("/api/v1/react/:action/post/:id", checkAuth, [
+    param("action").exists().notEmpty().isString().isIn(["like", "report"]),
+    param("id").exists().isMongoId()
+], validateResult, async (req, res) => {
     const session = await mongoose.startSession();
 
     try {
-        const action = req.params.action;
-        const id = req.params.id;
-        if (!["like", "report"].includes(action)) return res.status(400).json({ error: "Invalid action type. Try again." });
+        const { action, id } = req.cleanData;
 
         await session.withTransaction(async () => {
             const newReaction = new schemas.Reactions({
@@ -268,7 +263,7 @@ router.post("/api/v1/react/:action/post/:id", checkAuth, checkValidID, async (re
 
             await newReaction.save({ session });
 
-            const result = await schemas.Posts.updateOne(hotQueries.find_user_post(id, req.session.userId),
+            const result = await schemas.Posts.updateOne(hotQueries.view_post(id, req.session.userId),
                 {
                     $inc: {
                         likes: action === "like" ? 1 : 0,
@@ -285,7 +280,6 @@ router.post("/api/v1/react/:action/post/:id", checkAuth, checkValidID, async (re
         if (e.code === 11000) return res.status(400).json({ error: "You already did this action!" });
         if (e.message === "POST_UPDATE_FAILED") return res.status(400).json({ error: "Post not found!" });
         console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Server error. Try again later." });
     } finally {
         await session.endSession()
@@ -293,16 +287,13 @@ router.post("/api/v1/react/:action/post/:id", checkAuth, checkValidID, async (re
 });
 
 // Edit comment
-router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req, res) => {
+router.put("/api/v1/edit/post/comment/:id", checkAuth, [
+    body("commentId").exists().isMongoId(),
+    body("newComment").exists().notEmpty().isString().isLength({ max: 200 }).trim(),
+    param("id").exists().isMongoId()
+], validateResult, async (req, res) => {
     try {
-        let { newComment, commentId } = req.body;
-        newComment = String(newComment).trim();
-        if (!newComment) return res.status(400).json({ error: "Comment content cannot be empty." });
-        if (newComment.length > 200) return res.status(400).json({ error: "Comment cannot exceed 200 characters" });
-        const id = req.params.id;
-        const post = await schemas.Posts.findOne(hotQueries.find_user_post(id, req.session.userId));
-        if (!post) return res.status(400).json({ error: "Post not found or you don't have permission to access!" });
-
+        const { newComment, commentId, id } = req.cleanData;
         const result = await schemas.Comments.updateOne({
             for: id,
             _id: commentId,
@@ -317,29 +308,29 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, checkValidID, async (req,
         return res.status(200).json({ success: true });
     } catch (e) {
         console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Failed to update comment. Try again." });
     }
 });
 
 // Edit post
-router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) => {
+router.put("/api/v1/edit/post/:id", checkAuth, [
+    body("newTitle").exists().notEmpty().isString().isLength({ max: 20 }).trim(),
+    body("newContent").exists().notEmpty().isString().trim().custom((value, { req }) => {
+        if (value?.length > req.currentUser.maxPostContentCharsLength) return false;
+        return true;
+    }),
+    body("newSpoilers").exists().isIn([true, false]),
+    body("newKeywords").exists().isArray({ max: 5 }).customSanitizer(value => value?.filter(Boolean)?.map(kw => kw.toLowerCase().trim())),
+    param("id").exists().isMongoId()
+], validateResult, async (req, res) => {
     try {
-        let { newContent, newTitle, newKeywords, newSpoilers } = req.body;
-        const id = req.params.id;
-        newContent = String(newContent).trim();
-        newTitle = String(newTitle).trim();
-        newKeywords = newKeywords?.filter(Boolean)?.map(kw => kw.toLowerCase().trim()); // You give me a falsy value? Say goodbye to it
-        if (!newContent || !newTitle) return res.status(400).json({ error: "You must enter a title and content!" });
-        if (newTitle.length > 20) return res.status(400).json({ error: "Title cannot exceed 20 chars!" });
-        if (newContent.length > req.currentUser.maxPostContentCharsLength) return res.status(400).json({ error: `Content cannot exceed ${req.currentUser.maxPostContentCharsLength} characters!` });
-
-        const result = await schemas.Posts.updateOne(hotQueries.find_user_unforked_post(id, req.session.userId), {
+        const { newContent, newTitle, id, newKeywords, newSpoilers } = req.cleanData;
+        const result = await schemas.Posts.updateOne(hotQueries.modify_post(id, req.session.userId), {
             $set: {
                 content: newContent,
                 title: newTitle,
-                keywords: (Array.isArray(newKeywords) && newKeywords.length <= 5) ? newKeywords : [],
-                spoilers: newSpoilers ? true : false
+                keywords: newKeywords.filter(Boolean).map(kw => kw.toLowerCase().trim()),
+                spoilers: newSpoilers
             }
         });
 
@@ -347,19 +338,20 @@ router.put("/api/v1/edit/post/:id", checkAuth, checkValidID, async (req, res) =>
         return res.status(200).json({ success: true });
     } catch (e) {
         console.log("Error: " + e.message);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Failed to update. Try again later." });
     }
 });
 
 // Delete post and forks
-router.delete("/api/v1/delete/post/:id", checkAuth, checkValidID, async function (req, res) {
+router.delete("/api/v1/delete/post/:id", checkAuth, [
+    param("id").exists().isMongoId()
+], validateResult, async function (req, res) {
     const session = await mongoose.startSession();
 
     try {
-        const id = req.params.id;
+        const id = req.cleanData.id;
         await session.withTransaction(async () => {
-            const result = await schemas.Posts.deleteOne(hotQueries.find_user_unforked_post(id, req.session.userId), { session });
+            const result = await schemas.Posts.deleteOne(hotQueries.modify_post(id, req.session.userId), { session });
             if (result.deletedCount === 0) throw new Error("POST_DELETE_FAILED");
 
             await schemas.Users.updateOne({
@@ -382,18 +374,19 @@ router.delete("/api/v1/delete/post/:id", checkAuth, checkValidID, async function
     } catch (e) {
         if (e.message === "POST_DELETE_FAILED") return res.status(400).json({ error: "Post not found!" });
         console.error(`Delete Post Failue: ${e.message}.`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Failed to delete post. Try again." });
     } finally {
         await session.endSession();
     }
 });
 
-router.delete("/api/v1/delete/fork/:id", checkAuth, async (req, res) => {
+router.delete("/api/v1/delete/fork/:id", checkAuth, [
+    param("id").exists().isMongoId()
+], validateResult, async (req, res) => {
     const session = await mongoose.startSession();
 
     try {
-        const id = req.params.id;
+        const id = req.cleanData.id;
         await session.withTransaction(async () => {
             const result = await schemas.Posts.deleteOne({
                 _id: id,
@@ -417,7 +410,6 @@ router.delete("/api/v1/delete/fork/:id", checkAuth, async (req, res) => {
     } catch (e) {
         if (e.message === "FORK_DELETE_FAILED") return res.status(400).json({ error: "Fork not found!" });
         console.error(`Delete Fork Failue: ${e.message}.`);
-        createErrorMessage(e, req.session.userId, req.originalUrl);
         return res.status(500).json({ error: "Failed to delete fork. Try again." });
     } finally {
         await session.endSession();

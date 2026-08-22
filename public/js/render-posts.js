@@ -1,9 +1,7 @@
 let skip = 0;
-let isScrolling = false;
 
-async function renderPosts(posts = [], skip = 0) {
+async function renderPosts(posts = []) {
     const postsContainer = NS("#posts-container");
-    const postsContainerScrollTop = NS("#posts-container-scroll-top").hide();
     postsContainer.html("");
 
     // Nothing found
@@ -81,10 +79,9 @@ async function renderPosts(posts = [], skip = 0) {
 
     posts.forEach(async (post, index) => {
         // Elements
-        let comments = null;
         const postCard = NS(NS.createEl("div", postsContainer, { className: "post" }));
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-        NS(NS.createEl("h2", postHeader, {})).setText(post.title);
+        NS(NS.createEl("h2", postHeader, { className: "overflow-text" })).setText(post.title);
         const postHeaderIconsGroup = NS.createEl("div", postHeader, { className: "center" });
         if (!post.forkerId) {
             NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-paste post-icon", role: "button", tabIndex: "0" })).on("click", function () {
@@ -124,7 +121,7 @@ async function renderPosts(posts = [], skip = 0) {
                 });
 
                 if (!postResponse.success) return Swal.fire(postResponse.error);
-                renderPosts(Array.isArray(postResponse.posts) ? postResponse.posts : [postResponse.posts], skip);
+                renderPosts(Array.isArray(postResponse.posts) ? postResponse.posts : [postResponse.posts]);
                 Swal.fire("Success", "Successfully loaded the root post!", "success");
             });
 
@@ -158,25 +155,23 @@ async function renderPosts(posts = [], skip = 0) {
         const isLongPost = post.content.length >= 500;
         const chattingWith = post?.forkerId?.username === window.currentUserQuickInfo?.username ? `${post?.receiverId?.emoji} ${post?.receiverId?.username}` : `${post?.forkerId?.emoji} ${post?.forkerId?.username}`;
         const content = cleanHTML(post.content) || "Not content found";
-        const contentEl = NS(NS.createEl("div", postCard, {
-            style: 'overflow: auto'
-        })).html(
+        const contentEl = NS(NS.createEl("div", postCard, { className: "overflow-text" })).html(
             post.spoilers
                 ? "<button class='show-spoliers-btn w-full'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>"
                 : isLongPost ? "<button class='show-long-post-btn w-full'><i class='fas fa-up-long'></i> Show Long Post</button>"
                     : content);
 
-        if (!isLongPost && !post.spoilers) copyCode(contentEl); // Don't run unnecessary stuff
+        if (!isLongPost && !post.spoilers) setUpCopyCode(contentEl); // Don't run unnecessary stuff
 
         // Show spoliers/long post
         NS(postCard.get(".show-spoliers-btn")[0]).on("click", function () {
             contentEl.html(content);
-            copyCode(contentEl);
+            setUpCopyCode(contentEl);
         });
 
         NS(postCard.get(".show-long-post-btn")[0]).on("click", function () {
             contentEl.html(content);
-            copyCode(contentEl);
+            setUpCopyCode(contentEl);
         });
 
         // Author
@@ -185,9 +180,8 @@ async function renderPosts(posts = [], skip = 0) {
             role: "button", tabIndex: "0"
         }))
             .html(`Created by: ${post.by.emoji || "🚀"} <span class='author-name'>${capitalizeFirstLetter(post.by?.username) || "Someone"}</span> ${post.rootId ? `- You're chatting with <span class='user-chatting-with'>${chattingWith}</span>` : ""}`).on("click", async function () {
-                const isUsernameMatch = window.currentUserQuickInfo?.username === post.by.username;;
                 const authorProfileData = await NS.fetch({
-                    url: isUsernameMatch ? "/api/v1/get/user-profile" : `/api/v1/get/user-profile/${post.by.username}`
+                    url: `/api/v1/get/user-profile/${post.by._id}/?skip=0`
                 });
 
                 if (!authorProfileData.success) return Swal.fire(authorProfileData.error);
@@ -197,9 +191,7 @@ async function renderPosts(posts = [], skip = 0) {
         // Replies
         const renderReplies = async (id) => {
             const data = await NS.fetch({
-                url: `/api/v1/get/post/replies/${post._id}`,
-                method: "POST",
-                body: { rootId: id }
+                url: `/api/v1/get/post/replies/${post._id}/${id}`
             });
 
             if (!data.success) return Swal.fire(data.error);
@@ -266,17 +258,21 @@ async function renderPosts(posts = [], skip = 0) {
             .html("<button class='show-comments-btn w-full'><i class='fas fa-comment'></i> Show Comments</button>");
         let commentsSkip = 0;
 
-        const renderComments = () => {
-            commentsList.html(""); // Clear previous comments
-            const data = comments.comments || [];
+        const renderComments = async () => {
+            const data = await NS.fetch({
+                url: `/api/v1/get/post/comments/${post._id}/?skip=${commentsSkip}`,
+            });
 
-            if (!data || data.length <= 0) {
+            if (!data.success) return Swal.fire(data.error);
+            commentsList.html(""); // Clear previous comments
+
+            if (!data.comments || data.comments.length <= 0) {
                 NS(NS.createEl("div", commentsList, { className: "no-comments" }))
                     .setText("No comments yet.");
                 return;
             }
 
-            data.forEach(comment => {
+            data.comments.forEach(comment => {
                 const commentItem = NS(NS.createEl("div", commentsList, { className: "comment-item space-between" }));
                 commentItem.html(`
                         <div class='center' style='gap: 5px'>
@@ -331,34 +327,14 @@ async function renderPosts(posts = [], skip = 0) {
         NS(NS.createEl("button", commentsNavGroup, { className: "comments-prev" })).on("click", async function () {
             if (commentsSkip <= 0) return;
             commentsSkip -= 10;
-
-            comments = await NS.fetch({
-                url: `/api/v1/get/post/comments/${post._id}`,
-                method: "POST",
-                body: { skip: commentsSkip }
-            });
-
             renderComments();
         }).html("<i class='fa-solid fa-chevron-left'></i>");
         NS(NS.createEl("button", commentsNavGroup, { className: "comments-next" })).on("click", async function () {
-            if (NS(postCard).get(".no-comments")[0]) return;
+            if (postCard.get(".no-comments")[0]) return;
             commentsSkip += 10;
-
-            comments = await NS.fetch({
-                url: `/api/v1/get/post/comments/${post._id}`,
-                method: "POST",
-                body: { skip: commentsSkip }
-            });
-
             renderComments();
         }).html("<i class='fa-solid fa-chevron-right'></i>");
         NS(postCard.get(".show-comments-btn")[0]).on("click", async function () {
-            comments = await NS.fetch({
-                url: `/api/v1/get/post/comments/${post._id}`,
-                method: "POST",
-                body: { skip: commentsSkip }
-            });
-
             renderComments();
         });
 
@@ -406,12 +382,6 @@ async function renderPosts(posts = [], skip = 0) {
                     const newComments = Number(NS(this).getText()[0]) + 1;
                     NS(this).html(`<i class="fa-solid fa-comment"></i> ${newComments.toLocaleString()}`);
                     Swal.fire("Success", "Your comment has been added!", "success");
-                    comments = await NS.fetch({
-                        url: `/api/v1/get/post/comments/${post._id}`,
-                        method: "POST",
-                        body: { skip: commentsSkip }
-                    });
-
                     renderComments();
                 }
             });
@@ -427,13 +397,14 @@ async function renderPosts(posts = [], skip = 0) {
                     showCancelButton: true,
                     preConfirm: result => {
                         if (!result) return Swal.showValidationMessage("Please enter a valid receiver username!");
+                        if (result.length < 3 || result.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
                     }
                 }).then(async result => {
                     if (result.value && result.isConfirmed) {
                         const forkResponse = await NS.fetch({
                             url: `/api/v1/fork/post/${post._id}`,
                             method: "POST",
-                            body: { receiverId: result.value }
+                            body: { receiverUsername: result.value }
                         });
 
                         if (!forkResponse.success) return Swal.fire(forkResponse.error);
@@ -457,26 +428,6 @@ async function renderPosts(posts = [], skip = 0) {
         }
     });
 
-    // Scroll to top
-    postsContainerScrollTop.on("click", function () {
-        if (isScrolling) return;
-        postsContainer[0].scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-
-        isScrolling = true;
-    });
-
-    postsContainer.on("scrollend", function () {
-        isScrolling = false;
-    });
-
-    postsContainer.on("scroll", function () {
-        if (postsContainer[0].scrollTop < 40) postsContainerScrollTop.hide();
-        else postsContainerScrollTop.show();
-    });
-
     // Themes
     const postsComponentClasses = themes[theme].classes.filter(className => className.postsComponentElements?.length > 0);
     for (let className of postsComponentClasses) {
@@ -495,15 +446,11 @@ async function getPosts() {
     const id = query.get("id");
 
     const data = await NS.fetch({
-        url: id ? `/api/v1/get/post/${id}` : `/api/v1/get/posts/?skip=${skip}`
+        url: id ? `/api/v1/get/post/${id}` : `/api/v1/get/posts/?skip=${skip}`,
     });
 
     if (!data.success) return Swal.fire(data.error);
-    renderPosts(Array.isArray(data.posts) ? data.posts : [data.posts], skip);
+    renderPosts(Array.isArray(data.posts) ? data.posts : [data.posts]);
 }
-
-NS("#reload-btn").on("click", function () {
-    getPosts();
-});
 
 getPosts();

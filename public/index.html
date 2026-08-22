@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vlox Light in NS</title>
     <link rel="stylesheet" href="/main.css" />
-    <link rel="stylesheet" href="/css/card-generator.css" />
     <link rel="stylesheet" href="/css/posts.css" />
     <link rel="stylesheet" href="/css/taskbar.css" />
     <link rel="stylesheet" href="/css/preview.css" />
@@ -18,7 +17,6 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.8/purify.min.js"></script>
     <link rel="stylesheet"
@@ -59,8 +57,6 @@
                         title="Copy"></i>
                     <i id="clear-post-content-btn" class="fas fa-eraser helper-icon" role="button" tabindex="0"
                         title="Clear"></i>
-                    <i id="card-generator-btn" class="fas fa-address-card helper-icon" role="button" tabindex="0"
-                        title="Card generator"></i>
                     <i id="create-spoilers-btn" class="fa-solid fa-circle-exclamation helper-icon" role="button"
                         tabindex="0" title="Spoilers"></i>
                     <i id="create-preview-mode" class="fas fa-columns helper-icon" role="button" tabindex="0"
@@ -84,14 +80,8 @@
                 </button>
             </div></br></br>
 
-            <div id="posts-parent-container">
-                <div id="posts-container">
-                    <!--Posts will be loaded here -->
-                </div>
-
-                <button id="posts-container-scroll-top">
-                    <i class="fas fa-arrow-up"></i>
-                </button>
+            <div id="posts-container">
+                <!--Posts will be loaded here -->
             </div>
 
             <div class="center">
@@ -120,12 +110,12 @@
     <script src="nanoscript.min.js"></script>
     <script src="js/themes.js"></script>
     <script src="js/render-posts.js"></script>
+    <script src="js/bookmarks.js"></script>
     <script src="js/helpers.js"></script>
     <script src="js/plugins/ghost-state.js"></script>
     <script src="js/create-post.js"></script>
     <script src="js/private-posts.js"></script>
     <script src="js/render-profile-post.js"></script>
-    <script src="js/card-generator.js"></script>
     <script src="js/signup.js"></script>
     <script src="js/profile.js"></script>
     <script src="js/plugins/live-counter.js"></script>

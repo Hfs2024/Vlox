@@ -1,10 +1,11 @@
-const privatePostsBtn = NS("#private-posts-btn");
-privatePostsBtn.on("click", async function () {
+NS("#private-posts-btn").on("click", async function () {
     let privatePostsSkip = 0;
     let data = await NS.fetch({
-        url: "/api/v1/get/user-private-posts",
+        url: `/api/v1/get/user-private-posts/?skip=${privatePostsSkip}`,
         method: "POST"
     });
+
+    if (!data.success) return Swal.fire(data.error);
 
     Swal.fire({
         title: "Your private posts: ",
@@ -33,7 +34,7 @@ privatePostsBtn.on("click", async function () {
 
         data.posts.forEach(post => {
             const postCard = NS.createEl("div", container, { className: "post" });
-            const titleEl = NS(NS.createEl("h2", postCard, {})).setText(post.title);
+            NS(NS.createEl("h2", postCard, { className: "overflow-text" })).setText(post.title);
             changePostVisibility({
                 value: false,
                 buttonText: "Set as public",

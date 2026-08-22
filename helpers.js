@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const rateLimit = require("express-rate-limit");
+const { validationResult, matchedData } = require("express-validator");
 
 // Check auth
 async function checkAuth(req, res, next) {
@@ -20,49 +21,33 @@ async function checkAuth(req, res, next) {
     }
 }
 
-// Create error message
-async function createErrorMessage(e, userId, errorRoute) {
-    if (!mongoose.isValidObjectId(userId)) return console.log(`Failed to save error log: ${userId}`);
-    const newCrash = new schemas.ErrorLogs({
-        errorType: e.name,
-        errorMessage: e.message,
-        errorRoute: errorRoute,
-        userId: userId,
-        createdAt: new Date().toISOString()
-    });
-
-    await newCrash.save();
-}
-
-// Check valid ID
-function checkValidID(req, res, next) {
-    const id = req.params.id;
-    if (!id || !mongoose.isValidObjectId(id)) return res.status(400).json({ error: "This ID is not valid!" });
-    next();
-}
-
 // Generate recovery codes
 async function generateRecoveryCodes(count = 3) {
-    if (!Number.isInteger(count)) return console.log("Count must be a type of number.");
-    const recoveryCodesHashed = [];
-    const recoveryCodesRaw = [];
+    try {
+        if (!Number.isInteger(count)) return console.log("Count must be a type of number.");
+        const recoveryCodesHashed = [];
+        const recoveryCodesRaw = [];
 
-    for (let i = 0; i < count; i++) {
-        const code = crypto.randomBytes(10).toString("hex");
-        const hashed = await bcrypt.hash(code, 10);
-        recoveryCodesRaw.push(code);
-        recoveryCodesHashed.push(hashed);
+        for (let i = 0; i < count; i++) {
+            const code = crypto.randomBytes(10).toString("hex");
+            const hashed = await bcrypt.hash(code, 10);
+            recoveryCodesRaw.push(code);
+            recoveryCodesHashed.push(hashed);
+        }
+
+        return {
+            hashed: recoveryCodesHashed,
+            raw: recoveryCodesRaw
+        }
+    } catch (e) {
+        console.log("Error:", e);
+        return false;
     }
-
-    return {
-        hashed: recoveryCodesHashed,
-        raw: recoveryCodesRaw
-    };
 }
 
 // Hot queries
 const hotQueries = {
-    find_user_unforked_post: (postId, userId) => {
+    modify_post: (postId, userId) => {
         return {
             by: userId,
             _id: postId,
@@ -71,34 +56,18 @@ const hotQueries = {
         }
     },
 
-    find_user_post: (postId, userId) => {
+    view_post: (postId, userId) => {
         return {
             _id: postId,
             $or: [
-                {
-                    forkerId: null,
-                    receiverId: null,
-                    private: false
-                },
+                { by: userId, forkerId: null, receiverId: null },
+                { forkerId: null, receiverId: null, private: false },
                 {
                     $or: [
                         { forkerId: userId },
                         { receiverId: userId }
-                    ],
-                    private: false
+                    ]
                 }
-            ]
-        }
-    },
-
-    find_public_post: (postId, userId) => {
-        return {
-            _id: postId,
-            $or: [
-                { forkerId: null, receiverId: null, private: false },
-                { forkerId: userId },
-                { receiverId: userId },
-                { by: userId, forkerId: null, receiverId: null }
             ]
         }
     }
@@ -106,29 +75,47 @@ const hotQueries = {
 
 // Create limiter
 function createLimiter(windowMs = 900000, limit = 1000, options = {}, error = "Too Many Requests. Please try again later.") {
-    if (typeof options !== 'object' || options === null) return false;
-    if (typeof error !== "string") return false;
-    if (!Number.isInteger(limit) || !Number.isInteger(windowMs)) return false;
+    try {
+        if (typeof options !== 'object' || options === null) return false;
+        if (typeof error !== "string") return false;
+        if (!Number.isInteger(limit) || !Number.isInteger(windowMs)) return false;
 
-    return rateLimit({
-        windowMs: windowMs,
-        limit: limit,
-        message: {
-            status: 429,
-            error: error,
-        },
-        standardHeaders: true,
-        legacyHeaders: false,
-        ...options
-    });
+        return rateLimit({
+            windowMs: windowMs,
+            limit: limit,
+            message: {
+                status: 429,
+                error: error,
+            },
+            standardHeaders: true,
+            legacyHeaders: false,
+            ...options
+        });
+    } catch (e) {
+        console.log("Error:", e);
+        return false;
+    }
+}
+
+// Validate result
+function validateResult(req, res, next) {
+    try {
+        const result = validationResult(req);
+        if (!result.isEmpty()) return res.status(400).json({ error: "Invalid payload!" });
+        const cleanData = matchedData(req);
+        req.cleanData = cleanData;
+        next();
+    } catch (e) {
+        console.log("Error:", e);
+        return res.status(400).json({ error: "Something went wrong!" });
+    }
 }
 
 // Export
 module.exports = {
     checkAuth,
-    createErrorMessage,
-    checkValidID,
     generateRecoveryCodes,
     createLimiter,
     hotQueries,
+    validateResult
 };

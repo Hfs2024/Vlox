@@ -51,8 +51,8 @@ function changePostVisibility({
         style: "width: 100%"
     })).setText(buttonText).on("click", async function () {
         const visibilityData = await NS.fetch({
-            url: `/api/v1/change-visibility/post/?id=${postId}`,
-            method: "POST",
+            url: `/api/v1/change-visibility/post/${postId}`,
+            method: "PUT",
             body: { value: value ? true : false } // Force a boolean
         });
 
@@ -90,7 +90,7 @@ function generatePostLink(postId) {
 }
 
 // Copy code
-function copyCode(contentEl) {
+function setUpCopyCode(contentEl) {
     NS(contentEl.getAll("pre")[0]).each(pre => {
         hljs.highlightElement(pre);
         pre = NS(pre).attr("tabIndex", "0").attr("role", "button");
