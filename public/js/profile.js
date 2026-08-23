@@ -10,15 +10,15 @@ async function showProfile(data) {
           <hr>
           <div class='card'>
             <div class='space-between'>
-              <p class='text-overflow'><b>Bio:</b> <span id='user-profile-bio'></span></p>
+              <p class='center-overflow'><b>Bio:</b> <span id='user-profile-bio'></span></p>
               ${isUsernameMatch ? "<i class='fas fa-pen-to-square helper-icon' id='user-profile-bio-edit' role='button' tabindex='0'></i>" : ""}
             </div>
             <div class='space-between'>
-              <p class='text-overflow'><b>Email:</b> <span>${data.email}</span></p>
+              <p class='center-overflow'><b>Email:</b> <span>${data.email}</span></p>
               ${isUsernameMatch ? "<i class='fas fa-pen-to-square helper-icon' id='user-profile-email-edit' role='button' tabindex='0'></i>" : ""}
             </div>
             <div class='space-between'>  
-              <p class='text-overflow'><b>Visibility:</b> <span>${data.private ? "Private" : "Public"}</span></p>
+              <p class='center-overflow'><b>Visibility:</b> <span>${data.private ? "Private" : "Public"}</span></p>
               ${isUsernameMatch ? `<i class='fas fa-${data.private ? "eye" : "eye-slash"} helper-icon' id='user-profile-visibility-toggle' role='button' tabindex='0'></i>` : ""}
             </div>
             ${isUsernameMatch ? `
@@ -28,7 +28,7 @@ async function showProfile(data) {
               <div class='emoji-container-item'>👧🏻</div>
               <div class='emoji-container-item'>🏇🏻</div>
             </div>
-            <div class='overflow'>
+            <div class='center-overflow'>
               <button id='reset-password-recovery-codes-btn' class='w-full'>Reset Recovery Codes</button>
               <input id='insert-many-posts-input' type='file' style='display: none' accept=".json"></input>
               <button id='insert-many-posts-btn' class='w-full'>Insert Many Posts</button>

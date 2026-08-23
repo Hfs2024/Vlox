@@ -253,14 +253,14 @@ button:hover,
 /* Others */
 .center,
 .space-between,
-.overflow {
+.center-overflow {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 10px;
 }
 
-.overflow-text {
+.overflow {
     overflow: auto;
     white-space: nowrap;
 }
@@ -273,7 +273,7 @@ button:hover,
     justify-content: space-between;
 }
 
-.overflow {
+.center-overflow {
     overflow: auto;
     white-space: nowrap;
     justify-content: flex-start;
@@ -312,7 +312,7 @@ button:hover,
     color: darkred;
 }
 
-.text-overflow {
+.overflow {
     white-space: nowrap;
     overflow: auto;
 }

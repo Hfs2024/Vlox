@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vlox Light in NS</title>
-    <link rel="stylesheet" href="/main.css" />
+    <link rel="stylesheet" href="/css/main.css" />
     <link rel="stylesheet" href="/css/posts.css" />
     <link rel="stylesheet" href="/css/taskbar.css" />
     <link rel="stylesheet" href="/css/preview.css" />
@@ -46,10 +46,10 @@
             <div id="create-container">
                 <input id="create-post-title" type="text" placeholder="Enter post title..." /><br /><br />
                 <input id="create-post-keywords" type="text"
-                    placeholder="Enter post keywords (Separated by comma)..." /><br /><br />
+                    placeholder="Enter post keywords (Comma-separated)..." /><br /><br />
                 <textarea id="create-post-content" placeholder="Enter post content..."></textarea>
             </div>
-            <div id="create-preview-container" class="post-preview"></div>
+            <div id="create-preview-container" class="post-preview overflow"></div>
 
             <div class="space-between">
                 <div class="center" style="gap: 5px;">
@@ -61,6 +61,8 @@
                         tabindex="0" title="Spoilers"></i>
                     <i id="create-preview-mode" class="fas fa-columns helper-icon" role="button" tabindex="0"
                         title="Peview toggle"></i>
+                    <i id="view-active-gifts" class="fas fa-gift helper-icon" role="button" tabindex="0"
+                        title="View active gifts"></i>
                 </div>
                 <p class="count-text-wrapper">
                     Count:
@@ -68,12 +70,12 @@
                 </p>
             </div>
 
-            <button id="create-post-btn" style="width: 100%;">Create post</button>
+            <button id="create-post-btn" class="w-full">Create post</button>
         </section>
 
         <section class="right">
             <div class="center">
-                <input style="width: 100%" placeholder="Search by keywords... (Top 100 results only)"
+                <input class="w-full" placeholder="Search by keywords... (Top 100 results only)"
                     id="search-posts-input" />
                 <button style="margin-top: 0;" id="search-posts-btn">
                     <i class="fas fa-search"></i>
@@ -118,6 +120,7 @@
     <script src="js/render-profile-post.js"></script>
     <script src="js/signup.js"></script>
     <script src="js/profile.js"></script>
+    <script src="js/gifts.js"></script>
     <script src="js/plugins/live-counter.js"></script>
     <script src="js/plugins/copy.js"></script>
 </body>

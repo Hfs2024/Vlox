@@ -34,7 +34,7 @@ NS("#private-posts-btn").on("click", async function () {
 
         data.posts.forEach(post => {
             const postCard = NS.createEl("div", container, { className: "post" });
-            NS(NS.createEl("h2", postCard, { className: "overflow-text" })).setText(post.title);
+            NS(NS.createEl("h2", postCard, { className: "overflow" })).setText(post.title);
             changePostVisibility({
                 value: false,
                 buttonText: "Set as public",

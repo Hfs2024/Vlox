@@ -122,7 +122,7 @@ async function createPost({ title, content, keywords, spoilers = false } = {}) {
         }
     });
 
-    if (!data.success) Swal.fire(data.error);
+    if (!data.success) return Swal.fire(data.error);
     Swal.fire("Post created!");
 }
 

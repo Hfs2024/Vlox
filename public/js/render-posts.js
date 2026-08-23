@@ -81,7 +81,7 @@ async function renderPosts(posts = []) {
         // Elements
         const postCard = NS(NS.createEl("div", postsContainer, { className: "post" }));
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-        NS(NS.createEl("h2", postHeader, { className: "overflow-text" })).setText(post.title);
+        NS(NS.createEl("h2", postHeader, { className: "overflow" })).setText(post.title);
         const postHeaderIconsGroup = NS.createEl("div", postHeader, { className: "center" });
         if (!post.forkerId) {
             NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-paste post-icon", role: "button", tabIndex: "0" })).on("click", function () {
@@ -155,7 +155,7 @@ async function renderPosts(posts = []) {
         const isLongPost = post.content.length >= 500;
         const chattingWith = post?.forkerId?.username === window.currentUserQuickInfo?.username ? `${post?.receiverId?.emoji} ${post?.receiverId?.username}` : `${post?.forkerId?.emoji} ${post?.forkerId?.username}`;
         const content = cleanHTML(post.content) || "Not content found";
-        const contentEl = NS(NS.createEl("div", postCard, { className: "overflow-text" })).html(
+        const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" })).html(
             post.spoilers
                 ? "<button class='show-spoliers-btn w-full'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>"
                 : isLongPost ? "<button class='show-long-post-btn w-full'><i class='fas fa-up-long'></i> Show Long Post</button>"

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Users
 const usersSchema = new mongoose.Schema({
     username: { type: String, required: true, trim: true, lowercase: true },
     password: { type: String, required: true },
@@ -22,6 +23,7 @@ const usersSchema = new mongoose.Schema({
 usersSchema.index({ username: 1 }, { unique: true });
 usersSchema.index({ email: 1 }, { unique: true });
 
+// Reactions
 const reactionsSchema = new mongoose.Schema({
     type: { type: String, enum: ["like", "report"] },
     by: mongoose.Schema.Types.ObjectId,
@@ -29,6 +31,7 @@ const reactionsSchema = new mongoose.Schema({
 }, { timestamps: true });
 reactionsSchema.index({ by: 1, for: 1, type: 1 }, { unique: true });
 
+// Posts
 const postsSchema = new mongoose.Schema({
     title: { type: String, required: true },
     content: { type: String, required: true },
@@ -60,6 +63,7 @@ postsSchema.index(
     }
 );
 
+// Comments
 const commentsSchema = new mongoose.Schema({
     content: String,
     for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts" },
@@ -69,6 +73,7 @@ const commentsSchema = new mongoose.Schema({
 }, { timestamps: true });
 commentsSchema.index({ for: 1, rootId: 1 });
 
+// Bookmarks
 const bookmarksSchema = new mongoose.Schema({
     for: mongoose.Schema.Types.ObjectId,
     by: mongoose.Schema.Types.ObjectId,
@@ -76,10 +81,26 @@ const bookmarksSchema = new mongoose.Schema({
 }, { timestamps: true });
 bookmarksSchema.index({ for: 1, by: 1 }, { unique: true });
 
+// Gifts
+const giftsSchema = new mongoose.Schema({
+    usedBy: { type: [mongoose.Schema.Types.ObjectId], default: [] },
+    usedCount: { type: Number, default: 0 },
+    usesCount: { type: Number, required: true },
+    name: { type: String, required: true },
+    status: { type: String, enum: ["active", "expired"], default: "active" },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+        expires: 60
+    }
+}, { timestamps: true });
+giftsSchema.index({ name: 1 }, { unique: true });
+
 module.exports = {
     Users: mongoose.model("Users", usersSchema, "users"),
     Reactions: mongoose.model("Reactions", reactionsSchema, "reactions"),
     Posts: mongoose.model("Posts", postsSchema, "posts"),
     Comments: mongoose.model("Comments", commentsSchema, "comments"),
-    Bookmarks: mongoose.model("Bookmarks", bookmarksSchema, "bookmarks")
+    Bookmarks: mongoose.model("Bookmarks", bookmarksSchema, "bookmarks"),
+    Gifts: mongoose.model("Gifts", giftsSchema, "gifts")
 };

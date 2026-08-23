@@ -6,10 +6,9 @@ async function viewAnalytics(post) {
     });
 
     const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "post" });
-    NS(NS.createEl("h2", postCard, { className: "overflow-text" })).setText(post.title);
-    const contentEl = NS(NS.createEl("div", postCard, { className: "overflow-text" })).html(cleanHTML(post.content) || "Not content found");
-    setUpCopyCode(contentEl);
-    const panelAnalyticsGroup = NS.createEl("div", postCard, { className: "overflow" });
+    NS(NS.createEl("h2", postCard, { className: "overflow" })).setText(post.title);
+    const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
+    const panelAnalyticsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
     let likesPercent = 10;
     if (post.likes === 0) likesPercent = 0;
     else if (post.likes >= 100) likesPercent = 100;
@@ -44,6 +43,8 @@ async function viewAnalytics(post) {
         if (!redeemResponse.success) return Swal.fire(redeemResponse.error);
         Swal.fire("Success", `Redeemed successfully for ${redeemResponse.inc} extra post content chars. You must refresh the page for your new changes to apply.`, "success");
     });
+
+    setUpCopyCode(contentEl);
 }
 
 async function renderProfilePost({
@@ -52,7 +53,7 @@ async function renderProfilePost({
     if (!post) return;
     const postCard = NS.createEl("div", NS(container), { className: "post" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-    NS(NS.createEl("h2", postHeader, { className: "overflow-text" })).setText(post.title);
+    NS(NS.createEl("h2", postHeader, { className: "overflow" })).setText(post.title);
     NS(NS.createEl("i", postHeader, { className: "fas fa-link post-icon", role: "button", tabIndex: "0" })).on("click", async function () {
         NS.copy({
             text: generatePostLink(post._id),
@@ -65,15 +66,15 @@ async function renderProfilePost({
             }
         });
     });
-    const contentEl = NS(NS.createEl("div", postCard, { className: "overflow-text" })).html(cleanHTML(post.content) || "Not content found");
+    const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
 
     if (isUsernameMatch) {
         NS(NS.createEl("p", postCard, {
             style: "font-size: 15px;"
         })).html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
 
-        const primaryButtonsGroup = NS.createEl("div", postCard, { className: "overflow" });
-        const secondaryButtonsGroup = NS.createEl("div", postCard, { className: "overflow" });
+        const primaryButtonsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
+        const secondaryButtonsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
 
         // Primary buttons
         NS(NS.createEl("button", primaryButtonsGroup, {
@@ -101,7 +102,7 @@ async function renderProfilePost({
                     <input id='edit-post-keywords' type='text' placeholder='Enter new keyword (Seperated by comma)...' /></br></br>
                     <textarea id='edit-post-content' placeholder='Enter new content'></textarea>
                   </div>
-                  <div id="edit-preview-container" class="post-preview"></div>
+                  <div id="edit-preview-container" class="post-preview center-overflow"></div>
                   <div class='space-between'>
                     <div class='center'>
                       <i id="edit-spoilers-btn" class="fa-solid fa-circle-exclamation helper-icon" role="button" tabindex="0" title="Spoilers"></i>

@@ -36,8 +36,8 @@ NS("#post-bookmarks-btn").on("click", async function () {
 
         bookmarksPosts.posts.forEach(bookmark => {
             const bookmarkCard = NS.createEl("div", container, { className: "bookmark" });
-            NS(NS.createEl("h2", bookmarkCard, {})).setText(capitalizeFirstLetter(bookmark.title) || `Bookmark ${index + 1}`);
-            const buttonGroup = NS.createEl("div", bookmarkCard, { className: "overflow" });
+            NS(NS.createEl("h2", bookmarkCard, { className: "overflow" })).setText(capitalizeFirstLetter(bookmark.title) || `Bookmark ${index + 1}`);
+            const buttonGroup = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
             NS(NS.createEl("button", buttonGroup, { className: "delete-btn" })).setText("Delete bookmark").on("click", async function () {
                 const deleteResponse = await NS.fetch({
                     url: `/api/v1/delete/bookmark/${bookmark._id}`,
