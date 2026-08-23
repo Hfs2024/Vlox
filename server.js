@@ -1,6 +1,5 @@
-require("dotenv").config({
-    quiet: true
-});
+require("dotenv").config({ quiet: true });
+require("express-async-errors");
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
@@ -52,7 +51,7 @@ app.use("/", bookmarksRouter);
 app.use("/", actionsRouter);
 app.use("/", authRouter);
 
-// Main route
+// Main routes
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public/index.html"));
 });
@@ -67,26 +66,21 @@ app.post("/api/v1/posts", checkAuth, [
     body("spoilers").exists().isIn([true, false]),
     body("keywords").exists().isArray({ max: 5 }).customSanitizer(value => value?.filter(Boolean)?.map(kw => kw.toLowerCase().trim()))
 ], validateResult, async (req, res) => {
-    try {
-        const { title, content, spoilers, keywords } = req.cleanData;
-        const newPost = new schemas.Posts({
-            title: title,
-            content: content,
-            by: req.session.userId,
-            boosted: title.toUpperCase() === "[BOOST]",
-            spoilers: spoilers,
-            keywords: keywords,
-            receiverId: null,
-            forkerId: null,
-            rootId: null
-        });
+    const { title, content, spoilers, keywords } = req.cleanData;
+    const newPost = new schemas.Posts({
+        title: title,
+        content: content,
+        by: req.session.userId,
+        boosted: title.toUpperCase() === "[BOOST]",
+        spoilers: spoilers,
+        keywords: keywords,
+        receiverId: null,
+        forkerId: null,
+        rootId: null
+    });
 
-        await newPost.save();
-        return res.status(200).json({ success: true });
-    } catch (e) {
-        console.error("Write Post Failure: ", e.message);
-        return res.status(500).json({ error: "Failed to create post. Please try again." });
-    }
+    await newPost.save();
+    return res.status(200).json({ success: true });
 });
 
 // Insert many posts
@@ -95,145 +89,115 @@ if (!bulkPostsLimit) console.log("Failed to create bulk posts limit!");
 app.post("/api/v1/posts/bulk", checkAuth, [
     body("posts").exists().isArray({ max: 10 })
 ], bulkPostsLimit, validateResult, async (req, res) => {
-    try {
-        const { posts } = req.cleanData;
-        // Clean those posts
-        for (let i = 0; i < posts.length; i++) {
-            posts[i] = {
-                by: req.session.userId,
-                content: posts[i].content,
-                title: posts[i].title,
-                keywords: (Array.isArray(posts[i]?.keywords) && posts[i]?.keywords?.length <= 5) ? posts[i]?.keywords : [],
-                boosted: posts[i]?.title?.toUpperCase()?.trim() === "[BOOST]",
-                spoilers: posts[i].spoilers ? true : false,
-                private: posts[i].private ? true : false,
-                pinned: posts[i].pinned ? true : false
-            }
+    const { posts } = req.cleanData;
+    // Clean those posts
+    for (let i = 0; i < posts.length; i++) {
+        posts[i] = {
+            by: req.session.userId,
+            content: posts[i].content,
+            title: posts[i].title,
+            keywords: (Array.isArray(posts[i]?.keywords) && posts[i]?.keywords?.length <= 5) ? posts[i]?.keywords : [],
+            boosted: posts[i]?.title?.toUpperCase()?.trim() === "[BOOST]",
+            spoilers: posts[i].spoilers ? true : false,
+            private: posts[i].private ? true : false,
+            pinned: posts[i].pinned ? true : false
         }
-
-        // It's time to insert them
-        await schemas.Posts.insertMany(posts, { ordered: false });
-        return res.status(200).json({ success: true });
-    } catch (e) {
-        console.error(`Failed To Insert Posts: ${e.message}`);
-        return res.status(500).json({ error: "Could not insert posts. Try again later." });
     }
+
+    // It's time to insert them
+    await schemas.Posts.insertMany(posts, { ordered: false });
+    return res.status(200).json({ success: true });
 });
 
 app.get("/api/v1/get/post/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
-    try {
-        const id = req.cleanData.id;
-        const foundPost = await schemas.Posts.findOne({
-            ...hotQueries.view_post(id, req.session.userId)
-        }).populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
-            .populate("forkerId", "-password -recoveryCodes -email -pinnedPostsCount")
-            .populate("receiverId", "-password -recoveryCodes -email -pinnedPostsCount");
-        if (!foundPost) return res.status(400).json({ error: "Post not found!" });
-        return res.status(200).json({ success: true, posts: [foundPost] });
-    } catch (e) {
-        console.error(`Failed To Get Post: ${e.message}. User ID: ${req.session.userId}`);
-        return res.status(500).json({ error: "Could not get this post. Try again." });
-    }
+    const id = req.cleanData.id;
+    const foundPost = await schemas.Posts.findOne({
+        ...hotQueries.view_post(id, req.session.userId)
+    }).populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
+        .populate("forkerId", "-password -recoveryCodes -email -pinnedPostsCount")
+        .populate("receiverId", "-password -recoveryCodes -email -pinnedPostsCount");
+    if (!foundPost) return res.status(400).json({ error: "Post not found!" });
+    return res.status(200).json({ success: true, posts: [foundPost] });
 });
 
 app.get("/api/v1/get/posts", [
     query("skip").exists().isInt({ min: 0 })
 ], validateResult, async (req, res) => {
-    try {
-        const skip = req.cleanData.skip;
-        const posts = await schemas.Posts.find({
-            private: false,
-            $or: [
-                { forkerId: null, receiverId: null },
-                { forkerId: req.session.userId },
-                { receiverId: req.session.userId }
-            ]
-        }).sort({ boosted: -1, createdAt: -1, _id: -1 })
-            .skip(parseInt(skip))
-            .limit(50)
-            .populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
-            .populate("forkerId", "-password -recoveryCodes -email -pinnedPostsCount")
-            .populate("receiverId", "-password -recoveryCodes -email -pinnedPostsCount")
-            .lean();
+    const skip = req.cleanData.skip;
+    const posts = await schemas.Posts.find({
+        private: false,
+        $or: [
+            { forkerId: null, receiverId: null },
+            { forkerId: req.session.userId },
+            { receiverId: req.session.userId }
+        ]
+    }).sort({ boosted: -1, createdAt: -1, _id: -1 })
+        .skip(parseInt(skip))
+        .limit(50)
+        .populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
+        .populate("forkerId", "-password -recoveryCodes -email -pinnedPostsCount")
+        .populate("receiverId", "-password -recoveryCodes -email -pinnedPostsCount")
+        .lean();
 
-        return res.status(200).json({ success: true, posts });
-    } catch (e) {
-        console.error("Fetch Feed Break: ", e.message);
-        return res.status(500).json({ error: "Could not retrieve feed index assets" });
-    }
+    return res.status(200).json({ success: true, posts });
 });
 
 app.get("/api/v1/search/posts", [
     query("q").exists().notEmpty().isString().isLength({ max: 100 }).customSanitizer(value => value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')).toLowerCase().trim()
 ], validateResult, async (req, res) => {
-    try {
-        const query = req.cleanData.q;
-        const foundPosts = await schemas.Posts.find({
-            keywords: { $regex: query, $options: "i" },
-            private: false,
-            forkerId: null,
-            receiverId: null
-        }).sort({
-            likes: -1,
-            createdAt: -1,
-            _id: -1
-        }).limit(100).populate("by", "-password -recoveryCodes -email -pinnedPostsCount");
+    const query = req.cleanData.q;
+    const foundPosts = await schemas.Posts.find({
+        keywords: { $regex: query, $options: "i" },
+        private: false,
+        forkerId: null,
+        receiverId: null
+    }).sort({
+        likes: -1,
+        createdAt: -1,
+        _id: -1
+    }).limit(100).populate("by", "-password -recoveryCodes -email -pinnedPostsCount");
 
-        return res.status(200).json({ success: true, posts: foundPosts });
-    } catch (e) {
-        console.error("Search Posts Break: ", e.message);
-        return res.status(500).json({ error: "Could not search posts. Try again later." });
-    }
+    return res.status(200).json({ success: true, posts: foundPosts });
 });
 
 app.get("/api/v1/get/post/comments/:id", checkAuth, [
     param("id").exists().isMongoId(),
     query("skip").exists().isInt({ min: 0 })
 ], validateResult, async (req, res) => {
-    try {
-        const { skip, id } = req.cleanData;
-        const isPublic = await schemas.Posts.findOne(hotQueries.view_post(id, req.session.userId));
-        if (!isPublic) return res.status(400).json({ error: "Post not found!" });
-        const comments = await schemas.Comments.find({ for: id, rootId: null })
-            .sort({ createdAt: -1, _id: -1 })
-            .skip(parseInt(skip))
-            .limit(10)
-            .select("for content by")
-            .populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
-            .lean();
+    const { skip, id } = req.cleanData;
+    const isPublic = await schemas.Posts.findOne(hotQueries.view_post(id, req.session.userId));
+    if (!isPublic) return res.status(400).json({ error: "Post not found!" });
+    const comments = await schemas.Comments.find({ for: id, rootId: null })
+        .sort({ createdAt: -1, _id: -1 })
+        .skip(parseInt(skip))
+        .limit(10)
+        .select("for content by")
+        .populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
+        .lean();
 
-        return res.status(200).json({ success: true, comments });
-    } catch (e) {
-        console.error("Fetch Comments Break: " + e.message);
-        return res.status(500).json({ error: "Could not retrieve comments. Try again later." });
-    }
+    return res.status(200).json({ success: true, comments });
 });
 
 app.get("/api/v1/get/post/replies/:id/:rootId", checkAuth, [
     param("id").exists().isMongoId(),
     param("rootId").exists().isMongoId()
 ], validateResult, async (req, res) => {
-    try {
-        const { id, rootId } = req.cleanData;
+    const { id, rootId } = req.cleanData;
 
-        // Do you have permissions to access this post?
-        const post = await schemas.Posts.find(hotQueries.view_post(id, req.session.userId));
-        if (!post) return res.status(400).json({ error: "Post not found or you don't have permissions to see it!" });
+    // Do you have permissions to access this post?
+    const post = await schemas.Posts.find(hotQueries.view_post(id, req.session.userId));
+    if (!post) return res.status(400).json({ error: "Post not found or you don't have permissions to see it!" });
 
-        // Find replies
-        const replies = await schemas.Comments.find({
-            for: id,
-            rootId: rootId
-        })
-            .populate("by", "-password -recoveryCodes -email -pinnedPostsCount");
+    // Find replies
+    const replies = await schemas.Comments.find({
+        for: id,
+        rootId: rootId
+    })
+        .populate("by", "-password -recoveryCodes -email -pinnedPostsCount");
 
-        return res.status(200).json({ success: true, replies: replies });
-    } catch (e) {
-        console.error("Fetch Replies Break: ", e.message);
-        return res.status(500).json({ error: "Could not retrieve replies." });
-    }
+    return res.status(200).json({ success: true, replies: replies });
 });
 
 // Password recovery
@@ -244,67 +208,136 @@ app.post("/api/v1/reset/password", [
     body("newPassword").exists().notEmpty().isLength({ min: 6, max: 12 }).trim(),
     body("recoveryCode").exists().notEmpty()
 ], passwordRecoveryLimit, validateResult, async (req, res) => {
-    try {
-        const { username, recoveryCode, newPassword } = req.cleanData;
-        const user = await schemas.Users.findOne({ username: username });
-        if (!user) return res.status(400).json({ error: "Failed to find user!" });
-        let foundOne = false;
+    const { username, recoveryCode, newPassword } = req.cleanData;
+    const user = await schemas.Users.findOne({ username: username });
+    if (!user) return res.status(400).json({ error: "Failed to find user!" });
+    let foundOne = false;
 
-        for (let code of user.recoveryCodes) {
-            const isValid = await bcrypt.compare(recoveryCode, code);
+    for (let code of user.recoveryCodes) {
+        const isValid = await bcrypt.compare(recoveryCode, code);
 
-            if (isValid) {
-                await schemas.Users.updateOne({
-                    username: username,
+        if (isValid) {
+            await schemas.Users.updateOne({
+                username: username,
+                recoveryCodes: code
+            }, {
+                $set: {
+                    password: await bcrypt.hash(newPassword, 10)
+                },
+
+                $pull: {
                     recoveryCodes: code
-                }, {
-                    $set: {
-                        password: await bcrypt.hash(newPassword, 10)
-                    },
+                }
+            });
 
-                    $pull: {
-                        recoveryCodes: code
-                    }
-                });
-
-                foundOne = true;
-                break;
-            }
-
-            continue;
+            foundOne = true;
+            break;
         }
 
-        if (!foundOne) return res.status(400).json({ error: "Invalid recovery code!" });
-        return res.status(200).json({ success: true });
-    } catch (e) {
-        console.error(`Failed To Upadate User Password: ${e.message}`);
-        return res.status(500).json({ error: "Could not update your password right now. Try again later." });
+        continue;
     }
+
+    if (!foundOne) return res.status(400).json({ error: "Invalid recovery code!" });
+    return res.status(200).json({ success: true });
 });
 
 app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryLimit, checkAuth, async (req, res) => {
-    try {
-        const newCodes = await generateRecoveryCodes(3);
-        if (!newCodes) return res.status(400).json({ error: "Failed to generate new codes!" });
-        const result = await schemas.Users.updateOne({
-            _id: req.session.userId,
-        }, {
-            $set: {
-                recoveryCodes: newCodes.hashed
-            }
-        });
+    const newCodes = await generateRecoveryCodes(3);
+    const result = await schemas.Users.updateOne({
+        _id: req.session.userId,
+    }, {
+        $set: {
+            recoveryCodes: newCodes.hashed
+        }
+    });
 
-        if (result.matchedCount === 0) return res.status(400).json({ error: "Could not find your account right now!" });
-        return res.status(200).json({ success: true, codes: newCodes.raw });
-    } catch (e) {
-        console.error(`Failed To Revoke Recovery Codes: ${e.message}`);
-        return res.status(500).json({ error: "Could not update your password right now. Try again later." });
-    }
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Could not find your account right now!" });
+    return res.status(200).json({ success: true, codes: newCodes.raw });
+});
+
+// Gifts
+app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
+    param("id").exists().isMongoId()
+], validateResult, async (req, res) => {
+    const id = req.cleanData.id;
+    const remaining = 4000 - req.currentUser.maxPostContentCharsLength;
+    let inc = 100;
+    if (remaining < 100) inc = remaining;
+    const session = await mongoose.startSession();
+    await session.withTransaction(async () => {
+        // Gift
+        const giftResult = await schemas.Gifts.updateOne(
+            { _id: id, status: "active", usedBy: { $ne: req.session.userId } },
+            [
+                {
+                    $set: {
+                        status: {
+                            $cond: {
+                                if: { $eq: [{ $subtract: ["$usesCount", "$usedCount"] }, 1] },
+                                then: "expired",
+                                else: "$status"
+                            }
+                        },
+                        usedCount: {
+                            $cond: {
+                                if: { $eq: ["$usedCount", "$usesCount"] },
+                                then: "$usedCount",
+                                else: { $add: ["$usedCount", 1] }
+                            }
+                        },
+                        usedBy: {
+                            $setUnion: [
+                                { $ifNull: ["$usedBy", []] },
+                                [new mongoose.Types.ObjectId(req.session.userId)]
+                            ]
+                        }
+                    }
+                }
+            ],
+            { session }
+        );
+
+        if (giftResult.matchedCount === 0) throw new Error("GIFT_REDEEM_FAILED");
+
+        // User
+        const userResult = await schemas.Users.updateOne({
+            _id: req.session.userId,
+            maxPostContentCharsLength: { $lt: 4000 }
+        }, {
+            $inc: {
+                maxPostContentCharsLength: inc
+            }
+        }, { session });
+
+        if (userResult.matchedCount === 0) throw new Error("USER_UPDATE_FAILED");
+    });
+
+    await session.endSession();
+    return res.status(200).json({ success: true });
+});
+
+app.get("/api/v1/get/gifts", checkAuth, async (req, res) => {
+    const gifts = await schemas.Gifts.find({ status: "active" });
+    return res.status(200).json({ success: true, gifts });
 });
 
 // Fallback
 app.use((req, res) => {
     res.status(404).send("<h1>404 - Route not found.</h1>");
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+    let message = "An unexpected error occurred.";
+    if (err.code === 11000) return res.status(400).json({ error: "A record with this value already exists." });
+    if (err.message === "POST_UPDATE_FAILED") return res.status(400).json({ error: "Post update failed!" });
+    if (err.message === "USER_UPDATE_FAILED") return res.status(400).json({ error: "User update failed!" });
+    if (err.message === "COMMENT_UPDATE_FAILED") return res.status(400).json({ error: "Comment update failed!" });
+    if (err.message === "FORK_DELETE_FAILED") return res.status(400).json({ error: "Fork not found!" });
+    if (err.message === "POST_NOT_FOUND") return res.status(400).json({ error: "Post not found!" });
+    if (err.message === "GIFT_REDEEM_FAILED") return res.status(400).json({ error: "Gift redeem failed!" });
+    console.error("Error:", err.stack);
+    return res.status(400).json({ error: message });
 });
 
 // Start the server

@@ -52,7 +52,7 @@ function showLoginModal() {
               <input type="password" class="password-input" id="password" placeholder="Password">
               <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
             </div>
-            <div class='forget-password'>
+            <div class='forget-password' onclick='showResetPasswordModal()'>
                <p>Forgot your password?</p>
             </div>
             <div class="swal-toggle-text">
@@ -144,7 +144,7 @@ function showSignUpModal() {
         getQuickInfo();
         const blob = new Blob([data.recoveryCodes.join("\n")], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
-        NS(NS.createEl("a", {}, document.body))
+        NS(NS.createEl("a", document.body, {}))
             .attr("href", url)
             .attr("download", "recovery-codes.txt")
             .click()
