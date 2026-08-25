@@ -49,7 +49,7 @@ const postsSchema = new mongoose.Schema({
     forkerId: { type: mongoose.Schema.Types.ObjectId, default: null, ref: "Users" },
     keywords: { type: [String], default: [] }
 }, { timestamps: true });
-postsSchema.index({ createdAt: -1, _id: -1 });
+postsSchema.index({ boosted: -1, createdAt: -1, _id: -1 });
 postsSchema.index({ by: 1, createdAt: -1 });
 postsSchema.index(
     { rootId: 1, receiverId: 1, forkerId: 1 },
@@ -91,7 +91,7 @@ const giftsSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now,
-        expires: 60
+        expires: "1d"
     }
 }, { timestamps: true });
 giftsSchema.index({ name: 1 }, { unique: true });

@@ -23,10 +23,10 @@ async function showProfile(data) {
             </div>
             ${isUsernameMatch ? `
             <div class='center'>
-              <div class='emoji-container-item'>🚀</div>
-              <div class='emoji-container-item'>👦🏻</div>
-              <div class='emoji-container-item'>👧🏻</div>
-              <div class='emoji-container-item'>🏇🏻</div>
+              <button class='emoji-container-button'>🚀</button>
+              <button class='emoji-container-button'>👦🏻</button>
+              <button class='emoji-container-button'>👧🏻</button>
+              <button class='emoji-container-button'>🏇🏻</button>
             </div>
             <div class='center-overflow'>
               <button id='reset-password-recovery-codes-btn' class='w-full'>Reset Recovery Codes</button>
@@ -38,7 +38,7 @@ async function showProfile(data) {
           <div class='taskbar'>
             <button class='taskbar-button on-bg-color'>All</button>
             <button class='taskbar-button'>Pinned</button>
-          </div><br>
+          </div>
 
           <div class='taskbar-panel taskbar-panel-chosen'>
             <div id='user-posts-container' class='scroll-container'></div>

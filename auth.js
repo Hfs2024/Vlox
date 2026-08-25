@@ -44,8 +44,8 @@ router.put("/api/v1/change-visibility/user-profile", checkAuth, [
 
 // Login and signup
 router.post("/api/v1/login", [
-    body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }),
-    body("password").exists().notEmpty().isString().isLength({ min: 6, max: 12 })
+    body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
+    body("password").exists().notEmpty().isString().isLength({ min: 6, max: 12 }).trim()
 ], validateResult, async (req, res) => {
     const { username, password } = req.cleanData;
     const user = await schemas.Users.findOne({ username: username });

@@ -64,10 +64,10 @@ function changePostVisibility({
 // Eye icon
 function setUpEyeIcon() {
     NS(".password-input-eye").on("click", function () {
-        const type = NS(".password-input").attr("type");
+        const type = NS("#password").attr("type");
         const newType = type === "password" ? "text" : "password";
         const isText = newType === "text";
-        NS(".password-input").attr("type", newType);
+        NS("#password").attr("type", newType);
         NS(".password-input-eye").replaceClass(`fa-${isText ? "eye" : "eye-slash"}`, `fa-${isText ? "eye-slash" : "eye"}`);
     });
 }
@@ -153,14 +153,7 @@ function setUpPostsLiveCounter(element, countElement, maxChars) {
         selector: element,
         counterElement: countElement,
         showCounter: true,
-        max: maxChars || 2000,
-        runVisualFeedback: true,
-        visualFeedback: [
-            { value: 499, class: "count-yellow", elements: [element] },
-            { value: 999, class: "count-orange", elements: [element] },
-            { value: 1499, class: "count-red", elements: [element] },
-            { value: 1999, class: "count-darkred", elements: [element] }
-        ]
+        max: maxChars || 2000
     });
 }
 

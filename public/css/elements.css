@@ -1,0 +1,170 @@
+/* Preview */
+pre {
+    overflow: auto;
+    border-radius: 20px;
+    border: 20px;
+    padding: 10px;
+    background-color: black;
+    color: white;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+}
+
+pre:hover {
+    background-color: #333 !important;
+}
+
+blockquote {
+    margin: 20px 0;
+    padding: 10px;
+    background-color: white;
+    border-left: 5px solid #0055b3;
+    border-radius: 0 8px 8px 0;
+    font-family: 'Georgia', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: #334155;
+}
+
+img, video {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+table {
+    min-width: 100%;
+}
+
+th,
+td {
+    border-bottom: 2px solid black;
+    padding: 10px;
+    white-space: nowrap;
+}
+
+/* Inputs */
+input:not([type="range"]),
+.password-input-container,
+textarea {
+    width: 100%;
+    font-weight: bold;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 2px solid rgba(24, 67, 186, 0.642);
+    box-shadow: 0 2px 5px rgba(238, 0, 119, 0.1);
+    border-radius: 10px;
+    display: block;
+    margin-top: 20px;
+}
+
+textarea {
+    height: 130px;
+}
+
+.count-text-wrapper,
+.forget-password {
+    text-align: right;
+    color: gray;
+    font-size: 14px;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.forget-password {
+    cursor: pointer;
+}
+
+.forget-password:hover {
+    color: #aaa;
+}
+
+.password-input-container {
+    padding: 0;
+}
+
+.password-input-eye {
+    margin-right: 7px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.password-input-eye:hover {
+    color: #aaa;
+}
+
+#password {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin-top: 0 !important;
+}
+
+#password:focus {
+    outline: none !important;
+}
+
+/* Buttons */
+button,
+.analytics-item {
+    border-radius: 100px;
+    background-color: rgb(63, 62, 62);
+    color: white;
+    border: none;
+    font-weight: bold;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+    white-space: nowrap;
+}
+
+button:hover,
+.analytics-item:hover {
+    background-color: #222;
+}
+
+#change-theme-btn {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    border: 2px solid #eee;
+}
+
+.delete-btn,
+.show-spoliers-btn {
+    background-color: red;
+}
+
+.delete-btn:hover,
+.show-spoliers-btn:hover {
+    background-color: darkred;
+}
+
+/* Analytics bar */
+.analytics-likes-bar {
+    width: 100%;
+    background-color: gray;
+    margin-top: 20px;
+    border-radius: 20px;
+}
+
+.analytics-likes-bar-fill {
+    background-color: gold;
+    border-radius: 20px;
+    width: 0%;
+    height: 20px;
+}
+
+/* Emojis */
+.emoji-container-button {
+    background-color: #07E;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 0;
+    font-size: 18px;
+}
+
+.emoji-container-button:hover {
+    background-color: #0055b3;
+}
+
