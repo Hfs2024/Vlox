@@ -7,23 +7,24 @@ function showResetPasswordModal() {
     Swal.fire({
         html: `
          <h2>Reset your password</h2>
-         <input type="text" id="username" placeholder="Username"></br></br>
-         <input type="text" id="recovery-code" placeholder="Recovery code"></br></br>
+         <input type="text" id="username" placeholder="Username">
+         <input type="text" id="recovery-code" placeholder="Recovery code">
          <div class='center password-input-container'>
-            <input type="password" class="password-input" id="new-password" placeholder="New Password">
+            <input type="password" id="password" placeholder="New Password">
             <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
-        </div></br>
+         </div>
         `,
         showCancelButton: true,
         confirmButtonText: "Submit",
         preConfirm: () => {
             const username = Swal.getPopup().querySelector('#username').value;
-            const newPassword = Swal.getPopup().querySelector('#new-password').value;
+            const newPassword = Swal.getPopup().querySelector('#password').value;
             const recoveryCode = Swal.getPopup().querySelector('#recovery-code').value;
 
             if (!username || !newPassword || !recoveryCode) return Swal.showValidationMessage("You must enter a username, password and one of your recovery code!");
             if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
             if (newPassword.length < 6 || newPassword.length > 12) return Swal.showValidationMessage("Password must be between 6 and 12 chars!");
+            if (recoveryCode.length !== 20) return Swal.showValidationMessage("Recovery code must be exactly 20 chars long!");
         }
     }).then(async result => {
         if (!result.isConfirmed) return;
@@ -47,9 +48,9 @@ function showResetPasswordModal() {
 function showLoginModal() {
     Swal.fire({
         html: `<h2>Login</h2>
-            <input type="username" id="username" placeholder="Username"></br></br>
+            <input type="username" id="username" placeholder="Username" />
             <div class='center password-input-container'>
-              <input type="password" class="password-input" id="password" placeholder="Password">
+              <input type="password" id="password" placeholder="Password" />
               <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
             </div>
             <div class='forget-password' onclick='showResetPasswordModal()'>
@@ -95,13 +96,13 @@ function showLoginModal() {
 function showSignUpModal() {
     Swal.fire({
         html: `<h2>Sign Up</h2>
-            <input type="text" id="username" placeholder="Username"></br></br>
+            <input type="text" id="username" placeholder="Username" />
             <div class='center password-input-container'>
-              <input type="password" class="password-input" id="password" placeholder="Password">
+              <input type="password" id="password" placeholder="Password" />
               <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
-            </div></br>
-            <input type="email" id="email" placeholder="Email"></br></br>
-            <input type="text" id="bio" placeholder="Bio (Max 20 chars)" autocomplete="off">
+            </div>
+            <input type="email" id="email" placeholder="Email" />
+            <input type="text" id="bio" placeholder="Bio (Max 20 chars)" autocomplete="off" />
             <p class="count-text-wrapper">
                 Count:
                 <span class="count" id="user-bio-content-count">0/20</span>
@@ -157,12 +158,9 @@ function showSignUpModal() {
         selector: "#bio",
         counterElement: "#user-bio-content-count",
         showCounter: true,
-        max: 20,
-        visualFeedback: [
-            { value: 10, class: "count-orange", elements: ["#bio"] },
-            { value: 17, class: "count-red", elements: ["#bio"] },
-        ]
+        max: 20
     });
+
     setUpEyeIcon();
     runAccessibility();
 }
@@ -173,7 +171,7 @@ async function getUserStatus() {
         url: "api/v1/get/user-status"
     });
 
-    if (!status.success) return Swal.fire("Failed to read your current status: " + status.error);
+    if (!status.success) return Swal.fire(status.error);
     return status;
 }
 
@@ -208,11 +206,10 @@ signOutBtn.on("click", async function () {
 
 profileBtn.on("click", async function () {
     const response = await NS.fetch({
-        url: `/api/v1/get/user-profile/${window.currentUserQuickInfo._id}?skip=0`
+        url: `/api/v1/get/user-profile/${window.currentUserQuickInfo._id}/?skip=0`
     });
 
     if (!response.success) return Swal.fire(response.error);
-
     showProfile(response);
 });
 

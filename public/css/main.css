@@ -1,14 +1,4 @@
 /* Basic stylesheet */
-html {
-    box-sizing: border-box;
-}
-
-*,
-*::before,
-*::after {
-    box-sizing: inherit;
-}
-
 body {
     background-color: white;
     margin: 0;
@@ -17,13 +7,13 @@ body {
     transition: background-color 0.3s ease;
 }
 
-/* Theme */
+/* Themes */
 .theme-red {
     background-color: #df4632 !important;
 }
 
 .theme-green {
-    background-color: rgb(14, 73, 14) !important;
+    background-color: #0e490e !important;
 }
 
 /* Header/footer */
@@ -39,16 +29,6 @@ footer {
     justify-content: space-between;
     align-items: center;
     transition: background-color 0.3s ease;
-}
-
-header i {
-    cursor: pointer;
-    transition: color 0.3s ease;
-}
-
-header i:hover {
-    color: #918f8f;
-    cursor: pointer;
 }
 
 .logo {
@@ -94,146 +74,6 @@ header i:hover {
     overflow: auto;
 }
 
-/* Main elements */
-input:not([type="range"]),
-.password-input-container,
-textarea,
-select {
-    width: 100%;
-    font-weight: bold;
-    padding: 10px;
-    box-sizing: border-box;
-    border: 2px solid rgba(24, 67, 186, 0.642);
-    box-shadow: 0 2px 5px rgba(238, 0, 119, 0.1);
-    border-radius: 10px;
-}
-
-textarea {
-    height: 130px;
-}
-
-.count-text-wrapper,
-.forget-password {
-    text-align: right;
-    color: gray;
-    font-size: 14px;
-    font-weight: bold;
-    transition: color 0.3s ease;
-}
-
-.forget-password {
-    cursor: pointer;
-}
-
-.forget-password:hover {
-    color: #aaa;
-}
-
-.password-input-container {
-    padding: 0;
-}
-
-.password-input-eye {
-    margin-right: 7px;
-    cursor: pointer;
-    transition: color 0.3s ease;
-}
-
-.password-input-eye:hover {
-    color: #aaa;
-}
-
-.password-input {
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-.password-input:focus {
-    outline: none !important;
-}
-
-/* Buttons */
-button,
-.analytics-item {
-    border-radius: 100px;
-    background-color: rgb(63, 62, 62);
-    color: white;
-    border: none;
-    font-weight: bold;
-    padding: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 20px;
-    white-space: nowrap;
-}
-
-button:hover,
-.analytics-item:hover {
-    background-color: #222;
-}
-
-#change-theme-btn {
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    border: 2px solid #eee;
-}
-
-.delete-btn,
-.show-spoliers-btn {
-    background-color: red;
-}
-
-.delete-btn:hover,
-.show-spoliers-btn:hover {
-    background-color: darkred;
-}
-
-/* Analytics bar */
-.analytics-likes-bar {
-    width: 100%;
-    background-color: gray;
-    margin-top: 20px;
-    border-radius: 20px;
-}
-
-.analytics-likes-bar-fill {
-    background-color: gold;
-    border-radius: 20px;
-    width: 0%;
-    height: 20px;
-}
-
-/* Helper icons */
-.helper-icon {
-    cursor: pointer;
-    transition: color 0.3s ease;
-    font-size: 18px;
-}
-
-.helper-icon:hover {
-    color: #aaa;
-}
-
-/* Emojis */
-.emoji-container-item {
-    padding: 10px;
-    background-color: #07E;
-    border-radius: 100px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    cursor: pointer;
-}
-
-.emoji-container-item:hover {
-    background-color: #0055b3;
-}
-
-#user-current-emoji {
-    font-size: 30px;
-    margin-bottom: 20px;
-}
-
 /* Swal styles */
 .swal-toggle-link {
     color: #07E;
@@ -250,7 +90,7 @@ button:hover,
     width: auto !important;
 }
 
-/* Others */
+/* Helpers */
 .center,
 .space-between,
 .center-overflow {
@@ -296,28 +136,17 @@ button:hover,
     background-color: #0055b3;
 }
 
-.count-yellow {
-    color: rgb(165, 165, 69);
+.helper-icon {
+    cursor: pointer;
+    transition: color 0.3s ease;
+    font-size: 18px;
 }
 
-.count-orange {
-    color: orange;
+.helper-icon:hover {
+    color: #aaa;
 }
 
-.count-red {
-    color: red;
-}
-
-.count-darkred {
-    color: darkred;
-}
-
-.overflow {
-    white-space: nowrap;
-    overflow: auto;
-}
-
-/* Responsiveness and clean design */
+/* Responsiveness */
 @media (max-width: 768px) {
     .container {
         display: block;
@@ -336,6 +165,7 @@ button:hover,
     }
 }
 
+/* Cool scrollbar design */
 ::-webkit-scrollbar {
     width: 6px;
     height: 8px;

@@ -285,16 +285,11 @@ router.delete("/api/v1/delete/post/:id", checkAuth, [
     const session = await mongoose.startSession();
     const id = req.cleanData.id;
     await session.withTransaction(async () => {
-        const result = await schemas.Posts.deleteOne(hotQueries.modify_post(id, req.session.userId), { session });
-        if (result.deletedCount === 0) throw new Error("POST_DELETE_FAILED");
-
-        await schemas.Users.updateOne({
-            _id: req.session.userId,
-        }, {
-            $inc: {
-                pinnedPostsCount: -1
-            }
+        const result = await schemas.Posts.deleteOne({
+            ...hotQueries.modify_post(id, req.session.userId),
+            pinned: false
         }, { session });
+        if (result.deletedCount === 0) throw new Error("POST_DELETE_FAILED");
 
         await schemas.Reactions.deleteMany({
             for: id

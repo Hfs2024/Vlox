@@ -100,7 +100,7 @@ NS.liveCounter = ({
         if (showCounter && foundCounter) foundCounter.textContent = `${length}/${max}`;
         if (showRemaining && foundRemaining) foundRemaining.textContent = max - length;
 
-        runVisualFeedbackCheck();
+        if (runVisualFeedback) runVisualFeedbackCheck();
     });
 
     if (runVisualFeedback) runVisualFeedbackCheck();

@@ -35,11 +35,7 @@ async function renderPosts(posts = []) {
                     selector: `#${inputId}`,
                     counterElement: `#${countId}`,
                     showCounter: true,
-                    max: 200,
-                    visualFeedback: [
-                        { value: 100, class: "count-orange", elements: [`#${inputId}`] },
-                        { value: 170, class: "count-red", elements: [`#${inputId}`] },
-                    ]
+                    max: 200
                 });
 
                 // Elements

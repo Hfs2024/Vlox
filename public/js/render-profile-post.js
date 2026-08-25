@@ -98,8 +98,8 @@ async function renderProfilePost({
                 title: "Update post: ",
                 html: `
                   <div id='edit-container'>
-                    <input id='edit-post-title' type='text' placeholder='Enter new title...' /></br></br>
-                    <input id='edit-post-keywords' type='text' placeholder='Enter new keyword (Seperated by comma)...' /></br></br>
+                    <input id='edit-post-title' type='text' placeholder='Enter new title...' />
+                    <input id='edit-post-keywords' type='text' placeholder='Enter new keyword (Seperated by comma)...' />
                     <textarea id='edit-post-content' placeholder='Enter new content'></textarea>
                   </div>
                   <div id="edit-preview-container" class="post-preview center-overflow"></div>

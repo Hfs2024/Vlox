@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vlox Light in NS</title>
+    <link rel="stylesheet" href="/css/elements.css" />
     <link rel="stylesheet" href="/css/main.css" />
     <link rel="stylesheet" href="/css/posts.css" />
     <link rel="stylesheet" href="/css/taskbar.css" />
-    <link rel="stylesheet" href="/css/preview.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
@@ -28,14 +28,13 @@
     <header>
         <a href="/" class="logo">Vlox</a>
         <div class="center">
-            <i class="fas fa-user-plus" id="signup-btn" role="button" tabindex="0" aria-label="Sign Up"></i>
+            <i class="fas fa-user-plus helper-icon" id="signup-btn" role="button" tabindex="0" title="Signup"></i>
             <div id="loggedIn-group">
-                <i class="fas fa-user-circle" id="profile-btn" role="button" tabindex="0" aria-label="Profile"></i>
-                <i class="fas fa-vault" id="private-posts-btn" role="button" tabindex="0"
-                    aria-label="Private Posts"></i>
-                <i id="post-bookmarks-btn" class="fas fa-bookmark" role="button" tabindex="0"
-                    aria-label="Bookmarks"></i>
-                <i class="fas fa-sign-out" id="signout-btn" role="button" tabindex="0" aria-label="Sign Out"></i>
+                <i class="fas fa-user-circle helper-icon" id="profile-btn" role="button" tabindex="0"
+                    title="Profile"></i>
+                <i class="fas fa-vault helper-icon" id="private-posts-btn" role="button" tabindex="0" title="Private Posts"></i>
+                <i class="fas fa-bookmark helper-icon" id="post-bookmarks-btn" role="button" tabindex="0" title="Bookmark Posts"></i>
+                <i class="fas fa-sign-out  helper-icon" id="signout-btn" role="button" tabindex="0" title="Signout"></i>
             </div>
         </div>
     </header>
@@ -44,9 +43,8 @@
         <section class="left">
             <h1>What's on your mind today?</h1>
             <div id="create-container">
-                <input id="create-post-title" type="text" placeholder="Enter post title..." /><br /><br />
-                <input id="create-post-keywords" type="text"
-                    placeholder="Enter post keywords (Comma-separated)..." /><br /><br />
+                <input id="create-post-title" type="text" placeholder="Enter post title..." />
+                <input id="create-post-keywords" type="text" placeholder="Enter post keywords (Comma-separated)..." />
                 <textarea id="create-post-content" placeholder="Enter post content..."></textarea>
             </div>
             <div id="create-preview-container" class="post-preview overflow"></div>
@@ -74,13 +72,13 @@
         </section>
 
         <section class="right">
-            <div class="center">
-                <input class="w-full" placeholder="Search by keywords... (Top 100 results only)"
-                    id="search-posts-input" />
+            <div class="center" style="margin-bottom: 20px;">
+                <input class="w-full" placeholder="Search by keywords... (Top 100 results only)" id="search-posts-input"
+                    style="margin-top: 0;" />
                 <button style="margin-top: 0;" id="search-posts-btn">
                     <i class="fas fa-search"></i>
                 </button>
-            </div></br></br>
+            </div>
 
             <div id="posts-container">
                 <!--Posts will be loaded here -->

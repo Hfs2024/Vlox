@@ -94,10 +94,10 @@ app.post("/api/v1/posts/bulk", checkAuth, [
     for (let i = 0; i < posts.length; i++) {
         posts[i] = {
             by: req.session.userId,
-            content: posts[i].content,
-            title: posts[i].title,
+            content: posts[i].content?.slice(0, req.currentUser.maxPostContentCharsLength),
+            title: posts[i].title?.slice(0, 20),
             keywords: (Array.isArray(posts[i]?.keywords) && posts[i]?.keywords?.length <= 5) ? posts[i]?.keywords : [],
-            boosted: posts[i]?.title?.toUpperCase()?.trim() === "[BOOST]",
+            boosted: posts[i]?.title?.slice(0, req.currentUser.maxPostContentCharsLength)?.toUpperCase()?.trim() === "[BOOST]",
             spoilers: posts[i].spoilers ? true : false,
             private: posts[i].private ? true : false,
             pinned: posts[i].pinned ? true : false
@@ -204,9 +204,9 @@ app.get("/api/v1/get/post/replies/:id/:rootId", checkAuth, [
 const passwordRecoveryLimit = createLimiter(3600000, 5);
 if (!passwordRecoveryLimit) console.log("Failed to create passwored recovery limit!");
 app.post("/api/v1/reset/password", [
-    body("username").exists().notEmpty().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
-    body("newPassword").exists().notEmpty().isLength({ min: 6, max: 12 }).trim(),
-    body("recoveryCode").exists().notEmpty()
+    body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
+    body("newPassword").exists().notEmpty().isString().isLength({ min: 6, max: 12 }).trim(),
+    body("recoveryCode").exists().notEmpty().isString().isLength({ min: 20, max: 20 })
 ], passwordRecoveryLimit, validateResult, async (req, res) => {
     const { username, recoveryCode, newPassword } = req.cleanData;
     const user = await schemas.Users.findOne({ username: username });
@@ -296,7 +296,6 @@ app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
             ],
             { session }
         );
-
         if (giftResult.matchedCount === 0) throw new Error("GIFT_REDEEM_FAILED");
 
         // User
@@ -308,7 +307,6 @@ app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
                 maxPostContentCharsLength: inc
             }
         }, { session });
-
         if (userResult.matchedCount === 0) throw new Error("USER_UPDATE_FAILED");
     });
 
@@ -328,16 +326,16 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-    let message = "An unexpected error occurred.";
     if (err.code === 11000) return res.status(400).json({ error: "A record with this value already exists." });
     if (err.message === "POST_UPDATE_FAILED") return res.status(400).json({ error: "Post update failed!" });
     if (err.message === "USER_UPDATE_FAILED") return res.status(400).json({ error: "User update failed!" });
     if (err.message === "COMMENT_UPDATE_FAILED") return res.status(400).json({ error: "Comment update failed!" });
-    if (err.message === "FORK_DELETE_FAILED") return res.status(400).json({ error: "Fork not found!" });
-    if (err.message === "POST_NOT_FOUND") return res.status(400).json({ error: "Post not found!" });
+    if (err.message === "FORK_DELETE_FAILED") return res.status(400).json({ error: "Fork delete failed!" });
+    if (err.message === "POST_NOT_FOUND") return res.status(400).json({ error: "Post delete failed!" });
+    if (err.message === "POST_DELETE_FAILED") return res.status(400).json({ error: "Post delete failed!" });
     if (err.message === "GIFT_REDEEM_FAILED") return res.status(400).json({ error: "Gift redeem failed!" });
     console.error("Error:", err.stack);
-    return res.status(400).json({ error: message });
+    return res.status(400).json({ error: "An unexpected error occurred." });
 });
 
 // Start the server
