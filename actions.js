@@ -164,9 +164,9 @@ router.post("/api/v1/redeem/post/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const session = await mongoose.startSession();
-    const remaining = 4000 - req.currentUser.maxPostContentCharsLength;
-    let inc = 100;
-    if (remaining < 100) inc = remaining;
+    const remaining = Math.max(0, 4000 - req.currentUser.maxPostContentCharsLength);
+    const inc = Math.min(100, remaining);
+    if (inc <= 0) return res.status(400).json({ error: "Post redeem failed!" });
     const id = req.cleanData.id;
 
     await session.withTransaction(async () => {
