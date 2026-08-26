@@ -147,9 +147,10 @@ app.get("/api/v1/get/posts", [
 app.get("/api/v1/search/posts", [
     query("q").exists().notEmpty().isString().isLength({ max: 100 }).customSanitizer(value => value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')).toLowerCase().trim()
 ], validateResult, async (req, res) => {
-    const query = req.cleanData.q;
+    const query = `^${req.cleanData.q}$`;
+    const regex = new RegExp(query, 'i');
     const foundPosts = await schemas.Posts.find({
-        keywords: { $regex: query, $options: "i" },
+        keywords: { $regex: regex, $options: "i" },
         private: false,
         forkerId: null,
         receiverId: null
@@ -206,7 +207,7 @@ if (!passwordRecoveryLimit) console.log("Failed to create passwored recovery lim
 app.post("/api/v1/reset/password", [
     body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
     body("newPassword").exists().notEmpty().isString().isLength({ min: 6, max: 12 }).trim(),
-    body("recoveryCode").exists().notEmpty().isString().isLength({ min: 20, max: 20 })
+    body("recoveryCode").exists().notEmpty().isString().isLength({ min: 20, max: 20 }).trim()
 ], passwordRecoveryLimit, validateResult, async (req, res) => {
     const { username, recoveryCode, newPassword } = req.cleanData;
     const user = await schemas.Users.findOne({ username: username });
@@ -217,7 +218,7 @@ app.post("/api/v1/reset/password", [
         const isValid = await bcrypt.compare(recoveryCode, code);
 
         if (isValid) {
-            await schemas.Users.updateOne({
+            const result = await schemas.Users.updateOne({
                 username: username,
                 recoveryCodes: code
             }, {
@@ -230,6 +231,7 @@ app.post("/api/v1/reset/password", [
                 }
             });
 
+            if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update password!" });
             foundOne = true;
             break;
         }
