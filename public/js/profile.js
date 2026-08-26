@@ -196,13 +196,13 @@ async function showProfile(data) {
     });
 
     NS("#user-profile-visibility-toggle").on("click", async function () {
-        const result = await NS.fetch({
+        const updatevisibilityResponse = await NS.fetch({
             url: "/api/v1/change-visibility/user-profile",
             method: "PUT",
             body: { value: !data.private }
         });
 
-        if (!result.success) return Swal.fire(result.error);
+        if (!updatevisibilityResponse.success) return Swal.fire(updatevisibilityResponse.error);
         Swal.fire("Sucess", `Account is ${data.private ? "public" : "private"}`, "success");
     });
 

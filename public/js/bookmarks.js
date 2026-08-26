@@ -38,6 +38,8 @@ NS("#post-bookmarks-btn").on("click", async function () {
             const bookmarkCard = NS.createEl("div", container, { className: "bookmark" });
             const bookmarkHeader = NS.createEl("div", bookmarkCard, { className: "space-between" });
             const buttonGroup = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
+
+            // Header buttons
             NS(NS.createEl("h2", bookmarkHeader, { className: "overflow" })).setText(capitalizeFirstLetter(bookmark.title) || `Bookmark ${index + 1}`);
             NS(NS.createEl("i", bookmarkHeader, { className: "fas fa-eye helper-icon", role: "button", tabIndex: "0" })).on("click", async function () {
                 const postResponse = await NS.fetch({
@@ -49,6 +51,7 @@ NS("#post-bookmarks-btn").on("click", async function () {
                 Swal.clickConfirm();
             });
 
+            // Main buttons
             NS(NS.createEl("button", buttonGroup, { className: "delete-btn w-full" })).setText("Delete").on("click", async function () {
                 const deleteResponse = await NS.fetch({
                     url: `/api/v1/delete/bookmark/${bookmark._id}`,

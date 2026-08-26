@@ -33,7 +33,7 @@ function showResetPasswordModal() {
             method: "POST",
             body: {
                 recoveryCode: NS("#recovery-code").getVal()[0],
-                newPassword: NS("#new-password").getVal()[0],
+                newPassword: NS("#password").getVal()[0],
                 username: NS("#username").getVal()[0]
             }
         });

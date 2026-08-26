@@ -12,7 +12,8 @@ router.put("/api/v1/change-visibility/post/:id", checkAuth, [
 ], validateResult, async (req, res) => {
     const { id, value } = req.cleanData;
     const result = await schemas.Posts.updateOne({
-        ...hotQueries.modify_post(id, req.session.userId), pinned: false
+        ...hotQueries.modify_post(id, req.session.userId), 
+        pinned: false
     }, {
         $set: {
             private: value
@@ -269,7 +270,7 @@ router.put("/api/v1/edit/post/:id", checkAuth, [
         $set: {
             content: newContent,
             title: newTitle,
-            keywords: newKeywords.filter(Boolean).map(kw => kw.toLowerCase().trim()),
+            keywords: newKeywords,
             spoilers: newSpoilers
         }
     });
