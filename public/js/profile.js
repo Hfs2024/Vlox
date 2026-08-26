@@ -2,32 +2,27 @@ async function showProfile(data) {
     // Profile code
     let postsSkip = 0;
     const username = capitalizeFirstLetter(data.username);
-    const isUsernameMatch = window.currentUserQuickInfo.username === data.username;
+    const isUser = window.currentUserQuickInfo.username === data.username;
+    const emojis = ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻", "✌🏻"];
 
     Swal.fire({
-        titleText: `${isUsernameMatch ? `Hey, ${data.emoji || "🚀"} ${username}!` : `${data.emoji || "🚀"} ${username}'s profile`}`,
+        titleText: `${isUser ? `Hola, ${data.emoji || "🚀"} ${username}!` : `${data.emoji || "🚀"} ${username}'s profile`}`,
         html: `
-          <hr>
           <div class='card'>
             <div class='space-between'>
               <p class='center-overflow'><b>Bio:</b> <span id='user-profile-bio'></span></p>
-              ${isUsernameMatch ? "<i class='fas fa-pen-to-square helper-icon' id='user-profile-bio-edit' role='button' tabindex='0'></i>" : ""}
+              ${isUser ? "<i class='fas fa-pen-to-square helper-icon' id='user-profile-bio-edit' role='button' tabindex='0'></i>" : ""}
             </div>
             <div class='space-between'>
               <p class='center-overflow'><b>Email:</b> <span>${data.email}</span></p>
-              ${isUsernameMatch ? "<i class='fas fa-pen-to-square helper-icon' id='user-profile-email-edit' role='button' tabindex='0'></i>" : ""}
+              ${isUser ? "<i class='fas fa-pen-to-square helper-icon' id='user-profile-email-edit' role='button' tabindex='0'></i>" : ""}
             </div>
             <div class='space-between'>  
-              <p class='center-overflow'><b>Visibility:</b> <span>${data.private ? "Private" : "Public"}</span></p>
-              ${isUsernameMatch ? `<i class='fas fa-${data.private ? "eye" : "eye-slash"} helper-icon' id='user-profile-visibility-toggle' role='button' tabindex='0'></i>` : ""}
+              <p class='center-overflow'><b>Visibility:</b> ${data.private ? "Private" : "Public"}</p>
+              ${isUser ? `<i class='fas fa-${data.private ? "eye" : "eye-slash"} helper-icon' id='user-profile-visibility-toggle' role='button' tabindex='0'></i>` : ""}
             </div>
-            ${isUsernameMatch ? `
-            <div class='center'>
-              <button class='emoji-container-button'>🚀</button>
-              <button class='emoji-container-button'>👦🏻</button>
-              <button class='emoji-container-button'>👧🏻</button>
-              <button class='emoji-container-button'>🏇🏻</button>
-            </div>
+            ${isUser ? `
+            <div class='center-overflow emoji-container'></div>
             <div class='center-overflow'>
               <button id='reset-password-recovery-codes-btn' class='w-full'>Reset Recovery Codes</button>
               <input id='insert-many-posts-input' type='file' style='display: none' accept=".json"></input>
@@ -73,7 +68,7 @@ async function showProfile(data) {
             renderProfilePost({
                 post: post,
                 pinnedPosts: data.pinnedPosts,
-                isUsernameMatch: isUsernameMatch,
+                isUser: isUser,
                 container: "#user-posts-container"
             });
         });
@@ -89,7 +84,7 @@ async function showProfile(data) {
         data.pinnedPosts.forEach((post, index) => {
             renderProfilePost({
                 post: post,
-                isUsernameMatch: isUsernameMatch,
+                isUser: isUser,
                 container: "#user-pinned-posts-container"
             });
         });
@@ -151,8 +146,6 @@ async function showProfile(data) {
 
     // Update bio/email/visibility
     NS("#user-profile-bio-edit").on("click", function () {
-        if (!isUsernameMatch) return;
-
         Swal.fire({
             title: "Enter new bio: ",
             input: "text",
@@ -178,8 +171,6 @@ async function showProfile(data) {
     });
 
     NS("#user-profile-email-edit").on("click", function () {
-        if (!isUsernameMatch) return;
-
         Swal.fire({
             title: "Enter new email: ",
             input: "text",
@@ -215,28 +206,13 @@ async function showProfile(data) {
         Swal.fire("Sucess", `Account is ${data.private ? "public" : "private"}`, "success");
     });
 
-    // Set emoji
-    NS(".emoji-container-item").each(emoji => {
-        emoji = NS(emoji);
-        emoji.on("click", function () {
-            const updateEmojidata = NS.fetch({
-                url: "/api/v1/update/user",
-                method: "PUT",
-                body: { newEmoji: emoji.getText()[0] }
-            });
-
-            if (!updateEmojidata) return Swal.fire(updateEmojidata.error);
-            return Swal.fire("Success", "Emoji successfully changed!", "success");
-        });
-    });
-
     // Navigation
     NS("#user-posts-prev-btn").on("click", async function () {
         if (postsSkip <= 0) return;
         postsSkip -= 10;
 
         data = await NS.fetch({
-            url: `/api/v1/get/${isUsernameMatch ? "user-profile" : `user-profile/${data.username}`}/?skip=${postsSkip}`
+            url: `/api/v1/get/${isUser ? "user-profile" : `user-profile/${data.username}`}/?skip=${postsSkip}`
         });
 
         renderPosts();
@@ -247,11 +223,25 @@ async function showProfile(data) {
         postsSkip += 10;
 
         data = await NS.fetch({
-            url: `/api/v1/get/${isUsernameMatch ? "user-profile" : `user-profile/${data.username}`}/?skip=${postsSkip}`
+            url: `/api/v1/get/${isUser ? "user-profile" : `user-profile/${data.username}`}/?skip=${postsSkip}`
         });
 
         renderPosts();
     });
+
+    // Emojis
+    emojis.forEach(emoji => {
+        NS(NS.createEl("button", NS(".emoji-container"), { className: "emoji-container-button" })).setText(emoji).on("click", async function () {
+            const updateEmojidata = await NS.fetch({
+                url: "/api/v1/update/user",
+                method: "PUT",
+                body: { newEmoji: emoji }
+            });
+
+            if (!updateEmojidata.success) return Swal.fire(updateEmojidata.error);
+            return Swal.fire("Success", "Emoji successfully changed!", "success");
+        });
+    })
 
     renderPosts();
     renderPinnedPosts();

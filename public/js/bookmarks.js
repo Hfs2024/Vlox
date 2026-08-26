@@ -34,11 +34,22 @@ NS("#post-bookmarks-btn").on("click", async function () {
             return;
         }
 
-        bookmarksPosts.posts.forEach(bookmark => {
+        bookmarksPosts.posts.forEach((bookmark, index) => {
             const bookmarkCard = NS.createEl("div", container, { className: "bookmark" });
-            NS(NS.createEl("h2", bookmarkCard, { className: "overflow" })).setText(capitalizeFirstLetter(bookmark.title) || `Bookmark ${index + 1}`);
+            const bookmarkHeader = NS.createEl("div", bookmarkCard, { className: "space-between" });
             const buttonGroup = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
-            NS(NS.createEl("button", buttonGroup, { className: "delete-btn" })).setText("Delete bookmark").on("click", async function () {
+            NS(NS.createEl("h2", bookmarkHeader, { className: "overflow" })).setText(capitalizeFirstLetter(bookmark.title) || `Bookmark ${index + 1}`);
+            NS(NS.createEl("i", bookmarkHeader, { className: "fas fa-eye helper-icon", role: "button", tabIndex: "0" })).on("click", async function () {
+                const postResponse = await NS.fetch({
+                    url: `/api/v1/get/post/${bookmark.for}`
+                });
+
+                if (!postResponse.success) return Swal.fire(postResponse.error);
+                renderPosts(Array.isArray(postResponse.posts) ? postResponse.posts : [postResponse.posts]);
+                Swal.clickConfirm();
+            });
+
+            NS(NS.createEl("button", buttonGroup, { className: "delete-btn w-full" })).setText("Delete").on("click", async function () {
                 const deleteResponse = await NS.fetch({
                     url: `/api/v1/delete/bookmark/${bookmark._id}`,
                     method: "DELETE"
@@ -48,7 +59,7 @@ NS("#post-bookmarks-btn").on("click", async function () {
                 Swal.fire("Success", "Bookmark deleted!", "success");
             });
 
-            NS(NS.createEl("button", buttonGroup, { style: "width: 100%" })).setText("Rename bookmark").on("click", function () {
+            NS(NS.createEl("button", buttonGroup, { className: "w-full" })).setText("Rename").on("click", function () {
                 Swal.fire({
                     title: "Enter new title: ",
                     input: "text",
@@ -70,16 +81,6 @@ NS("#post-bookmarks-btn").on("click", async function () {
                         Swal.fire("Success", "Bookmark renamed successfully!", "success");
                     }
                 });
-            });
-
-            NS(NS.createEl("button", buttonGroup, { style: "width: 100%" })).setText("View bookmark").on("click", async function () {
-                const postResponse = await NS.fetch({
-                    url: `/api/v1/get/post/${bookmark.for}`
-                });
-
-                if (!postResponse.success) return Swal.fire(postResponse.error);
-                renderPosts(Array.isArray(postResponse.posts) ? postResponse.posts : [postResponse.posts]);
-                Swal.clickConfirm();
             });
         });
     }
@@ -110,4 +111,5 @@ NS("#post-bookmarks-btn").on("click", async function () {
     });
 
     renderBookmarks();
+    runAccessibility();
 });

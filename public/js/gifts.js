@@ -24,6 +24,6 @@ NS("#view-active-gifts").on("click", async function () {
 
             if (!redeemResponse.success) return Swal.fire(redeemResponse.error);
             Swal.fire("Success", "Gift redeemed!", "success");
-        })
+        });
     });
 });

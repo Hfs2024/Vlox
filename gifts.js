@@ -10,7 +10,7 @@ const rl = readline.createInterface({
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 // Connect MonogDB
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.PRODUCTION_MONGO_URI)
   .then(() => handleCreateGift())
   .catch(err => console.log(`Failed to connect MongoDB: ${err.message}`));
 

@@ -50,7 +50,7 @@ changeThemeBtn.on("click", function () {
 
     Swal.fire({
         title: "Pick a theme: ",
-        html: "<hr><div id='themes-container'></div>",
+        html: "<div id='themes-container'></div>",
         showCancelButton: true
     }).then(result => {
         if (!result.isConfirmed) return;
