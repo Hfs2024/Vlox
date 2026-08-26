@@ -100,7 +100,7 @@ router.post("/api/v1/signup", [
 
 // Update user
 router.put("/api/v1/update/user", checkAuth, [
-    body("newEmoji").optional({ values: "falsy" }).isString().isIn(["🚀", "👦🏻", "👧🏻", "🏇🏻"]).trim(),
+    body("newEmoji").optional({ values: "falsy" }).isString().isIn(["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻", "✌🏻"]).trim(),
     body("newEmail").optional({ values: "falsy" }).isEmail().isLength({ max: 100 }).normalizeEmail().trim(),
     body("newBio").optional({ values: "falsy" }).isString().isLength({ max: 20 }).trim()
 ], validateResult, async (req, res) => {
@@ -119,7 +119,7 @@ router.put("/api/v1/update/user", checkAuth, [
         runValidators: true
     });
 
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Can't find your account right now!" });
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update!" });
     return res.status(200).json({ success: true });
 });
 

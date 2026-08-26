@@ -48,7 +48,7 @@ async function viewAnalytics(post) {
 }
 
 async function renderProfilePost({
-    post, isUsernameMatch, container
+    post, isUser, container
 } = {}) {
     if (!post) return;
     const postCard = NS.createEl("div", NS(container), { className: "post" });
@@ -68,7 +68,7 @@ async function renderProfilePost({
     });
     const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
 
-    if (isUsernameMatch) {
+    if (isUser) {
         NS(NS.createEl("p", postCard, {
             style: "font-size: 15px;"
         })).html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
