@@ -1,7 +1,7 @@
 NS("#private-posts-btn").on("click", async function () {
-    let privatePostsSkip = 0;
+    let skip = 0;
     let data = await NS.fetch({
-        url: `/api/v1/get/user-private-posts/?skip=${privatePostsSkip}`,
+        url: `/api/v1/get/user-private-posts/?skip=${skip}`,
         method: "POST"
     });
 
@@ -47,10 +47,10 @@ NS("#private-posts-btn").on("click", async function () {
     // Navigation
     NS("#user-private-posts-next-btn").on("click", async function () {
         if (container.get(".nothing-found")[0]) return;
-        privatePostsSkip += 10;
+        skip += 10;
 
         data = await NS.fetch({
-            url: `/api/v1/get/user-private-posts/?skip=${privatePostsSkip}`,
+            url: `/api/v1/get/user-private-posts/?skip=${skip}`,
             method: "POST",
         });
 
@@ -58,11 +58,11 @@ NS("#private-posts-btn").on("click", async function () {
     });
 
     NS("#user-private-posts-prev-btn").on("click", async function () {
-        if (privatePostsSkip <= 0) return;
-        privatePostsSkip -= 10;
+        if (skip <= 0) return;
+        skip -= 10;
 
         data = await NS.fetch({
-            url: `/api/v1/get/user-private-posts/?skip=${privatePostsSkip}`,
+            url: `/api/v1/get/user-private-posts/?skip=${skip}`,
             method: "POST"
         });
 

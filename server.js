@@ -119,7 +119,7 @@ app.get("/api/v1/get/post/:id", checkAuth, [
         .populate("forkerId", "-password -recoveryCodes -email -pinnedPostsCount")
         .populate("receiverId", "-password -recoveryCodes -email -pinnedPostsCount");
     if (!foundPost) return res.status(400).json({ error: "Post not found!" });
-    return res.status(200).json({ success: true, posts: [foundPost] });
+    return res.status(200).json({ success: true, post: [foundPost] });
 });
 
 app.get("/api/v1/get/posts", [
@@ -145,12 +145,12 @@ app.get("/api/v1/get/posts", [
 });
 
 app.get("/api/v1/search/posts", [
-    query("q").exists().notEmpty().isString().isLength({ max: 100 }).customSanitizer(value => value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')).toLowerCase().trim()
+    query("query").exists().notEmpty().isString().isLength({ max: 100 }).customSanitizer(value => value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')).toLowerCase().trim()
 ], validateResult, async (req, res) => {
-    const query = `^${req.cleanData.q}$`;
+    const query = `^${req.cleanData.query}$`;
     const regex = new RegExp(query, 'i');
     const foundPosts = await schemas.Posts.find({
-        keywords: { $regex: regex, $options: "i" },
+        keywords: { $regex: regex },
         private: false,
         forkerId: null,
         receiverId: null

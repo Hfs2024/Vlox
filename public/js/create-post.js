@@ -19,14 +19,14 @@ async function search() {
     const value = searchPostsInput.getVal()[0];
     if (!value) return getPosts();
 
-    const searchResult = await NS.fetch({
-        url: `/api/v1/search/posts/?q=${encodeURI(value)}`,
+    const searchData = await NS.fetch({
+        url: `/api/v1/search/posts/?query=${encodeURI(value)}`,
         method: "GET"
     });
 
     isSearching = false;
-    if (!searchResult.success) return Swal.fire(searchResult.error);
-    renderPosts(Array.isArray(searchResult.posts) ? searchResult.posts : [searchResult.posts]);
+    if (!searchData.success) return Swal.fire(searchData.error);
+    renderPosts(Array.isArray(searchData.posts) ? searchData.posts : [searchData.posts]);
 }
 
 searchPostsBtn.on("click", function () {
@@ -49,7 +49,7 @@ setUpPreview({
     contentEl: createPostContent
 });
 
-setUpSpoilers(createSpoilersBtn);
+setUpBtnToggle(createSpoilersBtn);
 
 // Ghost state (Auto save)
 function clearGhostState() {
@@ -73,7 +73,7 @@ NS("#clear-post-content-btn").on("click", function () {
 
 // Copy post content
 copyPostContentBtn.on("click", function () {
-    if (!createPostContent.getVal()[0]) return Swal.fire("There is no content to copy!");
+    if (!createPostContent.getVal()[0]) return Swal.fire("No content!");
 
     NS.copy({
         text: createPostContent.getVal()[0],
@@ -87,7 +87,7 @@ createPostBtn.on("click", async function () {
     const title = createPostTitle.getVal()[0]?.trim();
     const content = createPostContent.getVal()[0]?.trim();
     const keywords = createPostKeywords.getVal()[0]?.trim().split(",");
-    const maxPostContentCharsLength = window.currentUserQuickInfo.maxPostContentCharsLength || 2000;
+    const maxPostContentCharsLength = window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000;
 
     if (!title || !content) return Swal.fire("Title and content are required!");
     if (title.length > 20 || content.length > maxPostContentCharsLength) return Swal.fire(`Title must be less than 20 chars and content should not exceed ${maxPostContentCharsLength} chars`);

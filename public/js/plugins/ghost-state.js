@@ -56,6 +56,7 @@ NS.clearGhostState = (selector = "", onEnd) => {
 
     localStorage.setItem("ns-current-saves", JSON.stringify(currentSaves));
     if (typeof onEnd === "function") onEnd();
+    
     return true;
 }
 

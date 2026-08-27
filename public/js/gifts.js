@@ -17,12 +17,12 @@ NS("#view-active-gifts").on("click", async function () {
         NS(NS.createEl("p", giftCard, {})).html(`<b>Max Uses:</b> ${gift.usesCount} times`);
         NS(NS.createEl("p", giftCard, {})).html(`<b>Used:</b> ${gift.usedCount} times`);
         NS(NS.createEl("button", giftCard, { className: "w-full" })).setText("Redeem").on("click", async function () {
-            const redeemResponse = await NS.fetch({
+            const redeemData = await NS.fetch({
                 url: `/api/v1/redeem/gift-link/${gift._id}`,
                 method: "POST"
             });
 
-            if (!redeemResponse.success) return Swal.fire(redeemResponse.error);
+            if (!redeemData.success) return Swal.fire(redeemData.error);
             Swal.fire("Success", "Gift redeemed!", "success");
         });
     });
