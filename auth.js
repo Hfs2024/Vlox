@@ -100,7 +100,7 @@ router.post("/api/v1/signup", [
 
 // Update user
 router.put("/api/v1/update/user", checkAuth, [
-    body("newEmoji").optional({ values: "falsy" }).isString().isIn(["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻", "✌🏻"]).trim(),
+    body("newEmoji").optional({ values: "falsy" }).isString().isIn(["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"]).trim(),
     body("newEmail").optional({ values: "falsy" }).isEmail().isLength({ max: 100 }).normalizeEmail().trim(),
     body("newBio").optional({ values: "falsy" }).isString().isLength({ max: 20 }).trim()
 ], validateResult, async (req, res) => {

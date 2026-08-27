@@ -4,7 +4,7 @@
 .bookmark,
 .card,
 .nothing-found {
-    background-color: #f0f0f0;
+    background-color: var(--card-background);
     border-radius: 10px;
     padding: 15px;
     text-align: left;
@@ -24,13 +24,13 @@
 
 .post-icon {
     font-size: 20px;
-    color: #07E;
+    color: var(--accent-main-blue);
     cursor: pointer;
     transition: color 0.3s ease;
 }
 
 .post-icon:hover {
-    color: #0055b3;
+    color: var(--accent-secondary-blue);
 }
 
 .post p {
@@ -46,7 +46,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    background-color: rgb(12, 34, 159);
+    background-color: var(--accent-main-blue);
     border-radius: 20px;
     margin-top: 20px;
     gap: 10px;
@@ -54,7 +54,7 @@
 }
 
 .options button {
-    background-color: white;
+    background-color: var(--accent-white);
     text-align: center;
     display: flex;
     justify-content: center;
@@ -73,7 +73,7 @@
 
 .options i {
     font-size: 20px;
-    color: #505050;
+    color: var(--accent-charcoal);
 }
 
 /* Post comments */
@@ -87,7 +87,7 @@
     white-space: nowrap;
     overflow: auto;
     padding: 10px;
-    background-color: ghostwhite;
+    background-color: var(--accent-white);
     color: black;
     border-radius: 30px;
     margin-top: 10px;
@@ -101,7 +101,7 @@
 
 .comment-item:hover,
 .no-comments:hover {
-    background-color: rgb(175, 199, 214);
+    background-color: #afc7d6;
 }
 
 .comment-item-author {
@@ -111,7 +111,7 @@
 .comment-item-icons {
     position: sticky;
     right: 0;
-    background-color: ghostwhite;
+    background-color: var(--accent-white);
     padding: 5px;
     border-radius: 20px;
 }

@@ -19,9 +19,9 @@ async function viewAnalytics(post) {
     const barFilled = likesPercent === 100;
 
     // Quick analytics
-    NS(NS.createEl("div", panelAnalyticsGroup, { className: "analytics-item" })).setText(`Likes: ${post.likes.toLocaleString()}`);
-    NS(NS.createEl("div", panelAnalyticsGroup, { className: "analytics-item" })).setText(`Reports: ${post.reports.toLocaleString()}`);
-    NS(NS.createEl("div", panelAnalyticsGroup, { className: "analytics-item" })).setText(`Comments: ${post.comments.toLocaleString()}`);
+    NS(NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" })).setText(`Likes: ${post.likes.toLocaleString()}`);
+    NS(NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" })).setText(`Reports: ${post.reports.toLocaleString()}`);
+    NS(NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" })).setText(`Comments: ${post.comments.toLocaleString()}`);
     NS(NS.createEl("p", postCard, { style: "text-align: center" }))
         .html(
             barFilled ?

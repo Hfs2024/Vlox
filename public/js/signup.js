@@ -53,7 +53,7 @@ function showLoginModal() {
               <input type="password" id="password" placeholder="Password" />
               <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
             </div>
-            <div class='forget-password' onclick='showResetPasswordModal()'>
+            <div class='forget-password-text-wrapper' onclick='showResetPasswordModal()'>
                <p>Forgot your password?</p>
             </div>
             <div class="swal-toggle-text">
