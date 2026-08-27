@@ -1,7 +1,6 @@
-const themes = [{
-    name: "Default",
-    classes: [{
-        class: "theme-red",
+const themes = {
+    default: [{
+        class: "theme-charcoal",
         elements: ["header", "footer", ".options"],
         postsComponentElements: [".options"],
         action: "remove"
@@ -11,26 +10,22 @@ const themes = [{
         elements: ["header", "footer", ".options"],
         postsComponentElements: [".options"],
         action: "remove"
-    }]
-},
-{
-    name: "Green",
-    classes: [{
+    }],
+
+    green: [{
         class: "theme-green",
         elements: ["header", "footer", ".options"],
         postsComponentElements: [".options"],
         action: "add"
     }, {
-        class: "theme-red",
+        class: "theme-charcoal",
         elements: ["header", "footer", ".options"],
         postsComponentElements: [".options"],
         action: "remove"
-    }]
-},
-{
-    name: "Red",
-    classes: [{
-        class: "theme-red",
+    }],
+
+    charcoal: [{
+        class: "theme-charcoal",
         elements: ["header", "footer", ".options"],
         postsComponentElements: [".options"],
         action: "add"
@@ -40,41 +35,34 @@ const themes = [{
         postsComponentElements: [".options"],
         action: "remove"
     }]
-}];
+}
+
 const changeThemeBtn = NS("#change-theme-btn");
-let theme = parseInt(localStorage.getItem("theme")) || 0;
-if (themes[theme]) applyTheme(themes[theme]);
+let currentTheme = localStorage.getItem("theme") || "default";
+if (themes[currentTheme]) applyTheme(themes[currentTheme]);
 
 changeThemeBtn.on("click", function () {
-    theme = parseInt(localStorage.getItem("theme")) || 0;
-
     Swal.fire({
         title: "Pick a theme: ",
-        html: "<div id='themes-container'></div>",
-        showCancelButton: true
-    }).then(result => {
-        if (!result.isConfirmed) return;
-        applyTheme(themes[theme]);
-        localStorage.setItem("theme", theme); // Critical: Don't save the actual theme object, save it's key index
+        html: "<div id='themes-container' class='center'></div>",
+        confirmButtonText: "Close"
     });
 
-    const container = NS("#themes-container").addClass("center");
+    const container = NS("#themes-container");
 
-    for (let i = 0; i < themes.length; i++) {
-        if (!Array.isArray(themes[i].classes) || !themes[i].name) continue;
-        const btn = NS(NS.createEl("button", container, { style: 'width: 100%', className: "theme-btn" })).setText(capitalizeFirstLetter(themes[i].name)).on("click", function () {
-            NS(".theme-btn").removeClass("on-bg-color");
-            NS(this).addClass("on-bg-color");
-            theme = i; // Critical: Save its key, not the object
+    for (let theme in themes) {
+        if (!Array.isArray(themes[currentTheme])) continue;
+        NS(NS.createEl("button", container, { className: "theme-btn w-full" })).setText(capitalizeFirstLetter(theme)).on("click", function () {
+            applyTheme(themes[theme]);
+            localStorage.setItem("theme", theme);
+            Swal.clickConfirm();
         });
     }
-
-    NS(NS(".theme-btn")[theme]).addClass("on-bg-color");
 });
 
 // Apply theme
 function applyTheme(theme) {
-    for (let className of theme.classes) {
+    for (let className of theme) {
         if (!Array.isArray(className.elements) || !className.class) continue;
         className.elements.forEach(element => {
             if (className.action === "remove") NS(element).removeClass(className.class);

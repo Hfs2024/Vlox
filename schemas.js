@@ -7,7 +7,7 @@ const usersSchema = new mongoose.Schema({
     banned: { type: Boolean, default: false },
     bio: { type: String, required: true, trim: true },
     emoji: {
-        type: String, default: "🚀", enum: ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻", "✌🏻"]
+        type: String, default: "🚀", enum: ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"]
     },
     email: {
         type: String,

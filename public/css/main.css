@@ -1,6 +1,18 @@
 /* Basic stylesheet */
+:root {
+    --accent-charcoal: #1f2933;
+    --accent-green: #0e490e;
+    --accent-main-blue: #214198;
+    --accent-secondary-blue: #10204c;
+    --accent-main-gray: #aaa;
+    --accent-secondary-gray: #555;
+    --accent-white: aliceblue;
+    --card-background: #f0f0f0;
+    --bg-main: white;
+}
+
 body {
-    background-color: white;
+    background-color: var(--bg-main);
     margin: 0;
     padding: 0;
     font-family: "Roboto Slab", serif;
@@ -8,20 +20,20 @@ body {
 }
 
 /* Themes */
-.theme-red {
-    background-color: #df4632 !important;
+.theme-charcoal {
+    background-color: var(--accent-charcoal) !important;
 }
 
 .theme-green {
-    background-color: #0e490e !important;
+    background-color: var(--accent-green) !important;
 }
 
 /* Header/footer */
 header,
 footer {
-    background-color: rgb(33, 65, 152);
+    background-color: var(--accent-main-blue);
     padding: 10px;
-    color: white;
+    color: var(--accent-white);
     margin: 10px;
     border-radius: 20px;
     font-weight: bold;
@@ -35,7 +47,7 @@ footer {
     font-size: 20px;
     font-weight: bold;
     margin: 10px;
-    color: white;
+    color: var(--accent-white);
     text-decoration: none;
 }
 
@@ -50,7 +62,7 @@ footer {
 .left,
 .right {
     margin: 20px;
-    background-color: aliceblue;
+    background-color: var(--accent-white);
     border-radius: 20px;
     padding: 20px;
     height: 100vh;
@@ -76,14 +88,14 @@ footer {
 
 /* Swal styles */
 .swal-toggle-link {
-    color: #07E;
+    color: var(--accent-main-blue);
     text-decoration: underline;
     cursor: pointer;
     transition: color 0.3s ease;
 }
 
 .swal-toggle-link:hover {
-    color: blue;
+    color: var(--accent-secondary-blue);
 }
 
 .swal2-input {
@@ -121,19 +133,19 @@ footer {
 }
 
 .on-color {
-    color: #07E;
+    color: var(--accent-main-blue);
 }
 
 .on-color:hover {
-    color: #0055b3;
+    color: var(--accent-secondary-blue);
 }
 
 .on-bg-color {
-    background-color: #07E;
+    background-color: var(--accent-main-blue);
 }
 
 .on-bg-color:hover {
-    background-color: #0055b3;
+    background-color: var(--accent-secondary-blue);
 }
 
 .helper-icon {
@@ -143,7 +155,7 @@ footer {
 }
 
 .helper-icon:hover {
-    color: #aaa;
+    color: var(--accent-main-gray);
 }
 
 /* Responsiveness */
@@ -172,15 +184,15 @@ footer {
 }
 
 ::-webkit-scrollbar-track {
-    background-color: #f1f1f1;
+    background-color: var(--accent-white);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #888;
+    background-color: var(--accent-main-gray);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
+    background-color: var(--accent-secondary-gray);
 }

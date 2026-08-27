@@ -425,7 +425,7 @@ async function renderPosts(posts = []) {
     });
 
     // Themes
-    const postsComponentClasses = themes[theme].classes.filter(className => className.postsComponentElements?.length > 0);
+    const postsComponentClasses = themes[currentTheme]?.filter(className => className?.postsComponentElements?.length > 0);
     for (let className of postsComponentClasses) {
         if (!Array.isArray(className.postsComponentElements) || !className.class) continue;
         className.postsComponentElements.forEach(element => {

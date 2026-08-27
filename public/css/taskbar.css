@@ -1,5 +1,5 @@
 .taskbar {
-    background-color: #ccc;
+    background-color: var(--accent-main-gray);
     white-space: nowrap;
     padding: 10px;
     border-radius: 20px;

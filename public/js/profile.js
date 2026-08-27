@@ -3,7 +3,7 @@ async function showProfile(data) {
     let postsSkip = 0;
     const username = capitalizeFirstLetter(data.username);
     const isUser = window.currentUserQuickInfo.username === data.username;
-    const emojis = ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻", "✌🏻"];
+    const emojis = ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"];
 
     Swal.fire({
         titleText: `${isUser ? `Hola, ${data.emoji || "🚀"} ${username}!` : `${data.emoji || "🚀"} ${username}'s profile`}`,
