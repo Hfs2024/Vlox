@@ -48,7 +48,7 @@ function changePostVisibility({
 }) {
     NS(NS.createEl("button", container, {
         id: "change-visibility-user-post-btn",
-        style: "width: 100%"
+        className: "w-full"
     })).setText(buttonText).on("click", async function () {
         const visibilityData = await NS.fetch({
             url: `/api/v1/change-visibility/post/${postId}`,
@@ -141,7 +141,7 @@ function setUpPreview({
     toggleDisplay(); // Must run to hide preview container
 }
 
-function setUpSpoilers(btn) {
+function setUpBtnToggle(btn) {
     btn?.on("click", function () {
         btn.toggleClass("on-color");
     });

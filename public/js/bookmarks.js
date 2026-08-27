@@ -1,10 +1,10 @@
 NS("#post-bookmarks-btn").on("click", async function () {
-    let bookmarksSkip = 0;
-    let bookmarksPosts = await NS.fetch({
-        url: `/api/v1/get/bookmarks/?skip=${bookmarksSkip}`,
+    let skip = 0;
+    let data = await NS.fetch({
+        url: `/api/v1/get/bookmarks/?skip=${skip}`,
         method: "POST"
     });
-    if (!bookmarksPosts.success) return Swal.fire(bookmarksPosts.error);
+    if (!data.success) return Swal.fire(data.error);
 
     Swal.fire({
         title: "Your bookmarks: ",
@@ -27,14 +27,14 @@ NS("#post-bookmarks-btn").on("click", async function () {
     const renderBookmarks = () => {
         container.html("");
 
-        if (!bookmarksPosts.posts || bookmarksPosts.posts.length <= 0) {
+        if (!data.bookmarks || data.bookmarks.length <= 0) {
             NS(NS.createEl("div", container, {
                 className: "nothing-found",
             })).html("<b>You don't have any bookmarks yet.</b>");
             return;
         }
 
-        bookmarksPosts.posts.forEach((bookmark, index) => {
+        data.bookmarks.forEach((bookmark, index) => {
             const bookmarkCard = NS.createEl("div", container, { className: "bookmark" });
             const bookmarkHeader = NS.createEl("div", bookmarkCard, { className: "space-between" });
             const buttonGroup = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
@@ -42,23 +42,23 @@ NS("#post-bookmarks-btn").on("click", async function () {
             // Header buttons
             NS(NS.createEl("h2", bookmarkHeader, { className: "overflow" })).setText(capitalizeFirstLetter(bookmark.title) || `Bookmark ${index + 1}`);
             NS(NS.createEl("i", bookmarkHeader, { className: "fas fa-eye helper-icon", role: "button", tabIndex: "0" })).on("click", async function () {
-                const postResponse = await NS.fetch({
+                const postData = await NS.fetch({
                     url: `/api/v1/get/post/${bookmark.for}`
                 });
 
-                if (!postResponse.success) return Swal.fire(postResponse.error);
-                renderPosts(Array.isArray(postResponse.posts) ? postResponse.posts : [postResponse.posts]);
+                if (!postData.success) return Swal.fire(post.error);
+                renderPosts(Array.isArray(postData.post) ? postData.post : [postData.post]);
                 Swal.clickConfirm();
             });
 
             // Main buttons
             NS(NS.createEl("button", buttonGroup, { className: "delete-btn w-full" })).setText("Delete").on("click", async function () {
-                const deleteResponse = await NS.fetch({
+                const deleteData = await NS.fetch({
                     url: `/api/v1/delete/bookmark/${bookmark._id}`,
                     method: "DELETE"
                 });
 
-                if (!deleteResponse.success) return Swal.fire(deleteResponse.error);
+                if (!deleteData.success) return Swal.fire(deleteData.error);
                 Swal.fire("Success", "Bookmark deleted!", "success");
             });
 
@@ -74,13 +74,13 @@ NS("#post-bookmarks-btn").on("click", async function () {
                     }
                 }).then(async result => {
                     if (result.value && result.isConfirmed) {
-                        const renameResponse = await NS.fetch({
+                        const renameData = await NS.fetch({
                             url: `/api/v1/rename/bookmark/${bookmark._id}`,
                             method: "PUT",
                             body: { title: result.value }
                         });
 
-                        if (!renameResponse.success) return Swal.fire(renameResponse.error);
+                        if (!renameData.success) return Swal.fire(renameData.error);
                         Swal.fire("Success", "Bookmark renamed successfully!", "success");
                     }
                 });
@@ -90,11 +90,11 @@ NS("#post-bookmarks-btn").on("click", async function () {
 
     // Navigation
     NS("#user-bookmarks-prev-btn").on("click", async function () {
-        if (bookmarksSkip <= 0) return;
-        bookmarksSkip -= 10;
+        if (skip <= 0) return;
+        skip -= 10;
 
-        bookmarksPosts = await NS.fetch({
-            url: `/api/v1/get/bookmarks/?skip=${bookmarksSkip}`,
+        data = await NS.fetch({
+            url: `/api/v1/get/bookmarks/?skip=${skip}`,
             method: "POST"
         });
 
@@ -103,16 +103,17 @@ NS("#post-bookmarks-btn").on("click", async function () {
 
     NS("#user-bookmarks-next-btn").on("click", async function () {
         if (container.get(".nothing-found")[0]) return;
-        bookmarksSkip += 10;
+        skip += 10;
 
-        bookmarksPosts = await NS.fetch({
-            url: `/api/v1/get/bookmarks/?skip=${bookmarksSkip}`,
+        data = await NS.fetch({
+            url: `/api/v1/get/bookmarks/?skip=${skip}`,
             method: "POST"
         });
 
         renderBookmarks();
     });
 
+    // Init
     renderBookmarks();
     runAccessibility();
 });

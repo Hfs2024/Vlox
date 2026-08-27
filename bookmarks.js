@@ -17,7 +17,7 @@ router.post("/api/v1/get/bookmarks", checkAuth, [
         .limit(10)
         .lean();
 
-    return res.status(200).json({ success: true, posts: bookmarks });
+    return res.status(200).json({ success: true, bookmarks: bookmarks });
 });
 
 router.post("/api/v1/bookmark/post/:id", checkAuth, [

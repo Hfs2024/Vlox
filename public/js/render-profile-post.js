@@ -50,7 +50,6 @@ async function viewAnalytics(post) {
 async function renderProfilePost({
     post, isUser, container
 } = {}) {
-    if (!post) return;
     const postCard = NS.createEl("div", NS(container), { className: "post" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
     NS(NS.createEl("h2", postHeader, { className: "overflow" })).setText(post.title);
@@ -92,7 +91,7 @@ async function renderProfilePost({
 
         NS(NS.createEl("button", primaryButtonsGroup, {
             id: "edit-user-post-btn",
-            style: "width: 100%"
+           className: "w-full"
         })).setText("Edit").on("click", async function () {
             Swal.fire({
                 title: "Update post: ",
@@ -125,7 +124,7 @@ async function renderProfilePost({
                         contentEl: NS("#edit-post-content")
                     });
 
-                    setUpSpoilers(editSpoilersBtn);
+                    setUpBtnToggle(editSpoilersBtn);
                     if (post.spoilers) editSpoilersBtn.addClass("on-color");
 
                     NS("#edit-post-title").setVal(post.title);
@@ -171,7 +170,7 @@ async function renderProfilePost({
 
         if (!post.private) NS(NS.createEl("button", primaryButtonsGroup, {
             id: "pin-user-post-btn",
-            style: "width: 100%"
+            className: "w-full"
         })).setText(post.pinned ? "Unpin" : "Pin").on("click", async function () {
             const pinData = await NS.fetch({
                 url: `/api/v1/pin/post/${post._id}`,
