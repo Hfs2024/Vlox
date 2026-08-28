@@ -140,6 +140,8 @@ function lockEvent(fn) {
 
         try {
             await fn();
+        } catch {
+            Swal.fire("Something went wrong!");
         } finally {
             el.removeAttr("inert");
         }
