@@ -101,7 +101,7 @@ async function renderPosts(posts = []) {
                 });
             });
 
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark post-icon", role: "button", tabIndex: "0" })).on("click", async function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark post-icon", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
                 const bookmarkResponse = await NS.fetch({
                     url: `/api/v1/bookmark/post/${post._id}`,
                     method: "POST"
@@ -109,9 +109,9 @@ async function renderPosts(posts = []) {
 
                 if (!bookmarkResponse.success) return Swal.fire(bookmarkResponse.error);
                 Swal.fire("Success", "Post bookmarked!", "success");
-            });
+            }));
         } else {
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-clock-rotate-left post-icon", role: "button", tabIndex: "0" })).on("click", async function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-clock-rotate-left post-icon", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
                 const postResponse = await NS.fetch({
                     url: `/api/v1/get/post/${post.rootId}`
                 });
@@ -119,9 +119,9 @@ async function renderPosts(posts = []) {
                 if (!postResponse.success) return Swal.fire(postResponse.error);
                 renderPosts(Array.isArray(postResponse.posts) ? postResponse.posts : [postResponse.posts]);
                 Swal.fire("Success", "Successfully loaded the root post!", "success");
-            });
+            }));
 
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-trash post-icon", role: "button", tabIndex: "0" })).on("click", async function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-trash post-icon", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
                 Swal.fire({
                     title: "Are you sure you want to delete the fork?",
                     showCancelButton: true
@@ -136,7 +136,7 @@ async function renderPosts(posts = []) {
                     Swal.fire("Success", "Successfully deleted!", "success");
                     getPosts();
                 });
-            });
+            }));
         };
         NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-link post-icon", role: "button", tabIndex: "0" })).on("click", async function () {
             NS.copy({
@@ -338,7 +338,7 @@ async function renderPosts(posts = []) {
         const optionsDiv = NS.createEl("div", postCard, { className: "options" });
 
         // Like
-        NS(NS.createEl("button", optionsDiv, {})).on("click", async function () {
+        NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
             const likesResponse = await NS.fetch({
                 url: `/api/v1/react/like/post/${post._id}`,
                 method: "POST"
@@ -347,10 +347,10 @@ async function renderPosts(posts = []) {
             if (likesResponse.error) return Swal.fire(likesResponse.error);
             const newLikes = post.likes + 1;
             NS(this).html(`<i class="fa-solid fa-thumbs-up"></i> ${newLikes.toLocaleString()}`);
-        }).html(`<i class="fa-solid fa-thumbs-up"></i> ${post.likes.toLocaleString() || 0}`);
+        })).html(`<i class="fa-solid fa-thumbs-up"></i> ${post.likes.toLocaleString() || 0}`);
 
         // Report
-        NS(NS.createEl("button", optionsDiv, {})).on("click", async function () {
+        NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
             const reportResponse = await NS.fetch({
                 url: `/api/v1/react/report/post/${post._id}`,
                 method: "POST"
@@ -359,7 +359,7 @@ async function renderPosts(posts = []) {
             if (!reportResponse.success) return Swal.fire(reportResponse.error);
             const newReports = post.reports + 1;
             NS(this).html(`<i class="fa-solid fa-warning"></i> ${newReports.toLocaleString()}`);
-        }).html(`<i class="fa-solid fa-warning"></i> ${post.reports.toLocaleString() || 0}`);
+        })).html(`<i class="fa-solid fa-warning"></i> ${post.reports.toLocaleString() || 0}`);
 
         // Comments
         NS(NS.createEl("button", optionsDiv, {})).on("click", function () {

@@ -75,7 +75,7 @@ function showLoginModal() {
         if (!result.isConfirmed) return;
 
         const data = await NS.fetch({
-            url: `api/v1/login`,
+            url: `/api/v1/login`,
             method: "POST",
             body: {
                 username: NS('#username').getVal()[0],
@@ -130,7 +130,7 @@ function showSignUpModal() {
         if (!result.isConfirmed) return;
 
         const data = await NS.fetch({
-            url: `api/v1/signup`,
+            url: `/api/v1/signup`,
             method: "POST",
             body: {
                 username: NS('#username').getVal()[0],
@@ -168,7 +168,7 @@ function showSignUpModal() {
 // User status
 async function getUserStatus() {
     const status = await NS.fetch({
-        url: "api/v1/get/user-status"
+        url: "/api/v1/get/user-status"
     });
 
     if (!status.success) return Swal.fire(status.error);
@@ -191,9 +191,9 @@ signUpBtn.on("click", function () {
     showLoginModal();
 });
 
-signOutBtn.on("click", async function () {
+signOutBtn.on("click", lockEvent(async function () {
     const data = await NS.fetch({
-        url: "api/v1/signout",
+        url: "/api/v1/signout",
         method: "DELETE"
     });
 
@@ -202,16 +202,16 @@ signOutBtn.on("click", async function () {
     getQuickInfo();
     clearGhostState()
     Swal.fire("Success", "You have been logged out!", "success");
-});
+}));
 
-profileBtn.on("click", async function () {
+profileBtn.on("click", lockEvent(async function () {
     const response = await NS.fetch({
         url: `/api/v1/get/user-profile/${window.currentUserQuickInfo._id}/?skip=0`
     });
 
     if (!response.success) return Swal.fire(response.error);
     showProfile(response);
-});
+}));
 
 // Is the user logged in? Then hide the login button
 checkUserStatus();

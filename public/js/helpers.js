@@ -157,6 +157,21 @@ function setUpPostsLiveCounter(element, countElement, maxChars) {
     });
 }
 
+// Lock on click
+function lockEvent(fn) {
+    return async function (event) {
+        const el = NS(event.currentTarget);
+        if (el.attr("inert")) return;
+        el.attr("inert", true);
+
+        try {
+            await fn();
+        } finally {
+            el.removeAttr("inert");
+        }
+    }
+}
+
 // Init
 getQuickInfo();
 runAccessibility();

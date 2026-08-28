@@ -41,7 +41,7 @@ app.use(
     })
 );
 const limiter = createLimiter(900000, 1000, {
-    skip: (req) => req.originalUrl.includes('/api/v1/reset/password')
+    skip: (req) => ['/api/v1/reset/password', '/api/v1/posts/bulk'].some(path => req.originalUrl.includes(path))
 });
 if (!limiter) console.log("Failed to create main limit!");
 else app.use(limiter);
@@ -71,7 +71,7 @@ app.post("/api/v1/posts", checkAuth, [
         title: title,
         content: content,
         by: req.session.userId,
-        boosted: title.toUpperCase() === "[BOOST]",
+        boosted: title.toLowerCase() === "[boost]",
         spoilers: spoilers,
         keywords: keywords,
         receiverId: null,
@@ -97,10 +97,10 @@ app.post("/api/v1/posts/bulk", checkAuth, [
             content: posts[i].content?.slice(0, req.currentUser.maxPostContentCharsLength),
             title: posts[i].title?.slice(0, 20),
             keywords: (Array.isArray(posts[i]?.keywords) && posts[i]?.keywords?.length <= 5) ? posts[i]?.keywords : [],
-            boosted: posts[i]?.title?.slice(0, req.currentUser.maxPostContentCharsLength)?.toUpperCase()?.trim() === "[BOOST]",
+            boosted: posts[i]?.title?.slice(0, req.currentUser.maxPostContentCharsLength)?.toLowerCase()?.trim() === "[boost]",
             spoilers: posts[i].spoilers ? true : false,
             private: posts[i].private ? true : false,
-            pinned: posts[i].pinned ? true : false
+            pinned: false
         }
     }
 
@@ -119,6 +119,7 @@ app.get("/api/v1/get/post/:id", checkAuth, [
         .populate("forkerId", "-password -recoveryCodes -email -pinnedPostsCount")
         .populate("receiverId", "-password -recoveryCodes -email -pinnedPostsCount");
     if (!foundPost) return res.status(400).json({ error: "Post not found!" });
+    
     return res.status(200).json({ success: true, post: [foundPost] });
 });
 
@@ -196,7 +197,8 @@ app.get("/api/v1/get/post/replies/:id/:rootId", checkAuth, [
         for: id,
         rootId: rootId
     })
-        .populate("by", "-password -recoveryCodes -email -pinnedPostsCount");
+        .populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
+        .lean();
 
     return res.status(200).json({ success: true, replies: replies });
 });

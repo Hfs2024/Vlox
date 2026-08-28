@@ -158,6 +158,11 @@ footer {
     color: var(--accent-main-gray);
 }
 
+[inert] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* Responsiveness */
 @media (max-width: 768px) {
     .container {

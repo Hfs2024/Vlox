@@ -34,7 +34,7 @@ async function viewAnalytics(post) {
         .html("<div class='analytics-likes-bar-fill'></div>");
     NS(".analytics-likes-bar-fill").css("width", `${likesPercent}%`);
 
-    if (!post.redeemed && barFilled) NS(NS.createEl("button", postCard, { style: "width: 100%" })).setText("One time redeem!").on("click", async function () {
+    if (!post.redeemed && barFilled) NS(NS.createEl("button", postCard, { style: "width: 100%" })).setText("One time redeem!").on("click", lockEvent(async function () {
         const redeemResponse = await NS.fetch({
             url: `/api/v1/redeem/post/${post._id}`,
             method: "POST"
@@ -42,7 +42,7 @@ async function viewAnalytics(post) {
 
         if (!redeemResponse.success) return Swal.fire(redeemResponse.error);
         Swal.fire("Success", `Redeemed successfully for ${redeemResponse.inc} extra post content chars. You must refresh the page for your new changes to apply.`, "success");
-    });
+    }));
 
     setUpCopyCode(contentEl);
 }
@@ -79,7 +79,7 @@ async function renderProfilePost({
         NS(NS.createEl("button", primaryButtonsGroup, {
             id: "delete-user-post-btn",
             className: "delete-btn w-full"
-        })).setText("Delete").on("click", async function () {
+        })).setText("Delete").on("click", lockEvent(async function () {
             const deletedData = await NS.fetch({
                 url: `/api/v1/delete/post/${post._id}`,
                 method: "DELETE"
@@ -87,7 +87,7 @@ async function renderProfilePost({
 
             if (!deletedData.success) return Swal.fire(deletedData.error);
             Swal.fire("Success", "Post deleted!", "success");
-        });
+        }));
 
         NS(NS.createEl("button", primaryButtonsGroup, {
             id: "edit-user-post-btn",

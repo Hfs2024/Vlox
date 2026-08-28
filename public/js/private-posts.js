@@ -1,4 +1,4 @@
-NS("#private-posts-btn").on("click", async function () {
+NS("#private-posts-btn").on("click", lockEvent(async function () {
     let skip = 0;
     let data = await NS.fetch({
         url: `/api/v1/get/user-private-posts/?skip=${skip}`,
@@ -45,7 +45,7 @@ NS("#private-posts-btn").on("click", async function () {
     }
 
     // Navigation
-    NS("#user-private-posts-next-btn").on("click", async function () {
+    NS("#user-private-posts-next-btn").on("click", lockEvent(async function () {
         if (container.get(".nothing-found")[0]) return;
         skip += 10;
 
@@ -55,9 +55,9 @@ NS("#private-posts-btn").on("click", async function () {
         });
 
         renderPrivatePosts();
-    });
+    }));
 
-    NS("#user-private-posts-prev-btn").on("click", async function () {
+    NS("#user-private-posts-prev-btn").on("click", lockEvent(async function () {
         if (skip <= 0) return;
         skip -= 10;
 
@@ -67,7 +67,7 @@ NS("#private-posts-btn").on("click", async function () {
         });
 
         renderPrivatePosts();
-    });
+    }));
 
     renderPrivatePosts();
-});
+}));

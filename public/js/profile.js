@@ -1,6 +1,6 @@
 async function showProfile(data) {
     // Profile code
-    let postsSkip = 0;
+    let skip = 0;
     const username = capitalizeFirstLetter(data.username);
     const isUser = window.currentUserQuickInfo.username === data.username;
     const emojis = ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"];
@@ -91,7 +91,7 @@ async function showProfile(data) {
     }
 
     // Reset password recovery codes
-    NS("#reset-password-recovery-codes-btn").on("click", async function () {
+    NS("#reset-password-recovery-codes-btn").on("click", lockEvent(async function () {
         const newCodesResponse = await NS.fetch({
             url: "/api/v1/reset/password/recovery-codes",
             method: "POST"
@@ -108,7 +108,7 @@ async function showProfile(data) {
         link.remove();
         URL.revokeObjectURL(url);
         Swal.fire("Sucesss", "Password Recovery Codes Reseted!", "success");
-    });
+    }));
 
     // Insert many posts
     NS("#insert-many-posts-btn").on("click", function () {
@@ -195,7 +195,7 @@ async function showProfile(data) {
         });
     });
 
-    NS("#user-profile-visibility-toggle").on("click", async function () {
+    NS("#user-profile-visibility-toggle").on("click", lockEvent(async function () {
         const updatevisibilityResponse = await NS.fetch({
             url: "/api/v1/change-visibility/user-profile",
             method: "PUT",
@@ -204,34 +204,34 @@ async function showProfile(data) {
 
         if (!updatevisibilityResponse.success) return Swal.fire(updatevisibilityResponse.error);
         Swal.fire("Sucess", `Account is ${data.private ? "public" : "private"}`, "success");
-    });
+    }));
 
     // Navigation
-    NS("#user-posts-prev-btn").on("click", async function () {
-        if (postsSkip <= 0) return;
-        postsSkip -= 10;
+    NS("#user-posts-prev-btn").on("click", lockEvent(async function () {
+        if (skip <= 0) return;
+        skip -= 10;
 
         data = await NS.fetch({
-            url: `/api/v1/get/${isUser ? "user-profile" : `user-profile/${data.username}`}/?skip=${postsSkip}`
+            url: `/api/v1/get/user-profile/${window.currentUserQuickInfo._id}/?skip=${skip}`
         });
 
         renderPosts();
-    });
+    }));
 
-    NS("#user-posts-next-btn").on("click", async function () {
+    NS("#user-posts-next-btn").on("click", lockEvent(async function () {
         if (container.get(".nothing-found")[0]) return;
-        postsSkip += 10;
+        skip += 10;
 
         data = await NS.fetch({
-            url: `/api/v1/get/${isUser ? "user-profile" : `user-profile/${data.username}`}/?skip=${postsSkip}`
+            url: `/api/v1/get/user-profile/${window.currentUserQuickInfo._id}/?skip=${skip}`
         });
 
         renderPosts();
-    });
+    }));
 
     // Emojis
     emojis.forEach(emoji => {
-        NS(NS.createEl("button", NS(".emoji-container"), { className: "emoji-container-button" })).setText(emoji).on("click", async function () {
+        NS(NS.createEl("button", NS(".emoji-container"), { className: "emoji-container-button" })).setText(emoji).on("click", lockEvent(async function () {
             const updateEmojidata = await NS.fetch({
                 url: "/api/v1/update/user",
                 method: "PUT",
@@ -240,7 +240,7 @@ async function showProfile(data) {
 
             if (!updateEmojidata.success) return Swal.fire(updateEmojidata.error);
             return Swal.fire("Success", "Emoji successfully changed!", "success");
-        });
+        }));
     })
 
     renderPosts();
