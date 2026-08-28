@@ -43,8 +43,6 @@ async function viewAnalytics(post) {
         if (!redeemResponse.success) return Swal.fire(redeemResponse.error);
         Swal.fire("Success", `Redeemed successfully for ${redeemResponse.inc} extra post content chars. You must refresh the page for your new changes to apply.`, "success");
     }));
-
-    setUpCopyCode(contentEl);
 }
 
 async function renderProfilePost({
@@ -125,7 +123,7 @@ async function renderProfilePost({
                     });
 
                     setUpBtnToggle(editSpoilersBtn);
-                    if (post.spoilers) editSpoilersBtn.addClass("on-color");
+                    if (post.spoilers) editSpoilersBtn.addClass("is-on-color");
 
                     NS("#edit-post-title").setVal(post.title);
                     NS("#edit-post-content").setVal(post.content);
@@ -157,7 +155,7 @@ async function renderProfilePost({
                             newContent: content,
                             newTitle: title,
                             newKeywords: keywords,
-                            newSpoilers: NS("#edit-spoilers-btn").hasClass("on-color")
+                            newSpoilers: NS("#edit-spoilers-btn").hasClass("is-on-color")
                         }
                     });
 
@@ -199,6 +197,5 @@ async function renderProfilePost({
         });
     }
 
-    setUpCopyCode(contentEl);
     runAccessibility();
 }

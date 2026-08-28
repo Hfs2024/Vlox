@@ -31,7 +31,7 @@ async function showProfile(data) {
           </div>
 
           <div class='taskbar'>
-            <button class='taskbar-button on-bg-color'>All</button>
+            <button class='taskbar-button is-on-bg-color'>All</button>
             <button class='taskbar-button'>Pinned</button>
           </div>
 

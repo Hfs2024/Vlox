@@ -2,16 +2,10 @@
 pre {
     overflow: auto;
     border-radius: 20px;
-    border: 20px;
     padding: 10px;
     background-color: black;
     color: var(--accent-white);
     transition: background-color 0.3s ease;
-    cursor: pointer;
-}
-
-pre:hover {
-    background-color: var(--accent-charcoal) !important;
 }
 
 blockquote {
@@ -32,10 +26,6 @@ img, video {
     border-radius: 10px;
 }
 
-table {
-    min-width: 100%;
-}
-
 th,
 td {
     border-bottom: 2px solid black;
@@ -44,8 +34,7 @@ td {
 }
 
 /* Inputs */
-input:not([type="range"]),
-.password-input-container,
+input,
 textarea {
     width: 100%;
     font-weight: bold;
@@ -76,31 +65,6 @@ textarea {
 
 .forget-password-text-wrapper:hover {
     color: var(--accent-main-gray);
-}
-
-.password-input-container {
-    padding: 0;
-}
-
-.password-input-eye {
-    margin-right: 7px;
-    cursor: pointer;
-    transition: color 0.3s ease;
-}
-
-.password-input-eye:hover {
-    color: var(--accent-main-gray);
-}
-
-#password {
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    margin-top: 0 !important;
-}
-
-#password:focus {
-    outline: none !important;
 }
 
 /* Buttons */
@@ -138,7 +102,7 @@ button:hover {
     background-color: darkred;
 }
 
-.search-posts-btn, .search-input-btn {
+#search-posts-btn, #search-input-btn {
     margin-bottom: 0;
 }
 

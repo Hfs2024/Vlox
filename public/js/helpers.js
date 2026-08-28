@@ -31,9 +31,9 @@ function capitalizeFirstLetter(string) {
 function setUpTaskbar() {
     NS(".taskbar-button").each((btn, index) => {
         NS(btn).on("click", function () {
-            NS(".taskbar-button").removeClass("on-bg-color");
+            NS(".taskbar-button").removeClass("is-on-bg-color");
             NS(".taskbar-panel").removeClass("taskbar-panel-chosen");
-            NS(btn).addClass("on-bg-color");
+            NS(btn).addClass("is-on-bg-color");
             NS(NS(".taskbar-panel")[index]).addClass("taskbar-panel-chosen");
         });
     });
@@ -61,17 +61,6 @@ function changePostVisibility({
     });
 }
 
-// Eye icon
-function setUpEyeIcon() {
-    NS(".password-input-eye").on("click", function () {
-        const type = NS("#password").attr("type");
-        const newType = type === "password" ? "text" : "password";
-        const isText = newType === "text";
-        NS("#password").attr("type", newType);
-        NS(".password-input-eye").replaceClass(`fa-${isText ? "eye" : "eye-slash"}`, `fa-${isText ? "eye-slash" : "eye"}`);
-    });
-}
-
 // Clean HTML
 function cleanHTML(html) {
     return DOMPurify.sanitize(marked.parse(html), {
@@ -79,7 +68,7 @@ function cleanHTML(html) {
             "pre", "code", "b", "table", "tr", "td", "th", "thead", "tfoot", "tbody",
             "b", "i", "br", "span", "em", "strong", "u", "s", "sub", "sup", "small",
             "p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "ul", "ol", "li",
-            "blockquote", "cite", "q"
+            "blockquote", "cite", "q", "img", "video", "audio", "source"
         ]
     });
 }
@@ -87,21 +76,6 @@ function cleanHTML(html) {
 // Post links
 function generatePostLink(postId) {
     return `https://vlox.containers.snapdeploy.app/?id=${postId}`;
-}
-
-// Copy code
-function setUpCopyCode(contentEl) {
-    NS(contentEl.getAll("pre")[0]).each(pre => {
-        hljs.highlightElement(pre);
-        pre = NS(pre).attr("tabIndex", "0").attr("role", "button");
-        pre.on("click", function () {
-            NS.copy({
-                text: pre.getText()[0],
-                onSuccess: () => { Swal.fire("Success", "Copied!", "success") },
-                onFailure: () => { Swal.fire("Error", "Something went wrong.", "errr") }
-            });
-        });
-    });
 }
 
 // Preview and spoilers
@@ -116,7 +90,7 @@ function setUpPreview({
     const toggleDisplay = () => {
         let container = null;
 
-        if (btn?.hasClass("on-color")) {
+        if (btn?.hasClass("is-on-color")) {
             editContainer?.css({ display: "none" });
             previewContainer?.css({ display: "block" });
             previewContainer?.html(`
@@ -134,7 +108,7 @@ function setUpPreview({
     }
 
     btn?.on("click", function () {
-        btn?.toggleClass("on-color");
+        btn?.toggleClass("is-on-color");
         toggleDisplay();
     });
 
@@ -143,7 +117,7 @@ function setUpPreview({
 
 function setUpBtnToggle(btn) {
     btn?.on("click", function () {
-        btn.toggleClass("on-color");
+        btn.toggleClass("is-on-color");
     });
 }
 

@@ -97,7 +97,7 @@ createPostBtn.on("click", lockEvent(async function () {
         title: title,
         content: content,
         keywords: keywords,
-        spoilers: createSpoilersBtn.hasClass("on-color")
+        spoilers: createSpoilersBtn.hasClass("is-on-color")
     });
 
     // Reset
@@ -105,8 +105,8 @@ createPostBtn.on("click", lockEvent(async function () {
     getPosts();
     createContainer.css({ display: "block" });
     previewContainer.css({ display: "none" });
-    createPreviewBtn.removeClass("on-color");
-    createSpoilersBtn.removeClass("on-color");
+    createPreviewBtn.removeClass("is-on-color");
+    createSpoilersBtn.removeClass("is-on-color");
 }));
 
 // Create posts function

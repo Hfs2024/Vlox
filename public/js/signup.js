@@ -7,12 +7,9 @@ function showResetPasswordModal() {
     Swal.fire({
         html: `
          <h2>Reset your password</h2>
-         <input type="text" id="username" placeholder="Username">
-         <input type="text" id="recovery-code" placeholder="Recovery code">
-         <div class='center password-input-container'>
-            <input type="password" id="password" placeholder="New Password">
-            <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
-         </div>
+         <input type="text" id="username" placeholder="Username" />
+         <input type="text" id="recovery-code" placeholder="Recovery code" />
+         <input type="password" id="password" placeholder="New password" />
         `,
         showCancelButton: true,
         confirmButtonText: "Submit",
@@ -41,18 +38,13 @@ function showResetPasswordModal() {
         if (!resetData.success) return Swal.fire(resetData.error);
         Swal.fire("Success", "Password reseted! You can now login", "success");
     });
-
-    setUpEyeIcon();
 }
 
 function showLoginModal() {
     Swal.fire({
         html: `<h2>Login</h2>
             <input type="username" id="username" placeholder="Username" />
-            <div class='center password-input-container'>
-              <input type="password" id="password" placeholder="Password" />
-              <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
-            </div>
+            <input type="password" id="password" placeholder="Password" />
             <div class='forget-password-text-wrapper' onclick='showResetPasswordModal()'>
                <p>Forgot your password?</p>
             </div>
@@ -89,7 +81,6 @@ function showLoginModal() {
         Swal.fire("Success", "Successfully logged in!", "success");
     });
 
-    setUpEyeIcon();
     runAccessibility();
 }
 
@@ -97,10 +88,7 @@ function showSignUpModal() {
     Swal.fire({
         html: `<h2>Sign Up</h2>
             <input type="text" id="username" placeholder="Username" />
-            <div class='center password-input-container'>
-              <input type="password" id="password" placeholder="Password" />
-              <i class='fas fa-eye password-input-eye' role='button' tabindex='0'></i>
-            </div>
+            <input type="password" id="password" placeholder="Password" />
             <input type="email" id="email" placeholder="Email" />
             <input type="text" id="bio" placeholder="Bio (Max 20 chars)" autocomplete="off" />
             <p class="count-text-wrapper">
@@ -161,7 +149,6 @@ function showSignUpModal() {
         max: 20
     });
 
-    setUpEyeIcon();
     runAccessibility();
 }
 
