@@ -120,7 +120,7 @@ app.get("/api/v1/get/post/:id", checkAuth, [
         .populate("receiverId", "-password -recoveryCodes -email -pinnedPostsCount");
     if (!foundPost) return res.status(400).json({ error: "Post not found!" });
     
-    return res.status(200).json({ success: true, post: [foundPost] });
+    return res.status(200).json({ success: true, posts: [foundPost] });
 });
 
 app.get("/api/v1/get/posts", [
