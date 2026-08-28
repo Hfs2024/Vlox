@@ -1,4 +1,4 @@
-NS("#post-bookmarks-btn").on("click", async function () {
+NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
     let skip = 0;
     let data = await NS.fetch({
         url: `/api/v1/get/bookmarks/?skip=${skip}`,
@@ -41,7 +41,7 @@ NS("#post-bookmarks-btn").on("click", async function () {
 
             // Header buttons
             NS(NS.createEl("h2", bookmarkHeader, { className: "overflow" })).setText(capitalizeFirstLetter(bookmark.title) || `Bookmark ${index + 1}`);
-            NS(NS.createEl("i", bookmarkHeader, { className: "fas fa-eye helper-icon", role: "button", tabIndex: "0" })).on("click", async function () {
+            NS(NS.createEl("i", bookmarkHeader, { className: "fas fa-eye helper-icon", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
                 const postData = await NS.fetch({
                     url: `/api/v1/get/post/${bookmark.for}`
                 });
@@ -49,10 +49,10 @@ NS("#post-bookmarks-btn").on("click", async function () {
                 if (!postData.success) return Swal.fire(post.error);
                 renderPosts(Array.isArray(postData.post) ? postData.post : [postData.post]);
                 Swal.clickConfirm();
-            });
+            }));
 
             // Main buttons
-            NS(NS.createEl("button", buttonGroup, { className: "delete-btn w-full" })).setText("Delete").on("click", async function () {
+            NS(NS.createEl("button", buttonGroup, { className: "delete-btn w-full" })).setText("Delete").on("click", lockEvent(async function () {
                 const deleteData = await NS.fetch({
                     url: `/api/v1/delete/bookmark/${bookmark._id}`,
                     method: "DELETE"
@@ -60,7 +60,7 @@ NS("#post-bookmarks-btn").on("click", async function () {
 
                 if (!deleteData.success) return Swal.fire(deleteData.error);
                 Swal.fire("Success", "Bookmark deleted!", "success");
-            });
+            }));
 
             NS(NS.createEl("button", buttonGroup, { className: "w-full" })).setText("Rename").on("click", function () {
                 Swal.fire({
@@ -89,7 +89,7 @@ NS("#post-bookmarks-btn").on("click", async function () {
     }
 
     // Navigation
-    NS("#user-bookmarks-prev-btn").on("click", async function () {
+    NS("#user-bookmarks-prev-btn").on("click", lockEvent(async function () {
         if (skip <= 0) return;
         skip -= 10;
 
@@ -99,9 +99,9 @@ NS("#post-bookmarks-btn").on("click", async function () {
         });
 
         renderBookmarks();
-    });
+    }));
 
-    NS("#user-bookmarks-next-btn").on("click", async function () {
+    NS("#user-bookmarks-next-btn").on("click", lockEvent(async function () {
         if (container.get(".nothing-found")[0]) return;
         skip += 10;
 
@@ -111,9 +111,9 @@ NS("#post-bookmarks-btn").on("click", async function () {
         });
 
         renderBookmarks();
-    });
+    }));
 
     // Init
     renderBookmarks();
     runAccessibility();
-});
+}));

@@ -1,4 +1,4 @@
-NS("#view-active-gifts").on("click", async function () {
+NS("#view-active-gifts").on("click", lockEvent(async function () {
     const data = await NS.fetch({
         url: "/api/v1/get/gifts"
     });
@@ -16,7 +16,7 @@ NS("#view-active-gifts").on("click", async function () {
         NS(NS.createEl("h2", giftCard, { className: "overflow" })).setText(gift.name);
         NS(NS.createEl("p", giftCard, {})).html(`<b>Max Uses:</b> ${gift.usesCount} times`);
         NS(NS.createEl("p", giftCard, {})).html(`<b>Used:</b> ${gift.usedCount} times`);
-        NS(NS.createEl("button", giftCard, { className: "w-full" })).setText("Redeem").on("click", async function () {
+        NS(NS.createEl("button", giftCard, { className: "w-full" })).setText("Redeem").on("click", lockEvent(async function () {
             const redeemData = await NS.fetch({
                 url: `/api/v1/redeem/gift-link/${gift._id}`,
                 method: "POST"
@@ -24,6 +24,6 @@ NS("#view-active-gifts").on("click", async function () {
 
             if (!redeemData.success) return Swal.fire(redeemData.error);
             Swal.fire("Success", "Gift redeemed!", "success");
-        });
+        }));
     });
-});
+}));

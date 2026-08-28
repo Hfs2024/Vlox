@@ -83,7 +83,7 @@ copyPostContentBtn.on("click", function () {
 });
 
 // Create post
-createPostBtn.on("click", async function () {
+createPostBtn.on("click", lockEvent(async function () {
     const title = createPostTitle.getVal()[0]?.trim();
     const content = createPostContent.getVal()[0]?.trim();
     const keywords = createPostKeywords.getVal()[0]?.trim().split(",");
@@ -107,7 +107,7 @@ createPostBtn.on("click", async function () {
     previewContainer.css({ display: "none" });
     createPreviewBtn.removeClass("on-color");
     createSpoilersBtn.removeClass("on-color");
-});
+}));
 
 // Create posts function
 async function createPost({ title, content, keywords, spoilers = false } = {}) {
