@@ -6,7 +6,7 @@
     --accent-secondary-blue: #10204c;
     --accent-main-gray: #aaa;
     --accent-secondary-gray: #555;
-    --accent-white: aliceblue;
+    --accent-white: #f0f8ff;
     --card-background: #f0f0f0;
     --bg-main: white;
 }
@@ -132,19 +132,19 @@ footer {
     max-width: 100%;
 }
 
-.on-color {
+.is-on-color {
     color: var(--accent-main-blue);
 }
 
-.on-color:hover {
+.is-on-color:hover {
     color: var(--accent-secondary-blue);
 }
 
-.on-bg-color {
+.is-on-bg-color {
     background-color: var(--accent-main-blue);
 }
 
-.on-bg-color:hover {
+.is-on-bg-color:hover {
     background-color: var(--accent-secondary-blue);
 }
 
@@ -160,7 +160,7 @@ footer {
 
 [inert] {
     opacity: 0.5;
-    cursor: not-allowed;
+    transition: 0.3s opacity ease;
 }
 
 /* Responsiveness */

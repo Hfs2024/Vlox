@@ -157,17 +157,13 @@ async function renderPosts(posts = []) {
                 : isLongPost ? "<button class='show-long-post-btn w-full'><i class='fas fa-up-long'></i> Show Long Post</button>"
                     : content);
 
-        if (!isLongPost && !post.spoilers) setUpCopyCode(contentEl); // Don't run unnecessary stuff
-
         // Show spoliers/long post
         NS(postCard.get(".show-spoliers-btn")[0]).on("click", function () {
             contentEl.html(content);
-            setUpCopyCode(contentEl);
         });
 
         NS(postCard.get(".show-long-post-btn")[0]).on("click", function () {
             contentEl.html(content);
-            setUpCopyCode(contentEl);
         });
 
         // Author
@@ -338,7 +334,7 @@ async function renderPosts(posts = []) {
         const optionsDiv = NS.createEl("div", postCard, { className: "options" });
 
         // Like
-        NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
+        const likeBtn = NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
             const likesResponse = await NS.fetch({
                 url: `/api/v1/react/like/post/${post._id}`,
                 method: "POST"
@@ -346,11 +342,11 @@ async function renderPosts(posts = []) {
 
             if (likesResponse.error) return Swal.fire(likesResponse.error);
             const newLikes = post.likes + 1;
-            NS(this).html(`<i class="fa-solid fa-thumbs-up"></i> ${newLikes.toLocaleString()}`);
+            likeBtn.html(`<i class="fa-solid fa-thumbs-up"></i> ${newLikes.toLocaleString()}`);
         })).html(`<i class="fa-solid fa-thumbs-up"></i> ${post.likes.toLocaleString() || 0}`);
 
         // Report
-        NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
+        const reportBtn = NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
             const reportResponse = await NS.fetch({
                 url: `/api/v1/react/report/post/${post._id}`,
                 method: "POST"
@@ -358,7 +354,7 @@ async function renderPosts(posts = []) {
 
             if (!reportResponse.success) return Swal.fire(reportResponse.error);
             const newReports = post.reports + 1;
-            NS(this).html(`<i class="fa-solid fa-warning"></i> ${newReports.toLocaleString()}`);
+            reportBtn.html(`<i class="fa-solid fa-warning"></i> ${newReports.toLocaleString()}`);
         })).html(`<i class="fa-solid fa-warning"></i> ${post.reports.toLocaleString() || 0}`);
 
         // Comments
