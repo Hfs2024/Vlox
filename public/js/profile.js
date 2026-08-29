@@ -152,7 +152,7 @@ async function showProfile(data) {
             }
         });
 
-        if (result.value && result.isConfirmed) {
+        if (result.isConfirmed) {
             const updateBioResponse = await NS.fetch({
                 url: "/api/v1/update/user",
                 method: "PUT",
@@ -177,7 +177,7 @@ async function showProfile(data) {
             }
         });
 
-        if (result.value && result.isConfirmed) {
+        if (result.isConfirmed) {
             const updateEmailResponse = await NS.fetch({
                 url: "/api/v1/update/user",
                 method: "PUT",

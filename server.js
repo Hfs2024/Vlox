@@ -160,7 +160,7 @@ app.get("/api/v1/search/posts", [
         createdAt: -1,
         _id: -1
     }).limit(100).populate("by", "-password -recoveryCodes -email -pinnedPostsCount");
-    
+
     return res.status(200).json({ success: true, posts: foundPosts });
 });
 
@@ -331,14 +331,19 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
+    const errors = {
+        POST_UPDATE_FAILED: "Post update failed!",
+        USER_UPDATE_FAILED: "User update failed!",
+        COMMENT_UPDATE_FAILED: "Comment update failed!",
+        FORK_DELETE_FAILED: "Fork delete failed!",
+        POST_NOT_FOUND: "Post not found!",
+        POST_DELETE_FAILED: "Post delete failed!",
+        GIFT_REDEEM_FAILED: "Gift redeem failed!"
+    }
+
     if (err.code === 11000) return res.status(400).json({ error: "A record with this value already exists." });
-    if (err.message === "POST_UPDATE_FAILED") return res.status(400).json({ error: "Post update failed!" });
-    if (err.message === "USER_UPDATE_FAILED") return res.status(400).json({ error: "User update failed!" });
-    if (err.message === "COMMENT_UPDATE_FAILED") return res.status(400).json({ error: "Comment update failed!" });
-    if (err.message === "FORK_DELETE_FAILED") return res.status(400).json({ error: "Fork delete failed!" });
-    if (err.message === "POST_NOT_FOUND") return res.status(400).json({ error: "Post delete failed!" });
-    if (err.message === "POST_DELETE_FAILED") return res.status(400).json({ error: "Post delete failed!" });
-    if (err.message === "GIFT_REDEEM_FAILED") return res.status(400).json({ error: "Gift redeem failed!" });
+    if (errors[err.message]) return res.status(400).json({ error: errors[err.message] });
+
     console.error("Error:", err.stack);
     return res.status(400).json({ error: "An unexpected error occurred." });
 });

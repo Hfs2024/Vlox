@@ -125,7 +125,7 @@ function setUpBtnToggle(btn) {
 function setUpPostsLiveCounter(element, countElement, maxChars) {
     NS.liveCounter({
         selector: element,
-        counterElement: countElement,
+        counterSelector: countElement,
         showCounter: true,
         max: maxChars || 2000
     });

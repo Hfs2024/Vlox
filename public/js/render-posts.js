@@ -30,7 +30,7 @@ async function renderPosts(posts = []) {
             didOpen: () => {
                 NS.liveCounter({
                     selector: `#${inputId}`,
-                    counterElement: `#${countId}`,
+                    counterSelector: `#${countId}`,
                     showCounter: true,
                     max: 200
                 });

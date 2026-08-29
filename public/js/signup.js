@@ -107,7 +107,7 @@ async function showSignUpModal() {
         didOpen: () => {
             NS.liveCounter({
                 selector: "#bio",
-                counterElement: "#user-bio-content-count",
+                counterSelector: "#user-bio-content-count",
                 showCounter: true,
                 max: 20
             });
