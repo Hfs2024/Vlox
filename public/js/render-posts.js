@@ -37,7 +37,7 @@ async function renderPosts(posts = []) {
 
                 // Elements
                 const inputEl = NS(`#${inputId}`).setVal(value).focus();
-                NS(`#${countId}`).setText(`${inputEl.getVal().length}/200`);
+                NS(`#${countId}`).setText(`${inputEl.getVal()[0].length}/200`);
             },
 
             preConfirm: () => {
@@ -209,7 +209,7 @@ async function renderPosts(posts = []) {
                         </div>
                     `).on("click", function (e) {
                     e.preventDefault();
-                    if (reply.by.username !== window.currentUserQuickInfo.username) return;
+                    if (reply.by.username !== window?.currentUserQuickInfo?.username) return;
 
                     inputComment({
                         title: "Update reply:",
@@ -278,7 +278,7 @@ async function renderPosts(posts = []) {
                         </div>
                     `).on("click", function (e) {
                     e.preventDefault();
-                    if (comment.by.username !== window.currentUserQuickInfo.username) return;
+                    if (comment.by.username !== window?.currentUserQuickInfo?.username) return;
 
                     inputComment({
                         title: "Update comment:",
@@ -360,11 +360,11 @@ async function renderPosts(posts = []) {
                 title: "Add a comment:",
                 inputId: "create-comment-input",
                 countId: "create-comment-count",
-                onSubmit: async () => {
+                onSubmit: async (content) => {
                     const commentResponse = await NS.fetch({
                         url: `/api/v1/comment/post/${post._id}`,
                         method: "POST",
-                        body: { comment: NS("#create-comment-input").getVal()[0] }
+                        body: { comment: content }
                     });
 
                     if (!commentResponse.success) return Swal.fire(commentResponse.error);

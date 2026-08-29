@@ -14,9 +14,9 @@ async function getQuickInfo() {
     });
 
     window.currentUserQuickInfo = quickInfo;
-    const maxPostContentCharsLength = window.currentUserQuickInfo?.maxPostContentCharsLength;
+    const maxPostContentCharsLength = window?.currentUserQuickInfo?.maxPostContentCharsLength;
     NS("#create-post-content-count").setText(`${NS("#create-post-content").getVal()[0].length}/${maxPostContentCharsLength || 2000}`);
-    setUpPostsLiveCounter("#create-post-content", "#create-post-content-count", window.currentUserQuickInfo.maxPostContentCharsLength);
+    setUpPostsLiveCounter("#create-post-content", "#create-post-content-count", maxPostContentCharsLength);
 
     return quickInfo;
 }

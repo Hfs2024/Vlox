@@ -197,7 +197,7 @@ signOutBtn.on("click", lockEvent(async function () {
 
 profileBtn.on("click", lockEvent(async function () {
     const response = await NS.fetch({
-        url: `/api/v1/get/user-profile/${window.currentUserQuickInfo._id}/?skip=0`
+        url: `/api/v1/get/user-profile/${window?.currentUserQuickInfo?._id}/?skip=0`
     });
 
     if (!response.success) return Swal.fire(response.error);
