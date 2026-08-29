@@ -2,7 +2,7 @@ async function showProfile(data) {
     // Profile code
     let skip = 0;
     const username = capitalizeFirstLetter(data.username);
-    const isUser = window.currentUserQuickInfo.username === data.username;
+    const isUser = window?.currentUserQuickInfo?.username === data.username;
     const emojis = ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"];
     const greetings = ["Hello", "Hola", "Bonjour", "Ciao", "Hallo", "Olá", "Привет", "你好", "こんにちは", "안녕하세요", "مرحبا", "नमस्ते", "Merhaba", "Shalom", "Sawubona"];
     const greeting = greetings[Math.floor(Math.random() * greetings.length)];
@@ -221,7 +221,7 @@ async function showProfile(data) {
         skip -= 10;
 
         data = await NS.fetch({
-            url: `/api/v1/get/user-profile/${window.currentUserQuickInfo._id}/?skip=${skip}`
+            url: `/api/v1/get/user-profile/${window?.currentUserQuickInfo?._id}/?skip=${skip}`
         });
 
         renderPosts();
@@ -232,7 +232,7 @@ async function showProfile(data) {
         skip += 10;
 
         data = await NS.fetch({
-            url: `/api/v1/get/user-profile/${window.currentUserQuickInfo._id}/?skip=${skip}`
+            url: `/api/v1/get/user-profile/${window?.currentUserQuickInfo?._id}/?skip=${skip}`
         });
 
         renderPosts();
