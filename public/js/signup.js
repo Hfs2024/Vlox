@@ -3,8 +3,8 @@ const signOutBtn = NS("#signout-btn");
 const profileBtn = NS("#profile-btn");
 const loggedInGroup = NS("#loggedIn-group");
 
-function showResetPasswordModal() {
-    Swal.fire({
+async function showResetPasswordModal() {
+    const result = await Swal.fire({
         html: `
          <h2>Reset your password</h2>
          <input type="text" id="username" placeholder="Username" />
@@ -22,26 +22,28 @@ function showResetPasswordModal() {
             if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
             if (newPassword.length < 6 || newPassword.length > 12) return Swal.showValidationMessage("Password must be between 6 and 12 chars!");
             if (recoveryCode.length !== 20) return Swal.showValidationMessage("Recovery code must be exactly 20 chars long!");
-        }
-    }).then(async result => {
-        if (!result.isConfirmed) return;
-        const resetData = await NS.fetch({
-            url: "/api/v1/reset/password",
-            method: "POST",
-            body: {
-                recoveryCode: NS("#recovery-code").getVal()[0],
-                newPassword: NS("#password").getVal()[0],
-                username: NS("#username").getVal()[0]
-            }
-        });
 
-        if (!resetData.success) return Swal.fire(resetData.error);
-        Swal.fire("Success", "Password reseted! You can now login", "success");
+            return { username, newPassword, recoveryCode };
+        }
     });
+
+    if (!result.isConfirmed) return;
+    const resetData = await NS.fetch({
+        url: "/api/v1/reset/password",
+        method: "POST",
+        body: {
+            recoveryCode: result.value.recoveryCode,
+            newPassword: result.value.newPassword,
+            username: result.value.username
+        }
+    });
+
+    if (!resetData.success) return Swal.fire(resetData.error);
+    Swal.fire("Success", "Password reseted! You can now login", "success");
 }
 
-function showLoginModal() {
-    Swal.fire({
+async function showLoginModal() {
+    const result = await Swal.fire({
         html: `<h2>Login</h2>
             <input type="username" id="username" placeholder="Username" />
             <input type="password" id="password" placeholder="Password" />
@@ -55,6 +57,7 @@ function showLoginModal() {
         showCancelButton: true,
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
+        didOpen: () => { runAccessibility(); },
         preConfirm: () => {
             const username = Swal.getPopup().querySelector('#username').value;
             const password = Swal.getPopup().querySelector('#password').value;
@@ -62,30 +65,29 @@ function showLoginModal() {
             if (!username || !password) return Swal.showValidationMessage("You must enter a username and a password!");
             if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
             if (password.length < 6 || password.length > 12) return Swal.showValidationMessage("Password must be between 6 and 12 chars!");
+
+            return { username, password };
         }
-    }).then(async result => {
-        if (!result.isConfirmed) return;
-
-        const data = await NS.fetch({
-            url: `/api/v1/login`,
-            method: "POST",
-            body: {
-                username: NS('#username').getVal()[0],
-                password: NS('#password').getVal()[0],
-            }
-        });
-
-        if (!data.success) return Swal.fire(data.error);
-        checkUserStatus();
-        getQuickInfo();
-        Swal.fire("Success", "Successfully logged in!", "success");
     });
 
-    runAccessibility();
+    if (!result.isConfirmed) return;
+    const data = await NS.fetch({
+        url: `/api/v1/login`,
+        method: "POST",
+        body: {
+            username: result.value.username,
+            password: result.value.password,
+        }
+    });
+
+    if (!data.success) return Swal.fire(data.error);
+    checkUserStatus();
+    getQuickInfo();
+    Swal.fire("Success", "Successfully logged in!", "success");
 }
 
-function showSignUpModal() {
-    Swal.fire({
+async function showSignUpModal() {
+    const result = await Swal.fire({
         html: `<h2>Sign Up</h2>
             <input type="text" id="username" placeholder="Username" />
             <input type="password" id="password" placeholder="Password" />
@@ -102,6 +104,17 @@ function showSignUpModal() {
         showCancelButton: true,
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
+        didOpen: () => {
+            NS.liveCounter({
+                selector: "#bio",
+                counterElement: "#user-bio-content-count",
+                showCounter: true,
+                max: 20
+            });
+
+            runAccessibility();
+        },
+
         preConfirm: () => {
             const username = Swal.getPopup().querySelector('#username').value;
             const password = Swal.getPopup().querySelector('#password').value;
@@ -113,43 +126,35 @@ function showSignUpModal() {
             if (password.length < 6 || password.length > 12) return Swal.showValidationMessage("Password must be between 6 and 12 chars!");
             if (email.length > 100 || !/.+\@.+\..+/.test(email)) return Swal.showValidationMessage("Email must valid and less than or equal to 100 chars!");
             if (bio.length < 5) return Swal.showValidationMessage("Bio must be higher or equal to 5 chars!");
+
+            return { username, passord, email, bio };
         }
-    }).then(async result => {
-        if (!result.isConfirmed) return;
-
-        const data = await NS.fetch({
-            url: `/api/v1/signup`,
-            method: "POST",
-            body: {
-                username: NS('#username').getVal()[0],
-                password: NS('#password').getVal()[0],
-                email: NS('#email').getVal()[0],
-                bio: NS('#bio').getVal()[0]
-            }
-        });
-
-        if (!data.success) return Swal.fire(data.error);
-        checkUserStatus();
-        getQuickInfo();
-        const blob = new Blob([data.recoveryCodes.join("\n")], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-        NS(NS.createEl("a", document.body, {}))
-            .attr("href", url)
-            .attr("download", "recovery-codes.txt")
-            .click()
-            .remove();
-        URL.revokeObjectURL(url);
-        Swal.fire("Success", "Account created successfully!", "success");        
     });
 
-    NS.liveCounter({
-        selector: "#bio",
-        counterElement: "#user-bio-content-count",
-        showCounter: true,
-        max: 20
+    if (!result.isConfirmed) return;
+    const data = await NS.fetch({
+        url: `/api/v1/signup`,
+        method: "POST",
+        body: {
+            username: result.value.username,
+            password: result.value.password,
+            email: result.value.email,
+            bio: result.value.bio
+        }
     });
 
-    runAccessibility();
+    if (!data.success) return Swal.fire(data.error);
+    checkUserStatus();
+    getQuickInfo();
+    const blob = new Blob([data.recoveryCodes.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    NS(NS.createEl("a", document.body, {}))
+        .attr("href", url)
+        .attr("download", "recovery-codes.txt")
+        .click()
+        .remove();
+    URL.revokeObjectURL(url);
+    Swal.fire("Success", "Account created successfully!", "success");
 }
 
 // User status
@@ -187,7 +192,6 @@ signOutBtn.on("click", lockEvent(async function () {
     if (!data.success) return Swal.fire(data.error);
     checkUserStatus();
     getQuickInfo();
-    clearGhostState()
     Swal.fire("Success", "You have been logged out!", "success");
 }));
 
