@@ -119,7 +119,7 @@ app.get("/api/v1/get/post/:id", checkAuth, [
         .populate("forkerId", "-password -recoveryCodes -email -pinnedPostsCount")
         .populate("receiverId", "-password -recoveryCodes -email -pinnedPostsCount");
     if (!foundPost) return res.status(400).json({ error: "Post not found!" });
-    
+
     return res.status(200).json({ success: true, posts: [foundPost] });
 });
 
@@ -160,7 +160,7 @@ app.get("/api/v1/search/posts", [
         createdAt: -1,
         _id: -1
     }).limit(100).populate("by", "-password -recoveryCodes -email -pinnedPostsCount");
-
+    
     return res.status(200).json({ success: true, posts: foundPosts });
 });
 

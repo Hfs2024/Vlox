@@ -15,19 +15,19 @@ In early 2026, I tried again with a project called *BlockSocial*. I added comple
 I had to stop and ask myself: *Why do my social media apps keep failing?* 
 The answer was always the same: **Verbose Vanilla JS.**
 
-### The Dilemma & The Solution
+### The Problem & The Solution
 When planning my next platform, **Vlox**, I evaluated my frontend options:
 - **jQuery?** Too legacy.
-- **Modern Frameworks (React/Vue)?** Too heavy for edge environments.
+- **Modern Frameworks (React/Vue)?** Too heavy.
 - **Vanilla JS?** Too verbose.
 
-I decided to take the best parts of each and engineer my own solution. I built **NanoScript**—a modern, ultra-lightweight JavaScript library designed for fluent DOM manipulation via a fast, method-chaining API. To make it even more powerful, I engineered custom plugins for it, including a live counter and **Ghost State** (which automatically saves what you type so you never lose a draft).
+I decided to take the best parts of each and engineer my own solution. I built **NanoScript**—a modern, ultra-lightweight JavaScript library designed for fluent DOM manipulation via a fast, method-chaining API. To make it even more powerful, I engineered custom plugins for it, including a live counter.
 
 ### Bringing Vlox to Life 
 With NanoScript handling the frontend, I built **Vlox** as a clean, high-performance Minimum Viable Product (MVP). It features a robust Node.js/Express backend, MongoDB database storage, secure bcrypt hashing, XSS sanitization, and more. 
 
 Thanks to NanoScript, the frontend architecture is finally in a state that I can easily scale without hitting a wall of messy code.
 
-If you liked the project, please drop a star on GitHub!
+If you liked the project, please drop a star on GitHub! 
 
 **Thanks for reading!**

@@ -46,8 +46,8 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                     url: `/api/v1/get/post/${bookmark.for}`
                 });
 
-                if (!postData.success) return Swal.fire(post.error);
-                renderPosts(Array.isArray(postData.post) ? postData.post : [postData.post]);
+                if (!postData.success) return Swal.fire(postData.error);
+                renderPosts(Array.isArray(postData.posts) ? postData.posts : [postData.posts]);
                 Swal.clickConfirm();
             }));
 
@@ -62,8 +62,8 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                 Swal.fire("Success", "Bookmark deleted!", "success");
             }));
 
-            NS(NS.createEl("button", buttonGroup, { className: "w-full" })).setText("Rename").on("click", function () {
-                Swal.fire({
+            NS(NS.createEl("button", buttonGroup, { className: "w-full" })).setText("Rename").on("click", async function () {
+                const result = await Swal.fire({
                     title: "Enter new title: ",
                     input: "text",
                     inputPlaceholder: "Enter new title...",
@@ -72,18 +72,17 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                         if (!result) return Swal.showValidationMessage("Please enter title before proceeding!");
                         if (result.length > 20) return Swal.showValidationMessage("Title must be less than or equal to 20 chars!");
                     }
-                }).then(async result => {
-                    if (result.value && result.isConfirmed) {
-                        const renameData = await NS.fetch({
-                            url: `/api/v1/rename/bookmark/${bookmark._id}`,
-                            method: "PUT",
-                            body: { title: result.value }
-                        });
-
-                        if (!renameData.success) return Swal.fire(renameData.error);
-                        Swal.fire("Success", "Bookmark renamed successfully!", "success");
-                    }
                 });
+
+                if (!result.isConfirmed) return;
+                const renameData = await NS.fetch({
+                    url: `/api/v1/rename/bookmark/${bookmark._id}`,
+                    method: "PUT",
+                    body: { title: result.value }
+                });
+
+                if (!renameData.success) return Swal.fire(renameData.error);
+                Swal.fire("Success", "Bookmark renamed successfully!", "success");
             });
         });
     }

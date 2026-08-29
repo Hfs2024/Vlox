@@ -7,15 +7,9 @@ async function viewAnalytics(post) {
 
     const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "post" });
     NS(NS.createEl("h2", postCard, { className: "overflow" })).setText(post.title);
-    const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
+    NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
     const panelAnalyticsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
-    let likesPercent = 10;
-    if (post.likes === 0) likesPercent = 0;
-    else if (post.likes >= 100) likesPercent = 100;
-    else if (post.likes >= 80) likesPercent = 80;
-    else if (post.likes >= 60) likesPercent = 60;
-    else if (post.likes >= 40) likesPercent = 40;
-    else if (post.likes >= 20) likesPercent = 20;
+    const likesPercent = post.likes === 0 ? 0 : post.likes >= 100 ? 100 : post.likes >= 80 ? 80 : post.likes >= 60 ? 60 : post.likes >= 40 ? 40 : 20;
     const barFilled = likesPercent === 100;
 
     // Quick analytics
@@ -63,7 +57,7 @@ async function renderProfilePost({
             }
         });
     });
-    const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
+    NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
 
     if (isUser) {
         NS(NS.createEl("p", postCard, {
@@ -89,21 +83,21 @@ async function renderProfilePost({
 
         NS(NS.createEl("button", primaryButtonsGroup, {
             id: "edit-user-post-btn",
-           className: "w-full"
+            className: "w-full"
         })).setText("Edit").on("click", async function () {
-            Swal.fire({
+            const result = await Swal.fire({
                 title: "Update post: ",
                 html: `
                   <div id='edit-container'>
                     <input id='edit-post-title' type='text' placeholder='Enter new title...' />
-                    <input id='edit-post-keywords' type='text' placeholder='Enter new keyword (Seperated by comma)...' />
+                    <input id='edit-post-keywords' type='text' placeholder='Enter new keyword (Separated by comma)...' />
                     <textarea id='edit-post-content' placeholder='Enter new content'></textarea>
                   </div>
                   <div id="edit-preview-container" class="post-preview center-overflow"></div>
                   <div class='space-between'>
                     <div class='center'>
                       <i id="edit-spoilers-btn" class="fa-solid fa-circle-exclamation helper-icon" role="button" tabindex="0" title="Spoilers"></i>
-                      <i id="edit-preview-mode" class="fas fa-columns helper-icon" role="button" tabindex="0" title="Peview toggle"></i>
+                      <i id="edit-preview-mode" class="fas fa-columns helper-icon" role="button" tabindex="0" title="Preview toggle"></i>
                     </div>                    
 
                     <p class="count-text-wrapper">
@@ -128,42 +122,38 @@ async function renderProfilePost({
                     NS("#edit-post-title").setVal(post.title);
                     NS("#edit-post-content").setVal(post.content);
                     NS("#edit-post-keywords").setVal(post.keywords.join(", "));
-                    NS("#edit-post-content-count").setText(`${NS("#edit-post-content").getVal()[0].length}/${window.maxPostContentCharsLength || 2000}`);
-                    setUpPostsLiveCounter("#edit-post-content", "#edit-post-content-count", window.currentUserQuickInfo.maxPostContentCharsLength);
+                    NS("#edit-post-content-count").setText(`${NS("#edit-post-content").getVal()[0].length}/${window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
+                    setUpPostsLiveCounter("#edit-post-content", "#edit-post-content-count", window?.currentUserQuickInfo?.maxPostContentCharsLength);
                 },
                 showCancelButton: true,
                 preConfirm: () => {
                     const title = Swal.getPopup().querySelector("#edit-post-title").value;
                     const content = Swal.getPopup().querySelector("#edit-post-content").value;
-                    const keywords = Swal.getPopup().querySelector("#edit-post-keywords").value.split(",");
-                    const maxPostContentCharsLength = window.currentUserQuickInfo.maxPostContentCharsLength || 2000;
+                    const keywords = Swal.getPopup().querySelector("#edit-post-keywords").value.split(",").filter(Boolean).map(kw => kw.toLowerCase().trim());
+                    const maxPostContentCharsLength = window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000;
                     if (!title || !content) return Swal.showValidationMessage("Don't forget the title and content!");
                     if (title.length > 20) return Swal.showValidationMessage("Title must be less than 20 chars!");
                     if (content.length > maxPostContentCharsLength) return Swal.showValidationMessage(`Content must be less than ${maxPostContentCharsLength} chars!`);
                     if (keywords.length > 5) return Swal.showValidationMessage("Keywords count should be less than 5!");
-                }
-            }).then(async result => {
-                const title = NS("#edit-post-title").getVal()[0];
-                const content = NS("#edit-post-content").getVal()[0];
-                const keywords = NS("#edit-post-keywords").getVal()[0].split(",");
 
-                if (title && content && result.isConfirmed) {
-                    const editPostData = await NS.fetch({
-                        url: `/api/v1/edit/post/${post._id}`,
-                        method: "PUT",
-                        body: {
-                            newContent: content,
-                            newTitle: title,
-                            newKeywords: keywords,
-                            newSpoilers: NS("#edit-spoilers-btn").hasClass("is-on-color")
-                        }
-                    });
-
-                    if (!editPostData.success) return Swal.fire(editPostData.error);
-                    getQuickInfo();
-                    Swal.fire("Success", `Post updated!`, "success");
+                    return { title, content, keywords };
                 }
             });
+
+            if (!result.isConfirmed) return;
+            const editPostData = await NS.fetch({
+                url: `/api/v1/edit/post/${post._id}`,
+                method: "PUT",
+                body: {
+                    newContent: result.value.content,
+                    newTitle: result.value.title,
+                    newKeywords: result.value.keywords,
+                    newSpoilers: NS("#edit-spoilers-btn").hasClass("is-on-color")
+                }
+            });
+
+            if (!editPostData.success) return Swal.fire(editPostData.error);
+            Swal.fire("Success", `Post updated!`, "success");
         });
 
         if (!post.private) NS(NS.createEl("button", primaryButtonsGroup, {

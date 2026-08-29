@@ -133,9 +133,10 @@ function setUpPostsLiveCounter(element, countElement, maxChars) {
 
 // Lock on click
 function lockEvent(fn) {
+    if (typeof fn !== "function") return;
+
     return async function (event) {
         const el = NS(event.currentTarget);
-        if (el.attr("inert")) return;
         el.attr("inert", true);
 
         try {

@@ -12,7 +12,6 @@ const createContainer = NS("#create-container");
 const previewContainer = NS("#create-preview-container");
 const prevBtn = NS("#prev-btn");
 const nextBtn = NS("#next-btn");
-let isSearching = false;
 
 // Search
 async function search() {
@@ -24,23 +23,19 @@ async function search() {
         method: "GET"
     });
 
-    isSearching = false;
     if (!searchData.success) return Swal.fire(searchData.error);
     renderPosts(Array.isArray(searchData.posts) ? searchData.posts : [searchData.posts]);
 }
 
-searchPostsBtn.on("click", function () {
-    if (isSearching) return Swal.fire("Still searching...");
-
+searchPostsBtn.on("click", lockEvent(async function () {
     const value = searchPostsInput.getVal()[0];
     if (value.length > 100) return Swal.fire("Query should be less than or equal to 100 chars!");
     if (!value) return getPosts();
 
-    isSearching = true;
-    search();
-});
+    await search();
+}));
 
-// Preview create preview mode and spoliers 
+// Preview mode and spoliers 
 setUpPreview({
     btn: createPreviewBtn,
     editContainer: createContainer,
@@ -50,26 +45,6 @@ setUpPreview({
 });
 
 setUpBtnToggle(createSpoilersBtn);
-
-// Ghost state (Auto save)
-function clearGhostState() {
-    createPostContentCount.setText(`0/${window.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
-    NS.clearGhostState("#create-post-title");
-    NS.clearGhostState("#create-post-content");
-    NS.clearGhostState("#create-post-keywords");
-    createPostTitle.setVal("");
-    createPostContent.setVal("");
-    createPostKeywords.setVal("");
-}
-
-NS.getGhostState();
-NS.ghostState({ selector: "#create-post-title", resave: 500 });
-NS.ghostState({ selector: "#create-post-content", resave: 500 });
-NS.ghostState({ selector: "#create-post-keywords", resave: 500 });
-NS("#clear-post-content-btn").on("click", function () {
-    clearGhostState();
-    Swal.fire("Success!", "Draft cleared!", "success");
-});
 
 // Copy post content
 copyPostContentBtn.on("click", function () {
@@ -86,31 +61,14 @@ copyPostContentBtn.on("click", function () {
 createPostBtn.on("click", lockEvent(async function () {
     const title = createPostTitle.getVal()[0]?.trim();
     const content = createPostContent.getVal()[0]?.trim();
-    const keywords = createPostKeywords.getVal()[0]?.trim().split(",");
+    const keywords = createPostKeywords.getVal()[0]?.trim().split(",").filter(Boolean).map(kw => kw.toLowerCase().trim());
     const maxPostContentCharsLength = window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000;
 
     if (!title || !content) return Swal.fire("Title and content are required!");
     if (title.length > 20 || content.length > maxPostContentCharsLength) return Swal.fire(`Title must be less than 20 chars and content should not exceed ${maxPostContentCharsLength} chars`);
     if (keywords.length > 5) return Swal.fire("Keywords count should be less than 5!");
 
-    await createPost({
-        title: title,
-        content: content,
-        keywords: keywords,
-        spoilers: createSpoilersBtn.hasClass("is-on-color")
-    });
-
-    // Reset
-    clearGhostState();
-    getPosts();
-    createContainer.css({ display: "block" });
-    previewContainer.css({ display: "none" });
-    createPreviewBtn.removeClass("is-on-color");
-    createSpoilersBtn.removeClass("is-on-color");
-}));
-
-// Create posts function
-async function createPost({ title, content, keywords, spoilers = false } = {}) {
+    // Create post
     const data = await NS.fetch({
         url: "/api/v1/posts",
         method: "POST",
@@ -118,13 +76,23 @@ async function createPost({ title, content, keywords, spoilers = false } = {}) {
             title,
             content,
             keywords,
-            spoilers: spoilers ? true : false
+            spoilers: createSpoilersBtn.hasClass("is-on-color")
         }
     });
 
     if (!data.success) return Swal.fire(data.error);
+
+    // Reset
+    createPostTitle.setVal("");
+    createPostContent.setVal("");
+    createPostKeywords.setVal("");
+    createContainer.css({ display: "block" });
+    previewContainer.css({ display: "none" });
+    createPreviewBtn.removeClass("is-on-color");
+    createSpoilersBtn.removeClass("is-on-color");
+    getPosts();
     Swal.fire("Post created!");
-}
+}));
 
 // Navigation
 prevBtn.on("click", () => {

@@ -13,15 +13,12 @@ async function renderPosts(posts = []) {
     }
 
     // Input comments
-    const inputComment = ({
-        title = "",
-        inputId = "",
-        countId = "",
-        value = "",
-        onSubmit
-    }) => {
-        Swal.fire({
-            title: title || "Add comment",
+    const inputComment = async ({ title = "Add comment", inputId = "", countId = "", value = "", onSubmit }) => {
+        const isValidDomId = (id) => typeof id === "string" && /^[a-zA-Z_][a-zA-Z0-9_.-]*$/.test(id);
+        if (!isValidDomId(inputId) || !isValidDomId(countId)) return Swal.fire("Something went wrong!");
+
+        const result = await Swal.fire({
+            title: title,
             showCancelButton: true,
             html: `
                   <input type='text' id='${inputId}' placeholder='Type your comment here...' />
@@ -40,18 +37,19 @@ async function renderPosts(posts = []) {
 
                 // Elements
                 const inputEl = NS(`#${inputId}`).setVal(value).focus();
-                NS(`#${countId}`).setText(`${inputEl.getVal()[0].length}/200`);
+                NS(`#${countId}`).setText(`${inputEl.getVal().length}/200`);
             },
 
             preConfirm: () => {
                 const comment = Swal.getPopup().querySelector(`#${inputId}`).value;
                 if (!comment) Swal.showValidationMessage("This field cannot be empty!");
+
+                return comment;
             }
-        }).then(async result => {
-            if (!result.isConfirmed) return;
-            const content = NS(`#${inputId}`).getVal()[0];
-            if (typeof onSubmit === "function") return onSubmit(content);
         });
+
+        if (!result.isConfirmed) return;
+        if (typeof onSubmit === "function") return onSubmit(result.value);
     }
 
     // Reply comments
@@ -73,7 +71,7 @@ async function renderPosts(posts = []) {
         });
     }
 
-    posts.forEach(async (post, index) => {
+    posts.forEach(async post => {
         // Elements
         const postCard = NS(NS.createEl("div", postsContainer, { className: "post" }));
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
@@ -83,17 +81,17 @@ async function renderPosts(posts = []) {
             NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-paste post-icon", role: "button", tabIndex: "0" })).on("click", function () {
                 NS.copy({
                     text: post.content,
-                    onSuccess: () => {
-                        Swal.fire({
+                    onSuccess: async () => {
+                        const result = await Swal.fire({
                             title: "Copied!",
                             text: "Click OK to open PasteDB if you want to share the copied text quickly!",
                             icon: "success",
                             showCancelButton: true,
                             confirmButtonText: "OK",
                             cancelButtonText: "Cancel"
-                        }).then(result => {
-                            if (result.isConfirmed) window.open("https://pastedb.netlify.app/", "_blank");
                         });
+
+                        if (result.isConfirmed) window.open("https://pastedb.netlify.app/", "_blank");
                     },
                     onFailure: () => {
                         Swal.fire("Error", "Failed to copy. Try again later", "error");
@@ -122,20 +120,19 @@ async function renderPosts(posts = []) {
             }));
 
             NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-trash post-icon", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
-                Swal.fire({
+                const result = await Swal.fire({
                     title: "Are you sure you want to delete the fork?",
                     showCancelButton: true
-                }).then(async result => {
-                    if (!result.isConfirmed) return;
-                    const forkDeleteResponse = await NS.fetch({
-                        url: `/api/v1/delete/fork/${post._id}`,
-                        method: "DELETE"
-                    });
-
-                    if (!forkDeleteResponse.success) return Swal.fire(forkDeleteResponse.error);
-                    Swal.fire("Success", "Successfully deleted!", "success");
-                    getPosts();
                 });
+
+                if (!result.isConfirmed) return;
+                const forkDeleteResponse = await NS.fetch({
+                    url: `/api/v1/delete/fork/${post._id}`,
+                    method: "DELETE"
+                });
+
+                if (!forkDeleteResponse.success) return Swal.fire(forkDeleteResponse.error);
+                Swal.fire("Success", "Successfully deleted!", "success");
             }));
         };
         NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-link post-icon", role: "button", tabIndex: "0" })).on("click", async function () {
@@ -149,15 +146,15 @@ async function renderPosts(posts = []) {
 
         // Content
         const isLongPost = post.content.length >= 500;
-        const chattingWith = post?.forkerId?.username === window.currentUserQuickInfo?.username ? `${post?.receiverId?.emoji} ${post?.receiverId?.username}` : `${post?.forkerId?.emoji} ${post?.forkerId?.username}`;
-        const content = cleanHTML(post.content) || "Not content found";
+        const chattingWith = post?.forkerId?.username === window?.currentUserQuickInfo?.username ? `${post?.receiverId?.emoji} ${post?.receiverId?.username}` : `${post?.forkerId?.emoji} ${post?.forkerId?.username}`;
+        const content = cleanHTML(post.content) || "No content found";
         const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" })).html(
             post.spoilers
                 ? "<button class='show-spoliers-btn w-full'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>"
                 : isLongPost ? "<button class='show-long-post-btn w-full'><i class='fas fa-up-long'></i> Show Long Post</button>"
                     : content);
 
-        // Show spoliers/long post
+        // Show spoliers/long posts
         NS(postCard.get(".show-spoliers-btn")[0]).on("click", function () {
             contentEl.html(content);
         });
@@ -357,7 +354,7 @@ async function renderPosts(posts = []) {
             reportBtn.html(`<i class="fa-solid fa-warning"></i> ${newReports.toLocaleString()}`);
         })).html(`<i class="fa-solid fa-warning"></i> ${post.reports.toLocaleString() || 0}`);
 
-        // Comments
+        // Comment
         NS(NS.createEl("button", optionsDiv, {})).on("click", function () {
             inputComment({
                 title: "Add a comment:",
@@ -381,8 +378,8 @@ async function renderPosts(posts = []) {
 
         // Fork and boost
         if (!post.boosted && !post.rootId) {
-            NS(NS.createEl("button", optionsDiv, {})).html("<i class='fa-solid fa-code-fork'></i>").on("click", function () {
-                Swal.fire({
+            NS(NS.createEl("button", optionsDiv, {})).html("<i class='fa-solid fa-code-fork'></i>").on("click", async function () {
+                const result = await Swal.fire({
                     title: "Enter receiver username: ",
                     input: "text",
                     inputPlaceholder: "Enter receiver username...",
@@ -391,19 +388,19 @@ async function renderPosts(posts = []) {
                         if (!result) return Swal.showValidationMessage("Please enter a valid receiver username!");
                         if (result.length < 3 || result.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
                     }
-                }).then(async result => {
-                    if (result.value && result.isConfirmed) {
-                        const forkResponse = await NS.fetch({
-                            url: `/api/v1/fork/post/${post._id}`,
-                            method: "POST",
-                            body: { receiverUsername: result.value }
-                        });
-
-                        if (!forkResponse.success) return Swal.fire(forkResponse.error);
-                        Swal.fire("Success", "Fork created!", "success");
-                        getPosts();
-                    }
                 });
+
+                if (result.value && result.isConfirmed) {
+                    const forkResponse = await NS.fetch({
+                        url: `/api/v1/fork/post/${post._id}`,
+                        method: "POST",
+                        body: { receiverUsername: result.value }
+                    });
+
+                    if (!forkResponse.success) return Swal.fire(forkResponse.error);
+                    Swal.fire("Success", "Fork created!", "success");
+                    getPosts();
+                }
             });
 
             NS(NS.createEl("button", optionsDiv, {})).html("<i class='fa-solid fa-repeat'></i>").on("click", function () {
@@ -415,7 +412,7 @@ async function renderPosts(posts = []) {
                 createPostTitle.setVal("[BOOST]");
                 createPostKeywords.setVal("boost");
                 createPostContent.setVal(`View ${generatePostLink(post._id)}`);
-                createPostContentCount.setText(`${createPostContent.getVal()[0].length}/${window.currentUserQuickInfo.maxPostContentCharsLength || 2000}`);
+                createPostContentCount.setText(`${createPostContent.getVal()[0].length}/${window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
             });
         }
     });

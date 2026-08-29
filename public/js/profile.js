@@ -4,17 +4,19 @@ async function showProfile(data) {
     const username = capitalizeFirstLetter(data.username);
     const isUser = window.currentUserQuickInfo.username === data.username;
     const emojis = ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"];
+    const greetings = ["Hello", "Hola", "Bonjour", "Ciao", "Hallo", "Olá", "Привет", "你好", "こんにちは", "안녕하세요", "مرحبا", "नमस्ते", "Merhaba", "Shalom", "Sawubona"];
+    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
 
     Swal.fire({
-        titleText: `${isUser ? `Hola, ${data.emoji || "🚀"} ${username}!` : `${data.emoji || "🚀"} ${username}'s profile`}`,
+        titleText: `${isUser ? `${greeting}, ${data.emoji || "🚀"} ${username}!` : `${data.emoji || "🚀"} ${username}'s profile`}`,
         html: `
           <div class='card'>
             <div class='space-between'>
-              <p class='center-overflow'><b>Bio:</b> <span id='user-profile-bio'></span></p>
+              <p class='center-overflow'><b>Bio:</b> ${capitalizeFirstLetter(data.bio) || "No bio found"}</p>
               ${isUser ? "<i class='fas fa-pen-to-square helper-icon' id='user-profile-bio-edit' role='button' tabindex='0'></i>" : ""}
             </div>
             <div class='space-between'>
-              <p class='center-overflow'><b>Email:</b> <span>${data.email}</span></p>
+              <p class='center-overflow'><b>Email:</b> ${data.email}</p>
               ${isUser ? "<i class='fas fa-pen-to-square helper-icon' id='user-profile-email-edit' role='button' tabindex='0'></i>" : ""}
             </div>
             <div class='space-between'>  
@@ -25,7 +27,7 @@ async function showProfile(data) {
             <div class='center-overflow emoji-container'></div>
             <div class='center-overflow'>
               <button id='reset-password-recovery-codes-btn' class='w-full'>Reset Recovery Codes</button>
-              <input id='insert-many-posts-input' type='file' style='display: none' accept=".json"></input>
+              <input id='insert-many-posts-input' type='file' style='display: none' accept=".json" />
               <button id='insert-many-posts-btn' class='w-full'>Insert Many Posts</button>
             </div>` : ""}
           </div>
@@ -98,15 +100,13 @@ async function showProfile(data) {
         });
 
         if (!newCodesResponse.success) return Swal.fire(newCodesResponse.error);
-        const link = document.createElement("a");
         const blob = new Blob([newCodesResponse.codes.join("\n")], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
-        document.body.appendChild(link);
-        link.href = url;
-        link.download = "recovery-codes.txt";
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
+        NS(NS.createEl("a", document.body, {}))
+            .attr("href", url)
+            .attr("download", "recovery-codes.txt")
+            .click()
+            .remove();
         Swal.fire("Sucesss", "Password Recovery Codes Reseted!", "success");
     }));
 
@@ -121,8 +121,8 @@ async function showProfile(data) {
         reader.onload = async () => {
             try {
                 const posts = JSON.parse(reader.result);
-                if (!Array.isArray(posts)) throw new Error("INVALID_DATA");
-                if (posts.length > 10) throw new Error("MAX_LENGTH_EXCEEDED");
+                if (!Array.isArray(posts)) return Swal.fire("Invalid Data!");
+                if (posts.length > 10) return Swal.fire("Posts count must be less than or equal to 10!");
                 const insertManyPostsData = await NS.fetch({
                     url: "/api/v1/posts/bulk",
                     method: "POST",
@@ -132,8 +132,6 @@ async function showProfile(data) {
                 if (!insertManyPostsData.success) return Swal.fire(insertManyPostsData.error);
                 Swal.fire("Success!", "Posts inserted!", "success");
             } catch (e) {
-                if (e.message === "INVALID_DATA") return Swal.fire("Invalid Data!");
-                if (e.message === "MAX_LENGTH_EXCEEDED") return Swal.fire("Posts count must be less than or equal to 10!");
                 Swal.fire("Something went wrong!");
             }
         }
@@ -141,12 +139,9 @@ async function showProfile(data) {
         reader.readAsText(file);
     });
 
-    // Bio
-    NS("#user-profile-bio").setText(data.bio ? capitalizeFirstLetter(data.bio) : "No bio found");
-
     // Update bio/email/visibility
-    NS("#user-profile-bio-edit").on("click", function () {
-        Swal.fire({
+    NS("#user-profile-bio-edit").on("click", async function () {
+        const result = await Swal.fire({
             title: "Enter new bio: ",
             input: "text",
             inputPlaceholder: "Enter new bio...",
@@ -155,23 +150,23 @@ async function showProfile(data) {
                 if (!result) return Swal.showValidationMessage("You must enter a new bio!");
                 if (result.length < 5 || result.length > 20) return Swal.showValidationMessage("Bio must be between 5 and 20 chars!");
             }
-        }).then(async result => {
-            if (result.value && result.isConfirmed) {
-                const updateBioResponse = await NS.fetch({
-                    url: "/api/v1/update/user",
-                    method: "PUT",
-                    body: { newBio: result.value }
-                });
-
-                if (!updateBioResponse.success) return Swal.fire(updateBioResponse.error);
-                Swal.fire("Success", "Bio updated!", "success");
-                getQuickInfo();
-            }
         });
+
+        if (result.value && result.isConfirmed) {
+            const updateBioResponse = await NS.fetch({
+                url: "/api/v1/update/user",
+                method: "PUT",
+                body: { newBio: result.value }
+            });
+
+            if (!updateBioResponse.success) return Swal.fire(updateBioResponse.error);
+            Swal.fire("Success", "Bio updated!", "success");
+            getQuickInfo();
+        }
     });
 
-    NS("#user-profile-email-edit").on("click", function () {
-        Swal.fire({
+    NS("#user-profile-email-edit").on("click", async function () {
+        const result = await Swal.fire({
             title: "Enter new email: ",
             input: "text",
             inputPlaceholder: "Enter new email...",
@@ -180,19 +175,19 @@ async function showProfile(data) {
                 if (!result) return Swal.showValidationMessage("You must enter a new email!");
                 if (result.length > 100) return Swal.showValidationMessage("Email must be less than or equal to 100 chars!");
             }
-        }).then(async result => {
-            if (result.value && result.isConfirmed) {
-                const updateEmailResponse = await NS.fetch({
-                    url: "/api/v1/update/user",
-                    method: "PUT",
-                    body: { newEmail: result.value }
-                });
-
-                if (!updateEmailResponse.success) return Swal.fire(updateEmailResponse.error);
-                Swal.fire("Success", "Email updated!", "success");
-                getQuickInfo();
-            }
         });
+
+        if (result.value && result.isConfirmed) {
+            const updateEmailResponse = await NS.fetch({
+                url: "/api/v1/update/user",
+                method: "PUT",
+                body: { newEmail: result.value }
+            });
+
+            if (!updateEmailResponse.success) return Swal.fire(updateEmailResponse.error);
+            Swal.fire("Success", "Email updated!", "success");
+            getQuickInfo();
+        }
     });
 
     NS("#user-profile-visibility-toggle").on("click", lockEvent(async function () {
@@ -205,6 +200,20 @@ async function showProfile(data) {
         if (!updatevisibilityResponse.success) return Swal.fire(updatevisibilityResponse.error);
         Swal.fire("Sucess", `Account is ${data.private ? "public" : "private"}`, "success");
     }));
+
+    // Emojis
+    emojis.forEach(emoji => {
+        NS(NS.createEl("button", NS(".emoji-container"), { className: "emoji-container-button" })).setText(emoji).on("click", lockEvent(async function () {
+            const updateEmojidata = await NS.fetch({
+                url: "/api/v1/update/user",
+                method: "PUT",
+                body: { newEmoji: emoji }
+            });
+
+            if (!updateEmojidata.success) return Swal.fire(updateEmojidata.error);
+            return Swal.fire("Success", "Emoji successfully changed!", "success");
+        }));
+    });
 
     // Navigation
     NS("#user-posts-prev-btn").on("click", lockEvent(async function () {
@@ -228,20 +237,6 @@ async function showProfile(data) {
 
         renderPosts();
     }));
-
-    // Emojis
-    emojis.forEach(emoji => {
-        NS(NS.createEl("button", NS(".emoji-container"), { className: "emoji-container-button" })).setText(emoji).on("click", lockEvent(async function () {
-            const updateEmojidata = await NS.fetch({
-                url: "/api/v1/update/user",
-                method: "PUT",
-                body: { newEmoji: emoji }
-            });
-
-            if (!updateEmojidata.success) return Swal.fire(updateEmojidata.error);
-            return Swal.fire("Success", "Emoji successfully changed!", "success");
-        }));
-    })
 
     renderPosts();
     renderPinnedPosts();
