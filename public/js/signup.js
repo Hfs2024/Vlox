@@ -6,10 +6,10 @@ const loggedInGroup = NS("#loggedIn-group");
 async function showResetPasswordModal() {
     const result = await Swal.fire({
         html: `
-         <h2>Reset your password</h2>
-         <input type="text" id="username" placeholder="Username" />
-         <input type="text" id="recovery-code" placeholder="Recovery code" />
-         <input type="password" id="password" placeholder="New password" />
+<h2>Reset your password</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="recovery-code" placeholder="Recovery code">
+<input type="password" id="password" placeholder="New password">
         `,
         showCancelButton: true,
         confirmButtonText: "Submit",
@@ -44,15 +44,16 @@ async function showResetPasswordModal() {
 
 async function showLoginModal() {
     const result = await Swal.fire({
-        html: `<h2>Login</h2>
-            <input type="username" id="username" placeholder="Username" />
-            <input type="password" id="password" placeholder="Password" />
-            <div class='forget-password-text-wrapper' onclick='showResetPasswordModal()'>
-               <p>Forgot your password?</p>
-            </div>
-            <div class="swal-toggle-text">
-                Need an account? <span class="swal-toggle-link" onclick="showSignUpModal()">Sign up</span>
-            </div>
+        html: `
+<h2>Login</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<div class="forget-password-text-wrapper" onclick="showResetPasswordModal()" role="button" tabindex="0">
+  <p>Forgot your password?</p>
+</div>
+<div class="swal-toggle-text">
+  Need an account? <span class="swal-toggle-link" onclick="showSignUpModal()" role="button" tabindex="0">Sign up</span>
+</div>
         `,
         showCancelButton: true,
         confirmButtonText: 'Submit',
@@ -88,30 +89,24 @@ async function showLoginModal() {
 
 async function showSignUpModal() {
     const result = await Swal.fire({
-        html: `<h2>Sign Up</h2>
-            <input type="text" id="username" placeholder="Username" />
-            <input type="password" id="password" placeholder="Password" />
-            <input type="email" id="email" placeholder="Email" />
-            <input type="text" id="bio" placeholder="Bio (Max 20 chars)" autocomplete="off" />
-            <p class="count-text-wrapper">
-                Count:
-                <span class="count" id="user-bio-content-count">0/20</span>
-            </p>           
-            <div class="swal-toggle-text">
-                Already have an account? <span class="swal-toggle-link" onclick="showLoginModal()">Log in</span>
-            </div>
+        html: `
+<h2>Sign Up</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<input type="email" id="email" placeholder="Email">
+<input type="text" id="bio" placeholder="Bio (Max 20 chars)" maxlength="20" autocomplete="off">
+<p class="count-text-wrapper">
+  Count: <span class="count" id="user-bio-content-count">0/20</span>
+</p>           
+<div class="swal-toggle-text">
+  Already have an account? <span class="swal-toggle-link" onclick="showLoginModal()" role="button" tabindex="0">Log in</span>
+</div>
         `,
         showCancelButton: true,
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
         didOpen: () => {
-            NS.liveCounter({
-                selector: "#bio",
-                counterSelector: "#user-bio-content-count",
-                showCounter: true,
-                max: 20
-            });
-
+            setUpLiveCounter("#bio", "#user-bio-content-count", 20);
             runAccessibility();
         },
 
@@ -144,8 +139,6 @@ async function showSignUpModal() {
     });
 
     if (!data.success) return Swal.fire(data.error);
-    checkUserStatus();
-    getQuickInfo();
     const blob = new Blob([data.recoveryCodes.join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     NS(NS.createEl("a", document.body, {}))
@@ -155,6 +148,8 @@ async function showSignUpModal() {
         .remove();
     URL.revokeObjectURL(url);
     Swal.fire("Success", "Account created successfully!", "success");
+    checkUserStatus();
+    getQuickInfo();
 }
 
 // User status

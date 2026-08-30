@@ -132,19 +132,19 @@ footer {
     max-width: 100%;
 }
 
-.is-on-color {
+.active-color {
     color: var(--accent-main-blue);
 }
 
-.is-on-color:hover {
+.active-color:hover {
     color: var(--accent-secondary-blue);
 }
 
-.is-on-bg-color {
+.active-bg {
     background-color: var(--accent-main-blue);
 }
 
-.is-on-bg-color:hover {
+.active-bg:hover {
     background-color: var(--accent-secondary-blue);
 }
 

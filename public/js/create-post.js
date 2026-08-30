@@ -76,7 +76,7 @@ createPostBtn.on("click", lockEvent(async function () {
             title,
             content,
             keywords,
-            spoilers: createSpoilersBtn.hasClass("is-on-color")
+            spoilers: createSpoilersBtn.hasClass("active-color")
         }
     });
 
@@ -88,21 +88,21 @@ createPostBtn.on("click", lockEvent(async function () {
     createPostKeywords.setVal("");
     createContainer.css({ display: "block" });
     previewContainer.css({ display: "none" });
-    createPreviewBtn.removeClass("is-on-color");
-    createSpoilersBtn.removeClass("is-on-color");
-    getPosts();
+    createPreviewBtn.removeClass("active-color");
+    createSpoilersBtn.removeClass("active-color");
     Swal.fire("Post created!");
+    await getPosts();
 }));
 
 // Navigation
-prevBtn.on("click", () => {
+prevBtn.on("click", lockEvent(async () => {
     if (skip <= 0) return;
     skip -= 50;
-    getPosts();
-});
+    await getPosts();
+}));
 
-nextBtn.on("click", () => {
+nextBtn.on("click", lockEvent(async () => {
     if (NS("#posts-container").get(".nothing-found")[0]) return;
     skip += 50;
-    getPosts();
-});
+    await getPosts();
+}));

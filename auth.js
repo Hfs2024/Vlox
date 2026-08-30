@@ -5,25 +5,6 @@ const { checkAuth, generateRecoveryCodes, validateResult } = require("./helpers.
 const express = require("express");
 const router = express.Router();
 
-// Private posts
-router.post("/api/v1/get/user-private-posts", checkAuth, [
-    query("skip").exists().isInt({ min: 0 })
-], validateResult, async (req, res) => {
-    const skip = parseInt(req.cleanData.skip);
-    const foundPosts = await schemas.Posts.find({
-        by: req.session.userId,
-        private: true,
-        forkerId: null,
-        receiverId: null
-    })
-        .sort({ createdAt: -1, _id: -1 })
-        .skip(skip)
-        .limit(10)
-        .lean();
-
-    return res.json({ success: true, posts: foundPosts });
-});
-
 // Change profile visibility
 router.put("/api/v1/change-visibility/user-profile", checkAuth, [
     body("value").exists().isIn([true, false])
@@ -101,13 +82,11 @@ router.post("/api/v1/signup", [
 // Update user
 router.put("/api/v1/update/user", checkAuth, [
     body("newEmoji").optional({ values: "falsy" }).isString().isIn(["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"]).trim(),
-    body("newEmail").optional({ values: "falsy" }).isEmail().isLength({ max: 100 }).normalizeEmail().trim(),
     body("newBio").optional({ values: "falsy" }).isString().isLength({ max: 20 }).trim()
 ], validateResult, async (req, res) => {
-    let { newBio, newEmail, newEmoji } = req.cleanData;
+    let { newBio, newEmoji } = req.cleanData;
     const updateQuery = {};
     if (newEmoji) updateQuery.emoji = newEmoji.normalize("NFC");
-    if (newEmail) updateQuery.email = newEmail;
     if (newBio) updateQuery.bio = newBio;
 
     // Update

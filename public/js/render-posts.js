@@ -13,51 +13,28 @@ async function renderPosts(posts = []) {
     }
 
     // Input comments
-    const inputComment = async ({ title = "Add comment", inputId = "", countId = "", value = "", onSubmit }) => {
-        const isValidDomId = (id) => typeof id === "string" && /^[a-zA-Z_][a-zA-Z0-9_.-]*$/.test(id);
-        if (!isValidDomId(inputId) || !isValidDomId(countId)) return Swal.fire("Something went wrong!");
-
+    const inputComment = async ({ title = "Add comment", value = "", onSubmit }) => {
         const result = await Swal.fire({
             title: title,
+            input: 'text',
+            inputValue: value,
+            inputPlaceholder: 'Type your comment here...',
             showCancelButton: true,
-            html: `
-                  <input type='text' id='${inputId}' placeholder='Type your comment here...' />
-                  <p class='count-text-wrapper'>
-                    Count:
-                    <span class='count' id='${countId}'>0/200</span>
-                  </p>
-                `,
-            didOpen: () => {
-                NS.liveCounter({
-                    selector: `#${inputId}`,
-                    counterSelector: `#${countId}`,
-                    showCounter: true,
-                    max: 200
-                });
+            preConfirm: result => {
+                if (!result) return Swal.showValidationMessage("This field cannot be empty!");
+                if (result.length > 200) return Swal.showValidationMessage("Comment cannot exceed 200 characters!");
 
-                // Elements
-                const inputEl = NS(`#${inputId}`).setVal(value).focus();
-                NS(`#${countId}`).setText(`${inputEl.getVal()[0].length}/200`);
-            },
-
-            preConfirm: () => {
-                const comment = Swal.getPopup().querySelector(`#${inputId}`).value;
-                if (!comment) Swal.showValidationMessage("This field cannot be empty!");
-
-                return comment;
+                return result;
             }
         });
 
-        if (!result.isConfirmed) return;
-        if (typeof onSubmit === "function") return onSubmit(result.value);
+        if (result.isConfirmed && typeof onSubmit === "function") return onSubmit(result.value);
     }
 
     // Reply comments
     const replyComment = (postId, commentId) => {
         inputComment({
             title: "Add reply:",
-            inputId: "reply-input",
-            countId: "reply-count",
             onSubmit: async (content) => {
                 const replyResponse = await NS.fetch({
                     url: `/api/v1/reply/comment/post/${postId}`,
@@ -71,6 +48,7 @@ async function renderPosts(posts = []) {
         });
     }
 
+    // Posts
     posts.forEach(async post => {
         // Elements
         const postCard = NS(NS.createEl("div", postsContainer, { className: "post" }));
@@ -214,11 +192,9 @@ async function renderPosts(posts = []) {
                     inputComment({
                         title: "Update reply:",
                         value: NS(replyItem.get(".reply-item-content")[0]).getText()[0],
-                        inputId: "update-reply-input",
-                        countId: "update-reply-count",
                         onSubmit: async (content) => {
                             const updateReplyResponse = await NS.fetch({
-                                url: `/api/v1/edit/post/comment/${reply.for}/`,
+                                url: `/api/v1/edit/post/comment/${reply.for}`,
                                 method: "PUT",
                                 body: { newComment: content, commentId: reply._id }
                             });
@@ -283,11 +259,9 @@ async function renderPosts(posts = []) {
                     inputComment({
                         title: "Update comment:",
                         value: NS(commentItem.get(".comment-item-content")[0]).getText()[0],
-                        inputId: "update-comment-input",
-                        countId: "update-comment-count",
                         onSubmit: async (content) => {
                             const updateCommentResponse = await NS.fetch({
-                                url: `/api/v1/edit/post/comment/${comment.for}/`,
+                                url: `/api/v1/edit/post/comment/${comment.for}`,
                                 method: "PUT",
                                 body: { newComment: content, commentId: comment._id }
                             });
@@ -358,8 +332,6 @@ async function renderPosts(posts = []) {
         NS(NS.createEl("button", optionsDiv, {})).on("click", function () {
             inputComment({
                 title: "Add a comment:",
-                inputId: "create-comment-input",
-                countId: "create-comment-count",
                 onSubmit: async (content) => {
                     const commentResponse = await NS.fetch({
                         url: `/api/v1/comment/post/${post._id}`,
