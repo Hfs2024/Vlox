@@ -19,8 +19,8 @@ async function viewAnalytics(post) {
     NS(NS.createEl("p", postCard, { style: "text-align: center" }))
         .html(
             barFilled ?
-                `You filled the bar! You're a <span style='color: goldenrod'><b>LEGEND!!</b></span>`
-                : `Fill the bar with 100 likes and be a LEGEND!`
+                `You filled the bar! You're a <b>LEGEND!!</b>`
+                : `Fill the bar with 100 likes!`
         );
 
     // Likes bar
@@ -88,24 +88,29 @@ async function renderProfilePost({
             const result = await Swal.fire({
                 title: "Update post: ",
                 html: `
-                  <div id='edit-container'>
-                    <input id='edit-post-title' type='text' placeholder='Enter new title...' />
-                    <input id='edit-post-keywords' type='text' placeholder='Enter new keyword (Separated by comma)...' />
-                    <textarea id='edit-post-content' placeholder='Enter new content'></textarea>
-                  </div>
-                  <div id="edit-preview-container" class="post-preview center-overflow"></div>
-                  <div class='space-between'>
-                    <div class='center'>
-                      <i id="edit-spoilers-btn" class="fa-solid fa-circle-exclamation helper-icon" role="button" tabindex="0" title="Spoilers"></i>
-                      <i id="edit-preview-mode" class="fas fa-columns helper-icon" role="button" tabindex="0" title="Preview toggle"></i>
-                    </div>                    
+<div id="edit-container">
+  <input id="edit-post-title" type="text" placeholder="Enter new title..." aria-label="Post Title">
+  <input id="edit-post-keywords" type="text" placeholder="Enter new keyword (Separated by comma)..."
+    aria-label="Keywords">
+  <textarea id="edit-post-content" placeholder="Enter new content" aria-label="Post Content"></textarea>
+</div>
 
-                    <p class="count-text-wrapper">
-                      Count:
-                      <span class="count" id="edit-post-content-count">0/2000</span>
-                    </p>
-                  </div>
+<div id="edit-preview-container" class="post-preview center-overflow"></div>
+
+<div class="space-between">
+  <div class="center">
+    <i id="edit-spoilers-btn" class="fa-solid fa-circle-exclamation helper-icon" role="button" tabindex="0"
+      title="Spoilers" aria-label="Toggle Spoilers"></i>
+    <i id="edit-preview-mode" class="fas fa-columns helper-icon" role="button" tabindex="0" title="Preview toggle"
+      aria-label="Toggle Preview Mode"></i>
+  </div>
+
+  <p class="count-text-wrapper">
+    Count: <span class="count" id="edit-post-content-count">0/2000</span>
+  </p>
+</div>
                 `,
+                showCancelButton: true,
                 didOpen: () => {
                     const editSpoilersBtn = NS("#edit-spoilers-btn")
                     setUpPreview({
@@ -117,15 +122,14 @@ async function renderProfilePost({
                     });
 
                     setUpBtnToggle(editSpoilersBtn);
-                    if (post.spoilers) editSpoilersBtn.addClass("is-on-color");
+                    if (post.spoilers) editSpoilersBtn.addClass("active-color");
 
                     NS("#edit-post-title").setVal(post.title);
                     NS("#edit-post-content").setVal(post.content);
                     NS("#edit-post-keywords").setVal(post.keywords.join(", "));
                     NS("#edit-post-content-count").setText(`${NS("#edit-post-content").getVal()[0].length}/${window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
-                    setUpPostsLiveCounter("#edit-post-content", "#edit-post-content-count", window?.currentUserQuickInfo?.maxPostContentCharsLength);
+                    setUpLiveCounter("#edit-post-content", "#edit-post-content-count", window?.currentUserQuickInfo?.maxPostContentCharsLength);
                 },
-                showCancelButton: true,
                 preConfirm: () => {
                     const title = Swal.getPopup().querySelector("#edit-post-title").value;
                     const content = Swal.getPopup().querySelector("#edit-post-content").value;
@@ -148,7 +152,7 @@ async function renderProfilePost({
                     newContent: result.value.content,
                     newTitle: result.value.title,
                     newKeywords: result.value.keywords,
-                    newSpoilers: NS("#edit-spoilers-btn").hasClass("is-on-color")
+                    newSpoilers: NS("#edit-spoilers-btn").hasClass("active-color")
                 }
             });
 
@@ -179,13 +183,18 @@ async function renderProfilePost({
             viewAnalytics(post);
         });
 
-        if (!post.pinned) changePostVisibility({
-            value: !post.private,
-            buttonText: "Change visibility",
-            container: secondaryButtonsGroup,
-            postId: post._id
+        if (!post.pinned) NS(NS.createEl("button", secondaryButtonsGroup, {
+            id: "change-visibility-user-post-btn",
+            className: "w-full"
+        })).setText("Change visibility").on("click", async function () {
+            const visibilityData = await NS.fetch({
+                url: `/api/v1/change-visibility/post/${post._id}`,
+                method: "PUT",
+                body: { value: !post.private } // Force a boolean
+            });
+
+            if (!visibilityData.success) return Swal.fire(visibilityData.error);
+            Swal.fire("Success", `Post visibility set as ${post.private ? "public" : "private"}!`, "success");
         });
     }
-
-    runAccessibility();
 }

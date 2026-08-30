@@ -4,8 +4,7 @@ const themes = {
         elements: ["header", "footer", ".options"],
         postsComponentElements: [".options"],
         action: "remove"
-    },
-    {
+    }, {
         class: "theme-green",
         elements: ["header", "footer", ".options"],
         postsComponentElements: [".options"],
@@ -49,7 +48,6 @@ changeThemeBtn.on("click", function () {
     });
 
     const container = NS("#themes-container");
-
     for (let theme in themes) {
         if (!Array.isArray(themes[currentTheme])) continue;
         NS(NS.createEl("button", container, { className: "theme-btn w-full" })).setText(capitalizeFirstLetter(theme)).on("click", function () {

@@ -132,3 +132,29 @@ button:hover {
 .emoji-container-button:hover {
     background-color: var(--accent-secondary-blue);
 }
+
+/* Task filter */
+.task-filter-bar {
+    background-color: var(--accent-main-gray);
+    white-space: nowrap;
+    padding: 10px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.task-filter-bar-button {
+    width: 100%;
+    margin-top: 0;
+}
+
+.task-filter-bar-panel {
+    display: none;
+}
+
+.task-filter-bar-panel-active {
+    display: block;
+}

@@ -16,7 +16,7 @@ async function getQuickInfo() {
     window.currentUserQuickInfo = quickInfo;
     const maxPostContentCharsLength = window?.currentUserQuickInfo?.maxPostContentCharsLength;
     NS("#create-post-content-count").setText(`${NS("#create-post-content").getVal()[0].length}/${maxPostContentCharsLength || 2000}`);
-    setUpPostsLiveCounter("#create-post-content", "#create-post-content-count", maxPostContentCharsLength);
+    setUpLiveCounter("#create-post-content", "#create-post-content-count", maxPostContentCharsLength);
 
     return quickInfo;
 }
@@ -25,40 +25,6 @@ async function getQuickInfo() {
 function capitalizeFirstLetter(string) {
     if (typeof string !== "string") return console.error("Invalid string");
     return string.split("")[0].toUpperCase() + string.slice(1) || "";
-}
-
-// Taskbar
-function setUpTaskbar() {
-    NS(".taskbar-button").each((btn, index) => {
-        NS(btn).on("click", function () {
-            NS(".taskbar-button").removeClass("is-on-bg-color");
-            NS(".taskbar-panel").removeClass("taskbar-panel-chosen");
-            NS(btn).addClass("is-on-bg-color");
-            NS(NS(".taskbar-panel")[index]).addClass("taskbar-panel-chosen");
-        });
-    });
-}
-
-// Change post visibility
-function changePostVisibility({
-    container,
-    buttonText,
-    value,
-    postId
-}) {
-    NS(NS.createEl("button", container, {
-        id: "change-visibility-user-post-btn",
-        className: "w-full"
-    })).setText(buttonText).on("click", async function () {
-        const visibilityData = await NS.fetch({
-            url: `/api/v1/change-visibility/post/${postId}`,
-            method: "PUT",
-            body: { value: value ? true : false } // Force a boolean
-        });
-
-        if (!visibilityData.success) return Swal.fire(visibilityData.error);
-        Swal.fire("Success", `Post visibility set as ${value ? "private" : "public"}!`, "success");
-    });
 }
 
 // Clean HTML
@@ -90,7 +56,7 @@ function setUpPreview({
     const toggleDisplay = () => {
         let container = null;
 
-        if (btn?.hasClass("is-on-color")) {
+        if (btn?.hasClass("active-color")) {
             editContainer?.css({ display: "none" });
             previewContainer?.css({ display: "block" });
             previewContainer?.html(`
@@ -108,7 +74,7 @@ function setUpPreview({
     }
 
     btn?.on("click", function () {
-        btn?.toggleClass("is-on-color");
+        btn?.toggleClass("active-color");
         toggleDisplay();
     });
 
@@ -117,12 +83,12 @@ function setUpPreview({
 
 function setUpBtnToggle(btn) {
     btn?.on("click", function () {
-        btn.toggleClass("is-on-color");
+        btn?.toggleClass("active-color");
     });
 }
 
 // Setup live coutner
-function setUpPostsLiveCounter(element, countElement, maxChars) {
+function setUpLiveCounter(element, countElement, maxChars) {
     NS.liveCounter({
         selector: element,
         counterSelector: countElement,
