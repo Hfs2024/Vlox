@@ -34,7 +34,7 @@ function cleanHTML(html) {
             "pre", "code", "b", "table", "tr", "td", "th", "thead", "tfoot", "tbody",
             "b", "i", "br", "span", "em", "strong", "u", "s", "sub", "sup", "small",
             "p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "ul", "ol", "li",
-            "blockquote", "cite", "q", "img", "video", "audio", "source"
+            "blockquote", "cite", "q", "img", "video", "audio", "source", "a"
         ]
     });
 }
