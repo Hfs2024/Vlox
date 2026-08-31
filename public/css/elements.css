@@ -18,6 +18,7 @@ blockquote {
     font-size: 20px;
     font-style: italic;
     color: #334155;
+    overflow: auto;
 }
 
 img, video {

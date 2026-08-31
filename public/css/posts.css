@@ -33,13 +33,6 @@
     color: var(--accent-secondary-blue);
 }
 
-.post p {
-    white-space: pre-wrap;
-    width: 100%;
-    overflow-wrap: break-word;
-    word-break: break-all;
-}
-
 /* Post actions */
 .options {
     display: flex;
