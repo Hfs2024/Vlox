@@ -38,7 +38,7 @@ const themes = {
 
 const changeThemeBtn = NS("#btn-theme");
 let currentTheme = localStorage.getItem("theme") || "default";
-if (themes[currentTheme]) applyTheme(themes[currentTheme]);
+if (themes[currentTheme]) runThemeEngine(themes[currentTheme], "elements");
 
 changeThemeBtn.on("click", function () {
     Swal.fire({
@@ -51,7 +51,7 @@ changeThemeBtn.on("click", function () {
     for (let theme in themes) {
         if (!Array.isArray(themes[currentTheme])) continue;
         NS(NS.createEl("button", container, { className: "theme-btn w-full" })).setText(capitalizeFirstLetter(theme)).on("click", function () {
-            applyTheme(themes[theme]);
+            runThemeEngine(themes[theme], "elements");
             localStorage.setItem("theme", theme);
             Swal.clickConfirm();
         });
@@ -59,12 +59,14 @@ changeThemeBtn.on("click", function () {
 });
 
 // Apply theme
-function applyTheme(theme) {
-    for (let className of theme) {
-        if (!Array.isArray(className.elements) || !className.class) continue;
-        className.elements.forEach(element => {
-            if (className.action === "remove") NS(element).removeClass(className.class);
-            else NS(element).addClass(className.class);
+function runThemeEngine(theme, category) {
+    if (!Array.isArray(theme)) return;
+
+    for (let rule of theme) {
+        if (!Array.isArray(rule[category]) || !rule.class) continue;
+        rule[category].forEach(element => {
+            if (rule.action === "remove") NS(element).removeClass(rule.class);
+            else NS(element).addClass(rule.class);
         });
     }
 }
