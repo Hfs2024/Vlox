@@ -392,7 +392,7 @@ async function renderPosts(posts = []) {
     // Themes
     const postsComponentClasses = themes[currentTheme]?.filter(rule => rule?.postsComponentElements?.length > 0);
     if (postsComponentClasses?.length > 0) runThemeEngine(postsComponentClasses, "postsComponentElements");
-    runAccessibility();
+    initAccessibility();
 }
 
 async function getPosts() {

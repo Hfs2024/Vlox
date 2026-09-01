@@ -80,7 +80,7 @@ app.post("/api/v1/posts", checkAuth, [
     });
 
     await newPost.save();
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, postId: newPost._id });
 });
 
 // Insert many posts

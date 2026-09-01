@@ -223,7 +223,7 @@ async function showProfile(data) {
             // Init
             renderPosts();
             renderPinnedPosts();
-            runAccessibility();
+            initAccessibility();
         }
     });
 }
