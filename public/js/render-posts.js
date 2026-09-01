@@ -390,17 +390,8 @@ async function renderPosts(posts = []) {
     });
 
     // Themes
-    const postsComponentClasses = themes[currentTheme]?.filter(className => className?.postsComponentElements?.length > 0);
-    if (postsComponentClasses?.length > 0) {
-        for (let className of postsComponentClasses) {
-            if (!Array.isArray(className.postsComponentElements) || !className.class) continue;
-            className.postsComponentElements.forEach(element => {
-                if (className.action === "remove") NS(element).removeClass(className.class);
-                else NS(element).addClass(className.class);
-            });
-        }
-    }
-
+    const postsComponentClasses = themes[currentTheme]?.filter(rule => rule?.postsComponentElements?.length > 0);
+    if (postsComponentClasses?.length > 0) runThemeEngine(postsComponentClasses, "postsComponentElements");
     runAccessibility();
 }
 
