@@ -27,12 +27,12 @@
     <header>
         <a href="/" class="logo">Vlox</a>
         <div class="center">
-            <i class="fas fa-user-plus helper-icon" id="signup-btn" role="button" tabindex="0" title="Signup"></i>
+            <i class="fas fa-user-plus icon-helper" id="signup-btn" role="button" tabindex="0" title="Signup"></i>
             <div id="loggedIn-group">
-                <i class="fas fa-user-circle helper-icon" id="profile-btn" role="button" tabindex="0"
+                <i class="fas fa-user-circle icon-helper" id="profile-btn" role="button" tabindex="0"
                     title="Profile"></i>
-                <i class="fas fa-bookmark helper-icon" id="post-bookmarks-btn" role="button" tabindex="0" title="Bookmark Posts"></i>
-                <i class="fas fa-sign-out  helper-icon" id="signout-btn" role="button" tabindex="0" title="Signout"></i>
+                <i class="fas fa-bookmark icon-helper" id="post-bookmarks-btn" role="button" tabindex="0" title="Bookmark Posts"></i>
+                <i class="fas fa-sign-out  icon-helper" id="signout-btn" role="button" tabindex="0" title="Signout"></i>
             </div>
         </div>
     </header>
@@ -45,20 +45,20 @@
                 <input id="create-post-keywords" type="text" placeholder="Enter post keywords (Comma-separated)..." />
                 <textarea id="create-post-content" placeholder="Enter post content..."></textarea>
             </div>
-            <div id="create-preview-container" class="post-preview overflow"></div>
+            <div id="create-preview-container" class="card overflow"></div>
 
             <div class="space-between">
                 <div class="center" style="gap: 5px;">
-                    <i id="copy-post-content-btn" class="fas fa-copy helper-icon" role="button" tabindex="0"
+                    <i id="copy-post-content-btn" class="fas fa-copy icon-helper" role="button" tabindex="0"
                         title="Copy"></i>
-                    <i id="create-spoilers-btn" class="fa-solid fa-circle-exclamation helper-icon" role="button"
+                    <i id="create-spoilers-btn" class="fa-solid fa-circle-exclamation icon-helper" role="button"
                         tabindex="0" title="Spoilers"></i>
-                    <i id="create-preview-mode" class="fas fa-columns helper-icon" role="button" tabindex="0"
+                    <i id="create-preview-mode" class="fas fa-columns icon-helper" role="button" tabindex="0"
                         title="Peview toggle"></i>
-                    <i id="view-active-gifts" class="fas fa-gift helper-icon" role="button" tabindex="0"
+                    <i id="view-active-gifts" class="fas fa-gift icon-helper" role="button" tabindex="0"
                         title="View active gifts"></i>
                 </div>
-                <p class="count-text-wrapper">
+                <p class="text-count">
                     Count:
                     <span class="count" id="create-post-content-count">0/2000</span>
                 </p>
@@ -70,7 +70,7 @@
         <section class="right">
             <div class="center" style="margin-bottom: 20px;">
                 <input class="w-full" placeholder="Search by keywords... (Top 100 results only)" id="search-posts-input" />
-                <button id="search-posts-btn">
+                <button id="btn-search-posts">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
@@ -92,7 +92,7 @@
             </div>
         </section>
 
-        <button id="change-theme-btn">
+        <button id="btn-theme">
             <i class="fas fa-paint-roller"></i>
         </button>
     </main>

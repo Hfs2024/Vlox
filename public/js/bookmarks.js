@@ -28,19 +28,19 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
 
                 if (!data.bookmarks || data.bookmarks.length <= 0) {
                     NS(NS.createEl("div", container, {
-                        className: "nothing-found",
+                        className: "state-nothing-found",
                     })).html("<b>You don't have any bookmarks yet.</b>");
                     return;
                 }
 
                 data.bookmarks.forEach((bookmark, index) => {
-                    const bookmarkCard = NS.createEl("div", container, { className: "bookmark" });
+                    const bookmarkCard = NS.createEl("div", container, { className: "card" });
                     const bookmarkHeader = NS.createEl("div", bookmarkCard, { className: "space-between" });
                     const buttonGroup = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
 
                     // Header buttons
                     NS(NS.createEl("h2", bookmarkHeader, { className: "overflow" })).setText(capitalizeFirstLetter(bookmark.title) || `Bookmark ${index + 1}`);
-                    NS(NS.createEl("i", bookmarkHeader, { className: "fas fa-eye helper-icon", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
+                    NS(NS.createEl("i", bookmarkHeader, { className: "fas fa-eye icon-helper", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
                         const postData = await NS.fetch({
                             url: `/api/v1/get/post/${bookmark.for}`
                         });
@@ -51,7 +51,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                     }));
 
                     // Main buttons
-                    NS(NS.createEl("button", buttonGroup, { className: "delete-btn w-full" })).setText("Delete").on("click", lockEvent(async function () {
+                    NS(NS.createEl("button", buttonGroup, { className: "btn-danger w-full" })).setText("Delete").on("click", lockEvent(async function () {
                         const deleteData = await NS.fetch({
                             url: `/api/v1/delete/bookmark/${bookmark._id}`,
                             method: "DELETE"
@@ -100,7 +100,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
             }));
 
             NS("#user-bookmarks-next-btn").on("click", lockEvent(async function () {
-                if (container.get(".nothing-found")[0]) return;
+                if (container.get(".state-nothing-found")[0]) return;
                 skip += 10;
 
                 data = await NS.fetch({

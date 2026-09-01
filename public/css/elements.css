@@ -51,20 +51,20 @@ textarea {
     height: 130px;
 }
 
-.count-text-wrapper,
-.forget-password-text-wrapper {
+.text-count,
+.text-forget-password {
     text-align: right;
     color: var(--accent-secondary-gray);
     font-size: 14px;
     font-weight: bold;
 }
 
-.forget-password-text-wrapper {
+.text-forget-password {
     cursor: pointer;
     transition: color 0.3s ease;
 }
 
-.forget-password-text-wrapper:hover {
+.text-forget-password:hover {
     color: var(--accent-main-gray);
 }
 
@@ -86,25 +86,30 @@ button:hover {
     background-color: #222;
 }
 
-#change-theme-btn {
+#btn-theme {
     position: fixed;
     bottom: 10px;
     left: 10px;
     border: 2px solid #eee;
 }
 
-.delete-btn,
-.show-spoliers-btn {
+.btn-danger {
     background-color: red;
 }
 
-.delete-btn:hover,
-.show-spoliers-btn:hover {
-    background-color: darkred;
+.btn-emoji-container {
+    background-color: var(--accent-main-blue);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 0;
+    font-size: 18px;
 }
 
-#search-posts-btn, #search-input-btn {
-    margin-bottom: 0;
+.btn-emoji-container:hover {
+    background-color: var(--accent-secondary-blue);
+}
+
+.btn-danger:hover {
+    background-color: darkred;
 }
 
 /* Analytics bar */
@@ -122,18 +127,6 @@ button:hover {
     height: 20px;
 }
 
-/* Emojis */
-.emoji-container-button {
-    background-color: var(--accent-main-blue);
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    margin-top: 0;
-    font-size: 18px;
-}
-
-.emoji-container-button:hover {
-    background-color: var(--accent-secondary-blue);
-}
-
 /* Task filter */
 .task-filter-bar {
     background-color: var(--accent-main-gray);
@@ -147,15 +140,15 @@ button:hover {
     margin-bottom: 20px;
 }
 
-.task-filter-bar-button {
+.btn-task-filter-bar {
     width: 100%;
     margin-top: 0;
 }
 
-.task-filter-bar-panel {
+.panel-task-filter-bar {
     display: none;
 }
 
-.task-filter-bar-panel-active {
+.panel-task-filter-bar-active {
     display: block;
 }

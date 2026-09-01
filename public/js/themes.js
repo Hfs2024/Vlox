@@ -36,7 +36,7 @@ const themes = {
     }]
 }
 
-const changeThemeBtn = NS("#change-theme-btn");
+const changeThemeBtn = NS("#btn-theme");
 let currentTheme = localStorage.getItem("theme") || "default";
 if (themes[currentTheme]) applyTheme(themes[currentTheme]);
 

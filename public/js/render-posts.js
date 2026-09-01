@@ -7,7 +7,7 @@ async function renderPosts(posts = []) {
     // Nothing found
     if (!posts || posts.length === 0) {
         NS(NS.createEl("div", postsContainer, {
-            className: "nothing-found"
+            className: "state-nothing-found"
         })).html("<b>No posts yet. Be the first one to post!</b>");
         return;
     }
@@ -51,12 +51,12 @@ async function renderPosts(posts = []) {
     // Posts
     posts.forEach(async post => {
         // Elements
-        const postCard = NS(NS.createEl("div", postsContainer, { className: "post" }));
+        const postCard = NS(NS.createEl("div", postsContainer, { className: "card" }));
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
         NS(NS.createEl("h2", postHeader, { className: "overflow" })).setText(post.title);
         const postHeaderIconsGroup = NS.createEl("div", postHeader, { className: "center" });
         if (!post.forkerId) {
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-paste post-icon", role: "button", tabIndex: "0" })).on("click", function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-paste icon-post", role: "button", tabIndex: "0" })).on("click", function () {
                 NS.copy({
                     text: post.content,
                     onSuccess: async () => {
@@ -77,7 +77,7 @@ async function renderPosts(posts = []) {
                 });
             });
 
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark post-icon", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
                 const bookmarkResponse = await NS.fetch({
                     url: `/api/v1/bookmark/post/${post._id}`,
                     method: "POST"
@@ -87,7 +87,7 @@ async function renderPosts(posts = []) {
                 Swal.fire("Success", "Post bookmarked!", "success");
             }));
         } else {
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-clock-rotate-left post-icon", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-clock-rotate-left icon-post", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
                 const postResponse = await NS.fetch({
                     url: `/api/v1/get/post/${post.rootId}`
                 });
@@ -97,7 +97,7 @@ async function renderPosts(posts = []) {
                 Swal.fire("Success", "Successfully loaded the root post!", "success");
             }));
 
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-trash post-icon", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-trash icon-post", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
                 const result = await Swal.fire({
                     title: "Are you sure you want to delete the fork?",
                     showCancelButton: true
@@ -113,7 +113,7 @@ async function renderPosts(posts = []) {
                 Swal.fire("Success", "Successfully deleted!", "success");
             }));
         };
-        NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-link post-icon", role: "button", tabIndex: "0" })).on("click", async function () {
+        NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })).on("click", async function () {
             NS.copy({
                 text: generatePostLink(post._id),
                 onSuccess: () => { Swal.fire("Success", "Copied!", "success") },
@@ -128,12 +128,12 @@ async function renderPosts(posts = []) {
         const content = cleanHTML(post.content) || "No content found";
         const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" })).html(
             post.spoilers
-                ? "<button class='show-spoliers-btn w-full'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>"
+                ? "<button class='btn-danger w-full'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>"
                 : isLongPost ? "<button class='show-long-post-btn w-full'><i class='fas fa-up-long'></i> Show Long Post</button>"
                     : content);
 
         // Show spoliers/long posts
-        NS(postCard.get(".show-spoliers-btn")[0]).on("click", function () {
+        NS(postCard.get(".btn-danger")[0]).on("click", function () {
             contentEl.html(content);
         });
 
@@ -182,8 +182,8 @@ async function renderPosts(posts = []) {
                         </div>
 
                         <div class='center comment-item-icons'>
-                           <i class='fas fa-reply post-icon reply-btn' role='button' tabindex='0'></i>
-                           <i class='fas fa-eye post-icon view-reply-btn' role='button' tabindex='0'></i>
+                           <i class='fas fa-reply icon-post reply-btn' role='button' tabindex='0'></i>
+                           <i class='fas fa-eye icon-post view-reply-btn' role='button' tabindex='0'></i>
                         </div>
                     `).on("click", function (e) {
                     e.preventDefault();
@@ -232,7 +232,7 @@ async function renderPosts(posts = []) {
             commentsList.html(""); // Clear previous comments
 
             if (!data.comments || data.comments.length <= 0) {
-                NS(NS.createEl("div", commentsList, { className: "no-comments" }))
+                NS(NS.createEl("div", commentsList, { className: "state-no-comments" }))
                     .setText("No comments yet.");
                 return;
             }
@@ -249,8 +249,8 @@ async function renderPosts(posts = []) {
                         </div>
 
                         <div class='center comment-item-icons'>
-                           <i class='fas fa-reply post-icon reply-btn' role='button' tabindex='0'></i>
-                           <i class='fas fa-eye post-icon view-reply-btn' role='button' tabindex='0'></i>
+                           <i class='fas fa-reply icon-post reply-btn' role='button' tabindex='0'></i>
+                           <i class='fas fa-eye icon-post view-reply-btn' role='button' tabindex='0'></i>
                         </div>
                     `).on("click", function (e) {
                     e.preventDefault();
@@ -293,7 +293,7 @@ async function renderPosts(posts = []) {
             renderComments();
         }).html("<i class='fa-solid fa-chevron-left'></i>");
         NS(NS.createEl("button", commentsNavGroup, { className: "comments-next" })).on("click", async function () {
-            if (postCard.get(".no-comments")[0]) return;
+            if (postCard.get(".state-no-comments")[0]) return;
             commentsSkip += 10;
             renderComments();
         }).html("<i class='fa-solid fa-chevron-right'></i>");
@@ -391,12 +391,14 @@ async function renderPosts(posts = []) {
 
     // Themes
     const postsComponentClasses = themes[currentTheme]?.filter(className => className?.postsComponentElements?.length > 0);
-    for (let className of postsComponentClasses) {
-        if (!Array.isArray(className.postsComponentElements) || !className.class) continue;
-        className.postsComponentElements.forEach(element => {
-            if (className.action === "remove") NS(element).removeClass(className.class);
-            else NS(element).addClass(className.class);
-        });
+    if (postsComponentClasses?.length > 0) {
+        for (let className of postsComponentClasses) {
+            if (!Array.isArray(className.postsComponentElements) || !className.class) continue;
+            className.postsComponentElements.forEach(element => {
+                if (className.action === "remove") NS(element).removeClass(className.class);
+                else NS(element).addClass(className.class);
+            });
+        }
     }
 
     runAccessibility();

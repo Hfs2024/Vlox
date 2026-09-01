@@ -48,12 +48,12 @@ async function showLoginModal() {
 <h2>Login</h2>
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
-<div class="forget-password-text-wrapper" onclick="showResetPasswordModal()" role="button" tabindex="0">
-  <p>Forgot your password?</p>
-</div>
-<div class="swal-toggle-text">
-  Need an account? <span class="swal-toggle-link" onclick="showSignUpModal()" role="button" tabindex="0">Sign up</span>
-</div>
+<p class="text-forget-password" onclick="showResetPasswordModal()" role="button" tabindex="0">
+  Forgot your password?
+</p>
+<p class="text-swal-toggle">
+  Need an account? <span class="link-swal-toggle" onclick="showSignUpModal()" role="button" tabindex="0">Sign up</span>
+</p>
         `,
         showCancelButton: true,
         confirmButtonText: 'Submit',
@@ -95,12 +95,12 @@ async function showSignUpModal() {
 <input type="password" id="password" placeholder="Password">
 <input type="email" id="email" placeholder="Email">
 <input type="text" id="bio" placeholder="Bio (Max 20 chars)" maxlength="20" autocomplete="off">
-<p class="count-text-wrapper">
+<p class="text-count">
   Count: <span class="count" id="user-bio-content-count">0/20</span>
 </p>           
-<div class="swal-toggle-text">
-  Already have an account? <span class="swal-toggle-link" onclick="showLoginModal()" role="button" tabindex="0">Log in</span>
-</div>
+<p class="text-swal-toggle">
+  Already have an account? <span class="link-swal-toggle" onclick="showLoginModal()" role="button" tabindex="0">Log in</span>
+</p>
         `,
         showCancelButton: true,
         confirmButtonText: 'Submit',
