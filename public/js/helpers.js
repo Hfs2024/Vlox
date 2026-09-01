@@ -1,5 +1,5 @@
 // Accessibility
-function runAccessibility() {
+function initAccessibility() {
     NS("[role='button']").each(btn => {
         NS(btn).on("keydown", function (e) {
             if (e.key === "Enter" || e.key === ' ') btn.click();
@@ -16,7 +16,7 @@ async function getQuickInfo() {
     window.currentUserQuickInfo = quickInfo;
     const maxPostContentCharsLength = window?.currentUserQuickInfo?.maxPostContentCharsLength;
     NS("#create-post-content-count").setText(`${NS("#create-post-content").getVal()[0].length}/${maxPostContentCharsLength || 2000}`);
-    setUpLiveCounter("#create-post-content", "#create-post-content-count", maxPostContentCharsLength);
+    initLiveCounter("#create-post-content", "#create-post-content-count", maxPostContentCharsLength);
 
     return quickInfo;
 }
@@ -44,8 +44,8 @@ function generatePostLink(postId) {
     return `https://vlox.containers.snapdeploy.app/?id=${postId}`;
 }
 
-// Preview and spoilers
-function setUpPreview({
+// Init preview and spoilers
+function initPostPreview({
     btn,
     editContainer,
     previewContainer,
@@ -54,8 +54,6 @@ function setUpPreview({
     onChange,
 } = {}) {
     const toggleDisplay = () => {
-        let container = null;
-
         if (btn?.hasClass("active-color")) {
             editContainer?.css({ display: "none" });
             previewContainer?.css({ display: "block" });
@@ -63,14 +61,12 @@ function setUpPreview({
           <h2>${titleEl?.getVal()[0] || "No title yet"}</h2>
           <div>${cleanHTML(contentEl?.getVal()[0] || "No content yet")}</div>    
         `);
-            container = "edit";
         } else {
             editContainer?.css({ display: "block" });
             previewContainer?.css({ display: "none" });
-            container = "preview";
         }
 
-        if (typeof onChange === "function") onChange(container);
+        if (typeof onChange === "function") onChange(btn?.hasClass("active-color"));
     }
 
     btn?.on("click", function () {
@@ -81,14 +77,14 @@ function setUpPreview({
     toggleDisplay(); // Must run to hide preview container
 }
 
-function setUpBtnToggle(btn) {
+function initToggle(btn) {
     btn?.on("click", function () {
         btn?.toggleClass("active-color");
     });
 }
 
-// Setup live coutner
-function setUpLiveCounter(element, countElement, maxChars) {
+// Init live coutner
+function initLiveCounter(element, countElement, maxChars) {
     NS.liveCounter({
         selector: element,
         counterSelector: countElement,
@@ -117,4 +113,4 @@ function lockEvent(fn) {
 
 // Init
 getQuickInfo();
-runAccessibility();
+initAccessibility();

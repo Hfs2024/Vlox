@@ -58,7 +58,7 @@ async function showLoginModal() {
         showCancelButton: true,
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
-        didOpen: () => { runAccessibility(); },
+        didOpen: () => { initAccessibility(); },
         preConfirm: () => {
             const username = Swal.getPopup().querySelector('#username').value;
             const password = Swal.getPopup().querySelector('#password').value;
@@ -106,8 +106,8 @@ async function showSignUpModal() {
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
         didOpen: () => {
-            setUpLiveCounter("#bio", "#user-bio-content-count", 20);
-            runAccessibility();
+            initLiveCounter("#bio", "#user-bio-content-count", 20);
+            initAccessibility();
         },
 
         preConfirm: () => {

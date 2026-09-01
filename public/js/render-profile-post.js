@@ -113,7 +113,7 @@ async function renderProfilePost({
                 showCancelButton: true,
                 didOpen: () => {
                     const editSpoilersBtn = NS("#edit-spoilers-btn")
-                    setUpPreview({
+                    initPostPreview({
                         btn: NS("#edit-preview-mode"),
                         editContainer: NS("#edit-container"),
                         previewContainer: NS("#edit-preview-container"),
@@ -121,14 +121,14 @@ async function renderProfilePost({
                         contentEl: NS("#edit-post-content")
                     });
 
-                    setUpBtnToggle(editSpoilersBtn);
+                    initToggle(editSpoilersBtn);
                     if (post.spoilers) editSpoilersBtn.addClass("active-color");
 
                     NS("#edit-post-title").setVal(post.title);
                     NS("#edit-post-content").setVal(post.content);
                     NS("#edit-post-keywords").setVal(post.keywords.join(", "));
                     NS("#edit-post-content-count").setText(`${NS("#edit-post-content").getVal()[0].length}/${window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
-                    setUpLiveCounter("#edit-post-content", "#edit-post-content-count", window?.currentUserQuickInfo?.maxPostContentCharsLength);
+                    initLiveCounter("#edit-post-content", "#edit-post-content-count", window?.currentUserQuickInfo?.maxPostContentCharsLength);
                 },
                 preConfirm: () => {
                     const title = Swal.getPopup().querySelector("#edit-post-title").value;
@@ -171,7 +171,6 @@ async function renderProfilePost({
             });
 
             if (!pinData.success) return Swal.fire(pinData.error);
-            getQuickInfo();
             Swal.fire("Success", `Post ${post.pinned ? "unpinned" : "pinned"}!`, "success");
         });
 

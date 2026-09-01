@@ -36,7 +36,7 @@ searchPostsBtn.on("click", lockEvent(async function () {
 }));
 
 // Preview mode and spoliers 
-setUpPreview({
+initPostPreview({
     btn: createPreviewBtn,
     editContainer: createContainer,
     previewContainer: previewContainer,
@@ -44,7 +44,7 @@ setUpPreview({
     contentEl: createPostContent
 });
 
-setUpBtnToggle(createSpoilersBtn);
+initToggle(createSpoilersBtn);
 
 // Copy post content
 copyPostContentBtn.on("click", function () {
@@ -90,8 +90,15 @@ createPostBtn.on("click", lockEvent(async function () {
     previewContainer.css({ display: "none" });
     createPreviewBtn.removeClass("active-color");
     createSpoilersBtn.removeClass("active-color");
-    Swal.fire("Post created!");
-    await getPosts();
+    createPostContentCount.setText(`0/${window.currentUserQuickInfo.maxPostContentCharsLength}`);
+
+    // Success
+    const link = generatePostLink(data.postId);
+    Swal.fire({
+        title: "Post created!",
+        html: `<a href="${link}">${link}</a>`,
+        icon: "success"
+    });
 }));
 
 // Navigation

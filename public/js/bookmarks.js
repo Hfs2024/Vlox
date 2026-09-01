@@ -33,13 +33,13 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                     return;
                 }
 
-                data.bookmarks.forEach((bookmark, index) => {
+                data.bookmarks.forEach(bookmark => {
                     const bookmarkCard = NS.createEl("div", container, { className: "card" });
                     const bookmarkHeader = NS.createEl("div", bookmarkCard, { className: "space-between" });
                     const buttonGroup = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
 
                     // Header buttons
-                    NS(NS.createEl("h2", bookmarkHeader, { className: "overflow" })).setText(capitalizeFirstLetter(bookmark.title) || `Bookmark ${index + 1}`);
+                    NS(NS.createEl("h2", bookmarkHeader, { className: "overflow" })).setText(capitalizeFirstLetter(bookmark.title));
                     NS(NS.createEl("i", bookmarkHeader, { className: "fas fa-eye icon-helper", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
                         const postData = await NS.fetch({
                             url: `/api/v1/get/post/${bookmark.for}`
@@ -113,7 +113,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
 
             // Init
             renderBookmarks();
-            runAccessibility();
+            initAccessibility();
         },
         confirmButtonText: "Close"
     });
