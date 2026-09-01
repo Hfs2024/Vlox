@@ -5,7 +5,7 @@ const createPostKeywords = NS("#create-post-keywords");
 const createPostTitle = NS("#create-post-title");
 const copyPostContentBtn = NS("#copy-post-content-btn");
 const searchPostsInput = NS("#search-posts-input");
-const searchPostsBtn = NS("#search-posts-btn");
+const searchPostsBtn = NS("#btn-search-posts");
 const createPreviewBtn = NS("#create-preview-mode");
 const createSpoilersBtn = NS("#create-spoilers-btn");
 const createContainer = NS("#create-container");
@@ -102,7 +102,7 @@ prevBtn.on("click", lockEvent(async () => {
 }));
 
 nextBtn.on("click", lockEvent(async () => {
-    if (NS("#posts-container").get(".nothing-found")[0]) return;
+    if (NS("#posts-container").get(".state-nothing-found")[0]) return;
     skip += 50;
     await getPosts();
 }));

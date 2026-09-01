@@ -5,7 +5,7 @@ async function viewAnalytics(post) {
         confirmButtonText: "Close"
     });
 
-    const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "post" });
+    const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "card" });
     NS(NS.createEl("h2", postCard, { className: "overflow" })).setText(post.title);
     NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
     const panelAnalyticsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
@@ -42,10 +42,10 @@ async function viewAnalytics(post) {
 async function renderProfilePost({
     post, isUser, container
 } = {}) {
-    const postCard = NS.createEl("div", NS(container), { className: "post" });
+    const postCard = NS.createEl("div", NS(container), { className: "card" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
     NS(NS.createEl("h2", postHeader, { className: "overflow" })).setText(post.title);
-    NS(NS.createEl("i", postHeader, { className: "fas fa-link post-icon", role: "button", tabIndex: "0" })).on("click", async function () {
+    NS(NS.createEl("i", postHeader, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })).on("click", async function () {
         NS.copy({
             text: generatePostLink(post._id),
             onSuccess: () => {
@@ -70,7 +70,7 @@ async function renderProfilePost({
         // Primary buttons
         NS(NS.createEl("button", primaryButtonsGroup, {
             id: "delete-user-post-btn",
-            className: "delete-btn w-full"
+            className: "btn-danger w-full"
         })).setText("Delete").on("click", lockEvent(async function () {
             const deletedData = await NS.fetch({
                 url: `/api/v1/delete/post/${post._id}`,
@@ -95,17 +95,17 @@ async function renderProfilePost({
   <textarea id="edit-post-content" placeholder="Enter new content" aria-label="Post Content"></textarea>
 </div>
 
-<div id="edit-preview-container" class="post-preview center-overflow"></div>
+<div id="edit-preview-container" class="card center-overflow"></div>
 
 <div class="space-between">
   <div class="center">
-    <i id="edit-spoilers-btn" class="fa-solid fa-circle-exclamation helper-icon" role="button" tabindex="0"
+    <i id="edit-spoilers-btn" class="fa-solid fa-circle-exclamation icon-helper" role="button" tabindex="0"
       title="Spoilers" aria-label="Toggle Spoilers"></i>
-    <i id="edit-preview-mode" class="fas fa-columns helper-icon" role="button" tabindex="0" title="Preview toggle"
+    <i id="edit-preview-mode" class="fas fa-columns icon-helper" role="button" tabindex="0" title="Preview toggle"
       aria-label="Toggle Preview Mode"></i>
   </div>
 
-  <p class="count-text-wrapper">
+  <p class="text-count">
     Count: <span class="count" id="edit-post-content-count">0/2000</span>
   </p>
 </div>

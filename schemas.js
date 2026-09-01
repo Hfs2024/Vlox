@@ -50,6 +50,8 @@ const postsSchema = new mongoose.Schema({
 }, { timestamps: true });
 postsSchema.index({ boosted: -1, createdAt: -1, _id: -1 });
 postsSchema.index({ by: 1, createdAt: -1 });
+postsSchema.index({ likes: 1 });
+postsSchema.index({ keywords: 1 });
 postsSchema.index(
     { rootId: 1, receiverId: 1, forkerId: 1 },
     {

@@ -13,11 +13,11 @@ async function showProfile(data) {
 <div class="card">
   <div class="space-between">
     <p class="center-overflow"><b>Bio:</b> ${capitalizeFirstLetter(data.bio) || "No bio found"}</p>
-    ${isUser ? '<i class="fas fa-pen-to-square helper-icon" id="user-profile-bio-edit" role="button" tabindex="0"></i>' : ""}
+    ${isUser ? '<i class="fas fa-pen-to-square icon-helper" id="user-profile-bio-edit" role="button" tabindex="0"></i>' : ""}
   </div>
   <div class="space-between">  
     <p class="center-overflow"><b>Visibility:</b> ${data.private ? "Private" : "Public"}</p>
-    ${isUser ? `<i class="fas fa-${data.private ? "eye" : "eye-slash"} helper-icon" id="user-profile-visibility-toggle" role="button" tabindex="0"></i>` : ""}
+    ${isUser ? `<i class="fas fa-${data.private ? "eye" : "eye-slash"} icon-helper" id="user-profile-visibility-toggle" role="button" tabindex="0"></i>` : ""}
   </div>
   <p class="center-overflow"><b>Email:</b> ${data.email}</p>
   ${isUser ? `
@@ -30,11 +30,11 @@ async function showProfile(data) {
 </div>
 
 <div class="task-filter-bar">
-  <button class="task-filter-bar-button active-bg">All</button>
-  <button class="task-filter-bar-button">Pinned</button>
+  <button class="btn-task-filter-bar active-bg">All</button>
+  <button class="btn-task-filter-bar">Pinned</button>
 </div>
 
-<div class="task-filter-bar-panel task-filter-bar-panel-active">
+<div class="panel-task-filter-bar panel-task-filter-bar-active">
   <div id="user-posts-container" class="scroll-container"></div>
   <div class="center">
     <button id="user-posts-prev-btn"> 
@@ -46,7 +46,7 @@ async function showProfile(data) {
   </div>
 </div>
 
-<div class="task-filter-bar-panel">
+<div class="panel-task-filter-bar">
   <div id="user-pinned-posts-container" class="scroll-container"></div>
 </div>
         `,
@@ -59,7 +59,7 @@ async function showProfile(data) {
                 container.html(""); // Clear the container
 
                 if (!data.posts || data.posts.length === 0) {
-                    NS(NS.createEl("div", container, { className: "nothing-found" }))
+                    NS(NS.createEl("div", container, { className: "state-nothing-found" }))
                         .html("<b>No posts yet.</b>");
                     return;
                 }
@@ -75,7 +75,7 @@ async function showProfile(data) {
 
             const renderPinnedPosts = () => {
                 if (!data.pinnedPosts || data.pinnedPosts.length === 0) {
-                    NS(NS.createEl("div", NS("#user-pinned-posts-container"), { className: "nothing-found" }))
+                    NS(NS.createEl("div", NS("#user-pinned-posts-container"), { className: "state-nothing-found" }))
                         .html("<b>No pinned posts yet.</b>");
                     return;
                 }
@@ -186,7 +186,7 @@ async function showProfile(data) {
             }));
 
             NS("#user-posts-next-btn").on("click", lockEvent(async function () {
-                if (container.get(".nothing-found")[0]) return;
+                if (container.get(".state-nothing-found")[0]) return;
                 skip += 10;
 
                 data = await NS.fetch({
@@ -197,7 +197,7 @@ async function showProfile(data) {
             }));
 
             emojis.forEach(emoji => {
-                NS(NS.createEl("button", NS(".emoji-container"), { className: "emoji-container-button" }))
+                NS(NS.createEl("button", NS(".emoji-container"), { className: "btn-emoji-container" }))
                     .setText(emoji)
                     .on("click", lockEvent(async function () {
                         const updateEmojidata = await NS.fetch({
@@ -211,12 +211,12 @@ async function showProfile(data) {
                     }));
             });
 
-            NS(".task-filter-bar-button").each((btn, index) => {
+            NS(".btn-task-filter-bar").each((btn, index) => {
                 NS(btn).on("click", function () {
-                    NS(".task-filter-bar-button").removeClass("active-bg");
-                    NS(".task-filter-bar-panel").removeClass("task-filter-bar-panel-active");
+                    NS(".btn-task-filter-bar").removeClass("active-bg");
+                    NS(".panel-task-filter-bar").removeClass("panel-task-filter-bar-active");
                     NS(btn).addClass("active-bg");
-                    NS(NS(".task-filter-bar-panel")[index]).addClass("task-filter-bar-panel-active");
+                    NS(NS(".panel-task-filter-bar")[index]).addClass("panel-task-filter-bar-active");
                 });
             });
 

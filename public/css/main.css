@@ -87,14 +87,18 @@ footer {
 }
 
 /* Swal styles */
-.swal-toggle-link {
+.text-swal-toggle {
+    margin: 0;
+}
+
+.link-swal-toggle {
     color: var(--accent-main-blue);
     text-decoration: underline;
     cursor: pointer;
     transition: color 0.3s ease;
 }
 
-.swal-toggle-link:hover {
+.link-swal-toggle:hover {
     color: var(--accent-secondary-blue);
 }
 
@@ -148,13 +152,13 @@ footer {
     background-color: var(--accent-secondary-blue);
 }
 
-.helper-icon {
+.icon-helper {
     cursor: pointer;
     transition: color 0.3s ease;
     font-size: 18px;
 }
 
-.helper-icon:hover {
+.icon-helper:hover {
     color: var(--accent-main-gray);
 }
 

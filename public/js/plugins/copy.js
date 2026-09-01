@@ -11,7 +11,7 @@ NS.copy = async ({
     onSuccess,
     onFailure
 }) => {
-    if (typeof text === "string") return false;
+    if (typeof text !== "string") return false;
     if (!text) return false;
 
     try {

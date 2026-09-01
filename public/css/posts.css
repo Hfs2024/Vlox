@@ -1,9 +1,6 @@
 /* Basic */
-.post,
-.post-preview,
-.bookmark,
 .card,
-.nothing-found {
+.state-nothing-found {
     background-color: var(--card-background);
     border-radius: 10px;
     padding: 15px;
@@ -13,23 +10,23 @@
     margin-bottom: 20px;
 }
 
-.nothing-found {
+.state-nothing-found {
     margin-bottom: 0;
 }
 
-.nothing-found {
+.state-nothing-found {
     text-align: center;
     font-size: 20px;
 }
 
-.post-icon {
+.icon-post {
     font-size: 20px;
     color: var(--accent-main-blue);
     cursor: pointer;
     transition: color 0.3s ease;
 }
 
-.post-icon:hover {
+.icon-post:hover {
     color: var(--accent-secondary-blue);
 }
 
@@ -76,7 +73,7 @@
 }
 
 .comment-item,
-.no-comments {
+.state-no-comments {
     white-space: nowrap;
     overflow: auto;
     padding: 10px;
@@ -93,7 +90,7 @@
 }
 
 .comment-item:hover,
-.no-comments:hover {
+.state-no-comments:hover {
     background-color: #afc7d6;
 }
 
