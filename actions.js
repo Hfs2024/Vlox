@@ -12,7 +12,7 @@ router.put("/api/v1/change-visibility/post/:id", checkAuth, [
 ], validateResult, async (req, res) => {
     const { id, value } = req.cleanData;
     const result = await schemas.Posts.updateOne({
-        ...hotQueries.modify_post(id, req.session.userId), 
+        ...hotQueries.modify_post(id, req.session.userId),
         pinned: false
     }, {
         $set: {
@@ -235,14 +235,12 @@ router.post("/api/v1/react/:action/post/:id", checkAuth, [
 
 // Edit comment
 router.put("/api/v1/edit/post/comment/:id", checkAuth, [
-    body("commentId").exists().isMongoId(),
+    param("id").exists().isMongoId(),
     body("newComment").exists().notEmpty().isString().isLength({ max: 200 }).trim(),
-    param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
-    const { newComment, commentId, id } = req.cleanData;
+    const { newComment, id } = req.cleanData;
     const result = await schemas.Comments.updateOne({
-        for: id,
-        _id: commentId,
+        _id: id,
         by: req.session.userId
     }, {
         $set: {
@@ -250,7 +248,7 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, [
         }
     });
 
-    if (!result) return res.status(400).json({ error: "Comment not found or it's not your comment!" });
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Comment not found or isn't yours!" });
     return res.status(200).json({ success: true });
 });
 
@@ -292,9 +290,12 @@ router.delete("/api/v1/delete/post/:id", checkAuth, [
         }, { session });
         if (result.deletedCount === 0) throw new Error("POST_DELETE_FAILED");
 
+        // Remove reactions
         await schemas.Reactions.deleteMany({
             for: id
         }, { session });
+
+        // Remove comments
         await schemas.Comments.deleteMany({
             for: id
         }, { session });
@@ -320,9 +321,12 @@ router.delete("/api/v1/delete/fork/:id", checkAuth, [
 
         if (result.deletedCount === 0) throw new Error("FORK_DELETE_FAILED");
 
+        // Remove reactions
         await schemas.Reactions.deleteMany({
             for: id
         });
+
+        // Remove comments
         await schemas.Comments.deleteMany({
             for: id
         });

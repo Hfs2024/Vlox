@@ -1,72 +1,85 @@
+// Define themes
 const themes = {
-    default: [{
-        class: "theme-charcoal",
-        elements: ["header", "footer", ".options"],
-        postsComponentElements: [".options"],
-        action: "remove"
-    }, {
-        class: "theme-green",
-        elements: ["header", "footer", ".options"],
-        postsComponentElements: [".options"],
-        action: "remove"
-    }],
-
+    default: [],
     green: [{
         class: "theme-green",
         elements: ["header", "footer", ".options"],
-        postsComponentElements: [".options"],
-        action: "add"
-    }, {
-        class: "theme-charcoal",
-        elements: ["header", "footer", ".options"],
-        postsComponentElements: [".options"],
-        action: "remove"
+        postsElements: [".options"],
+        remove: false
     }],
-
     charcoal: [{
         class: "theme-charcoal",
         elements: ["header", "footer", ".options"],
-        postsComponentElements: [".options"],
-        action: "add"
-    }, {
-        class: "theme-green",
-        elements: ["header", "footer", ".options"],
-        postsComponentElements: [".options"],
-        action: "remove"
+        postsElements: [".options"],
+        remove: false
     }]
-}
+};
 
-const changeThemeBtn = NS("#btn-theme");
+// Track current theme
 let currentTheme = localStorage.getItem("theme") || "default";
-if (themes[currentTheme]) runThemeEngine(themes[currentTheme], "elements");
+if (!themes[currentTheme]) currentTheme = "default";
 
-changeThemeBtn.on("click", function () {
+// Apply on initial page load
+applyTheme(currentTheme, "elements");
+
+// Change theme
+NS("#btn-theme").on("click", function () {
     Swal.fire({
         title: "Pick a theme: ",
         html: "<div id='themes-container' class='center'></div>",
         confirmButtonText: "Close"
     });
 
-    const container = NS("#themes-container");
-    for (let theme in themes) {
-        if (!Array.isArray(themes[currentTheme])) continue;
-        NS(NS.createEl("button", container, { className: "theme-btn w-full" })).setText(capitalizeFirstLetter(theme)).on("click", function () {
-            runThemeEngine(themes[theme], "elements");
-            localStorage.setItem("theme", theme);
-            Swal.clickConfirm();
-        });
+    for (let themeName in themes) {
+        if (themeName === currentTheme) continue;
+
+        NS(NS.createEl("button", NS("#themes-container"), { className: "w-full" }))
+            .setText(themeName)
+            .on("click", function () {
+                // Apply
+                const result = applyTheme(themeName, "elements");
+                if (!result) return;
+
+                // Update
+                localStorage.setItem("theme", themeName);
+                currentTheme = themeName;
+
+                // Close
+                Swal.close();
+            });
     }
 });
 
-// Apply theme
-function runThemeEngine(theme, category) {
-    if (!Array.isArray(theme)) return;
+// Apply function
+function applyTheme(newThemeName, category) {
+    if (!Array.isArray(themes[newThemeName]) || !["elements", "postsElements"].includes(category)) return false;
+    const isObject = obj => Object.prototype.toString.call(obj) === "[object Object]";
 
-    for (let rule of theme) {
-        if (!Array.isArray(rule[category]) || !rule.class) continue;
+    // Clear
+    const oldTheme = Array.isArray(themes[currentTheme]) ? themes[currentTheme] : [];
+    if (category === "elements" && oldTheme.length > 0) {
+        for (let rule of oldTheme) {
+            if (!isObject(rule) || !Array.isArray(rule[category]) || !rule.class) continue;
+
+            rule[category].forEach(element => {
+                NS(element).removeClass(rule.class);
+            });
+        }
+    }
+
+    // Add
+    const newTheme = themes[newThemeName].filter(rule => rule?.[category]?.length > 0);
+    for (let rule of newTheme) {
+        if (!isObject(rule) || !Array.isArray(rule[category]) || !rule.class) continue;
+
         rule[category].forEach(element => {
-            if (rule.action === "remove") NS(element).removeClass(rule.class);
-            else NS(element).addClass(rule.class);
+            const el = NS(element);
+
+            // Apply class
+            if (rule.remove) el.removeClass(rule.class);
+            el.addClass(rule.class);
         });
     }
+
+    return true;
 }

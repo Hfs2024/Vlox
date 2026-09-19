@@ -12,7 +12,7 @@ async function renderPosts(posts = []) {
         return;
     }
 
-    // Input comments
+    // Input comment
     const inputComment = async ({ title = "Add comment", value = "", onSubmit }) => {
         const result = await Swal.fire({
             title: title,
@@ -31,7 +31,7 @@ async function renderPosts(posts = []) {
         if (result.isConfirmed && typeof onSubmit === "function") return onSubmit(result.value);
     }
 
-    // Reply comments
+    // Reply comment
     const replyComment = (postId, commentId) => {
         inputComment({
             title: "Add reply:",
@@ -55,29 +55,8 @@ async function renderPosts(posts = []) {
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
         NS(NS.createEl("h2", postHeader, { className: "overflow" })).setText(post.title);
         const postHeaderIconsGroup = NS.createEl("div", postHeader, { className: "center" });
-        if (!post.forkerId) {
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-paste icon-post", role: "button", tabIndex: "0" })).on("click", function () {
-                NS.copy({
-                    text: post.content,
-                    onSuccess: async () => {
-                        const result = await Swal.fire({
-                            title: "Copied!",
-                            text: "Click OK to open PasteDB if you want to share the copied text quickly!",
-                            icon: "success",
-                            showCancelButton: true,
-                            confirmButtonText: "OK",
-                            cancelButtonText: "Cancel"
-                        });
-
-                        if (result.isConfirmed) window.open("https://pastedb.netlify.app/", "_blank");
-                    },
-                    onFailure: () => {
-                        Swal.fire("Error", "Failed to copy. Try again later", "error");
-                    }
-                });
-            });
-
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
+        if (!post.rootId) {
+            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })).on("click", (async function () {
                 const bookmarkResponse = await NS.fetch({
                     url: `/api/v1/bookmark/post/${post._id}`,
                     method: "POST"
@@ -112,7 +91,7 @@ async function renderPosts(posts = []) {
                 if (!forkDeleteResponse.success) return Swal.fire(forkDeleteResponse.error);
                 Swal.fire("Success", "Successfully deleted!", "success");
             }));
-        };
+        }
         NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })).on("click", async function () {
             NS.copy({
                 text: generatePostLink(post._id),
@@ -173,18 +152,18 @@ async function renderPosts(posts = []) {
             data.replies.forEach(reply => {
                 const replyItem = NS(NS.createEl("div", repliesList, { className: "comment-item space-between" }));
                 replyItem.html(`
-                        <div class='center' style='gap: 5px'>
-                          <div class='comment-item-author'>
-                            ${reply.by.username === reply.by.username ? "<i class='fas fa-medal' title='Author'></i>" : reply.by.emoji}
-                            ${capitalizeFirstLetter(reply.by.username)}:
-                            </div>
-                          <div class='reply-item-content'></div>
-                        </div>
+<div class="center" style="gap: 5px">
+  <div class="comment-item-author">
+    <i class="fas fa-medal" title="Author"></i>
+    ${capitalizeFirstLetter(reply.by.username)}:
+  </div>
+  <div class="reply-item-content"></div>
+</div>
 
-                        <div class='center comment-item-icons'>
-                           <i class='fas fa-reply icon-post reply-btn' role='button' tabindex='0'></i>
-                           <i class='fas fa-eye icon-post view-reply-btn' role='button' tabindex='0'></i>
-                        </div>
+<div class="center comment-item-icons">
+  <i class="fas fa-reply icon-post reply-btn" role="button" tabindex="0" aria-label="Reply"></i>
+  <i class="fas fa-eye icon-post view-reply-btn" role="button" tabindex="0" aria-label="View reply"></i>
+</div>
                     `).on("click", function (e) {
                     e.preventDefault();
                     if (reply.by.username !== window?.currentUserQuickInfo?.username) return;
@@ -194,9 +173,9 @@ async function renderPosts(posts = []) {
                         value: NS(replyItem.get(".reply-item-content")[0]).getText()[0],
                         onSubmit: async (content) => {
                             const updateReplyResponse = await NS.fetch({
-                                url: `/api/v1/edit/post/comment/${reply.for}`,
+                                url: `/api/v1/edit/post/comment/${reply._id}`,
                                 method: "PUT",
-                                body: { newComment: content, commentId: reply._id }
+                                body: { newComment: content }
                             });
 
                             if (!updateReplyResponse.success) return Swal.fire(updateReplyResponse.error);
@@ -224,13 +203,14 @@ async function renderPosts(posts = []) {
         let commentsSkip = 0;
 
         const renderComments = async () => {
+            // Data
             const data = await NS.fetch({
                 url: `/api/v1/get/post/comments/${post._id}/?skip=${commentsSkip}`,
             });
-
             if (!data.success) return Swal.fire(data.error);
-            commentsList.html(""); // Clear previous comments
 
+            // Render
+            commentsList.html(""); // Clear previous comments
             if (!data.comments || data.comments.length <= 0) {
                 NS(NS.createEl("div", commentsList, { className: "state-no-comments" }))
                     .setText("No comments yet.");
@@ -240,20 +220,19 @@ async function renderPosts(posts = []) {
             data.comments.forEach(comment => {
                 const commentItem = NS(NS.createEl("div", commentsList, { className: "comment-item space-between" }));
                 commentItem.html(`
-                        <div class='center' style='gap: 5px'>
-                          <div class='comment-item-author'>
-                            ${comment.by.username === post.by.username ? "<i class='fas fa-medal' title='Author'></i>" : comment.by.emoji}
-                            ${capitalizeFirstLetter(comment.by.username)}:
-                            </div>
-                          <div class='comment-item-content'></div>
-                        </div>
+<div class="center" style="gap: 5px">
+  <div class="comment-item-author">
+    ${comment.by.username === post.by.username ? '<i class="fas fa-medal" title="Author"></i>' : comment.by.emoji}
+    ${capitalizeFirstLetter(comment.by.username)}:
+  </div>
+  <div class="comment-item-content"></div>
+</div>
 
-                        <div class='center comment-item-icons'>
-                           <i class='fas fa-reply icon-post reply-btn' role='button' tabindex='0'></i>
-                           <i class='fas fa-eye icon-post view-reply-btn' role='button' tabindex='0'></i>
-                        </div>
-                    `).on("click", function (e) {
-                    e.preventDefault();
+<div class="center comment-item-icons">
+  <i class="fas fa-reply icon-post reply-btn" role="button" tabindex="0" aria-label="Reply"></i>
+  <i class="fas fa-eye icon-post view-reply-btn" role="button" tabindex="0" aria-label="View reply"></i>
+</div>
+                    `).on("click", function () {
                     if (comment.by.username !== window?.currentUserQuickInfo?.username) return;
 
                     inputComment({
@@ -261,9 +240,9 @@ async function renderPosts(posts = []) {
                         value: NS(commentItem.get(".comment-item-content")[0]).getText()[0],
                         onSubmit: async (content) => {
                             const updateCommentResponse = await NS.fetch({
-                                url: `/api/v1/edit/post/comment/${comment.for}`,
+                                url: `/api/v1/edit/post/comment/${comment._id}`,
                                 method: "PUT",
-                                body: { newComment: content, commentId: comment._id }
+                                body: { newComment: content }
                             });
 
                             if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
@@ -271,7 +250,7 @@ async function renderPosts(posts = []) {
                             NS(commentItem.get(".comment-item-content")[0]).setText(content || "No content found");
                         }
                     });
-                });
+                })
 
                 NS(commentItem.get(".comment-item-content")[0]).setText(comment.content || "No content found");
                 NS(commentItem.get(".reply-btn")[0]).on("click", function (e) {
@@ -305,7 +284,7 @@ async function renderPosts(posts = []) {
         const optionsDiv = NS.createEl("div", postCard, { className: "options" });
 
         // Like
-        const likeBtn = NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
+        const likesBtn = NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
             const likesResponse = await NS.fetch({
                 url: `/api/v1/react/like/post/${post._id}`,
                 method: "POST"
@@ -313,8 +292,8 @@ async function renderPosts(posts = []) {
 
             if (likesResponse.error) return Swal.fire(likesResponse.error);
             const newLikes = post.likes + 1;
-            likeBtn.html(`<i class="fa-solid fa-thumbs-up"></i> ${newLikes.toLocaleString()}`);
-        })).html(`<i class="fa-solid fa-thumbs-up"></i> ${post.likes.toLocaleString() || 0}`);
+            NS(likesBtn.get(".likes-count")[0]).setText(newLikes.toLocaleString());
+        })).html(`<i class="fa-solid fa-thumbs-up"></i> <span class="likes-count">${post.likes.toLocaleString()}</span>`);
 
         // Report
         const reportBtn = NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
@@ -325,11 +304,11 @@ async function renderPosts(posts = []) {
 
             if (!reportResponse.success) return Swal.fire(reportResponse.error);
             const newReports = post.reports + 1;
-            reportBtn.html(`<i class="fa-solid fa-warning"></i> ${newReports.toLocaleString()}`);
-        })).html(`<i class="fa-solid fa-warning"></i> ${post.reports.toLocaleString() || 0}`);
+            NS(reportBtn.get(".reports-count")[0]).setText(newReports.toLocaleString());
+        })).html(`<i class="fa-solid fa-warning"></i> <span class="reports-count">${post.reports.toLocaleString()}</span>`);
 
         // Comment
-        NS(NS.createEl("button", optionsDiv, {})).on("click", function () {
+        const commentBtn = NS(NS.createEl("button", optionsDiv, {})).on("click", function () {
             inputComment({
                 title: "Add a comment:",
                 onSubmit: async (content) => {
@@ -340,13 +319,14 @@ async function renderPosts(posts = []) {
                     });
 
                     if (!commentResponse.success) return Swal.fire(commentResponse.error);
-                    const newComments = Number(NS(this).getText()[0]) + 1;
-                    NS(this).html(`<i class="fa-solid fa-comment"></i> ${newComments.toLocaleString()}`);
+                    const comments = NS(commentBtn.get(".comments-count")[0]);
+                    const newComments = parseInt(comments.getText()[0]) + 1;
+                    comments.setText(newComments.toLocaleString());
                     Swal.fire("Success", "Your comment has been added!", "success");
                     renderComments();
                 }
             });
-        }).html(`<i class="fa-solid fa-comment"></i> ${post.comments.toLocaleString() || 0}`);
+        }).html(`<i class="fa-solid fa-comment"></i> <span class="comments-count">${post.comments.toLocaleString()}</span>`);
 
         // Fork and boost
         if (!post.boosted && !post.rootId) {
@@ -390,8 +370,7 @@ async function renderPosts(posts = []) {
     });
 
     // Themes
-    const postsComponentClasses = themes[currentTheme]?.filter(rule => rule?.postsComponentElements?.length > 0);
-    if (postsComponentClasses?.length > 0) runThemeEngine(postsComponentClasses, "postsComponentElements");
+    applyTheme(currentTheme, "postsElements");
     initAccessibility();
 }
 

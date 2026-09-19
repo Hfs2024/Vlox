@@ -1,10 +1,5 @@
 NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
     let skip = 0;
-    let data = await NS.fetch({
-        url: `/api/v1/get/bookmarks/?skip=${skip}`,
-        method: "POST"
-    });
-    if (!data.success) return Swal.fire(data.error);
 
     Swal.fire({
         title: "Your bookmarks: ",
@@ -23,9 +18,16 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
             const container = NS("#user-bookmarks-container");
 
             // Bookmarks
-            const renderBookmarks = () => {
-                container.html("");
+            const renderBookmarks = async () => {
+                // Data
+                const data = await NS.fetch({
+                    url: `/api/v1/get/bookmarks/?skip=${skip}`,
+                    method: "POST"
+                });
+                if (!data.success) return Swal.fire(data.error);
 
+                // Render
+                container.html("");
                 if (!data.bookmarks || data.bookmarks.length <= 0) {
                     NS(NS.createEl("div", container, {
                         className: "state-nothing-found",
@@ -47,7 +49,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
 
                         if (!postData.success) return Swal.fire(postData.error);
                         renderPosts(Array.isArray(postData.posts) ? postData.posts : [postData.posts]);
-                        Swal.clickConfirm();
+                        Swal.fire("Success", "Post loaded!", "success");
                     }));
 
                     // Main buttons
@@ -90,24 +92,12 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
             NS("#user-bookmarks-prev-btn").on("click", lockEvent(async function () {
                 if (skip <= 0) return;
                 skip -= 10;
-
-                data = await NS.fetch({
-                    url: `/api/v1/get/bookmarks/?skip=${skip}`,
-                    method: "POST"
-                });
-
                 renderBookmarks();
             }));
 
             NS("#user-bookmarks-next-btn").on("click", lockEvent(async function () {
                 if (container.get(".state-nothing-found")[0]) return;
                 skip += 10;
-
-                data = await NS.fetch({
-                    url: `/api/v1/get/bookmarks/?skip=${skip}`,
-                    method: "POST"
-                });
-
                 renderBookmarks();
             }));
 

@@ -55,9 +55,15 @@ async function showProfile(data) {
             const container = NS("#user-posts-container");
 
             // Posts
-            const renderPosts = () => {
-                container.html(""); // Clear the container
+            const renderPosts = async () => {
+                // Data
+                data = await NS.fetch({
+                    url: `/api/v1/get/user-profile/${window?.currentUserQuickInfo?._id}/?skip=${skip}`
+                });
+                if (!data.success) return Swal.fire(data.error);
 
+                // Render
+                container.html(""); // Clear the container
                 if (!data.posts || data.posts.length === 0) {
                     NS(NS.createEl("div", container, { className: "state-nothing-found" }))
                         .html("<b>No posts yet.</b>");
@@ -177,22 +183,12 @@ async function showProfile(data) {
             NS("#user-posts-prev-btn").on("click", lockEvent(async function () {
                 if (skip <= 0) return;
                 skip -= 10;
-
-                data = await NS.fetch({
-                    url: `/api/v1/get/user-profile/${window?.currentUserQuickInfo?._id}/?skip=${skip}`
-                });
-
                 renderPosts();
             }));
 
             NS("#user-posts-next-btn").on("click", lockEvent(async function () {
                 if (container.get(".state-nothing-found")[0]) return;
                 skip += 10;
-
-                data = await NS.fetch({
-                    url: `/api/v1/get/user-profile/${window?.currentUserQuickInfo?._id}/?skip=${skip}`
-                });
-
                 renderPosts();
             }));
 
