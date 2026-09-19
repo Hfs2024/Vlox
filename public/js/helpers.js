@@ -97,12 +97,12 @@ function initLiveCounter(element, countElement, maxChars) {
 function lockEvent(fn) {
     if (typeof fn !== "function") return;
 
-    return async function (event) {
-        const el = NS(event.currentTarget);
+    return async function (e) {
+        const el = NS(e.currentTarget);
         el.attr("inert", true);
 
         try {
-            await fn();
+            await fn(e);
         } catch {
             Swal.fire("Something went wrong!");
         } finally {
