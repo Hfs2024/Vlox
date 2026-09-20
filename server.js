@@ -115,9 +115,9 @@ app.get("/api/v1/get/post/:id", checkAuth, [
     const id = req.cleanData.id;
     const foundPost = await schemas.Posts.findOne({
         ...hotQueries.view_post(id, req.session.userId)
-    }).populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
-        .populate("forkerId", "-password -recoveryCodes -email -pinnedPostsCount")
-        .populate("receiverId", "-password -recoveryCodes -email -pinnedPostsCount");
+    }).populate("by", "-password -recoveryCodes")
+        .populate("forkerId", "-password -recoveryCodes")
+        .populate("receiverId", "-password -recoveryCodes");
     if (!foundPost) return res.status(400).json({ error: "Post not found!" });
 
     return res.status(200).json({ success: true, posts: [foundPost] });
@@ -137,9 +137,9 @@ app.get("/api/v1/get/posts", [
     }).sort({ boosted: -1, createdAt: -1, _id: -1 })
         .skip(parseInt(skip))
         .limit(50)
-        .populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
-        .populate("forkerId", "-password -recoveryCodes -email -pinnedPostsCount")
-        .populate("receiverId", "-password -recoveryCodes -email -pinnedPostsCount")
+        .populate("by", "-password -recoveryCodes")
+        .populate("forkerId", "-password -recoveryCodes")
+        .populate("receiverId", "-password -recoveryCodes")
         .lean();
 
     return res.status(200).json({ success: true, posts });
@@ -159,7 +159,7 @@ app.get("/api/v1/search/posts", [
         likes: -1,
         createdAt: -1,
         _id: -1
-    }).limit(100).populate("by", "-password -recoveryCodes -email -pinnedPostsCount");
+    }).limit(100).populate("by", "-password -recoveryCodes");
 
     return res.status(200).json({ success: true, posts: foundPosts });
 });
@@ -176,7 +176,7 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
         .skip(parseInt(skip))
         .limit(10)
         .select("for content by")
-        .populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
+        .populate("by", "-password -recoveryCodes")
         .lean();
 
     return res.status(200).json({ success: true, comments });
@@ -197,7 +197,7 @@ app.get("/api/v1/get/post/replies/:id/:rootId", checkAuth, [
         for: id,
         rootId: rootId
     })
-        .populate("by", "-password -recoveryCodes -email -pinnedPostsCount")
+        .populate("by", "-password -recoveryCodes")
         .lean();
 
     return res.status(200).json({ success: true, replies: replies });
