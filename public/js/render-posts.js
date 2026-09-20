@@ -12,87 +12,28 @@ async function renderPosts(posts = []) {
         return;
     }
 
-    // Input comment
-    const inputComment = async ({ title = "Add comment", value = "", onSubmit }) => {
-        const result = await Swal.fire({
-            title: title,
-            input: 'text',
-            inputValue: value,
-            inputPlaceholder: 'Type your comment here...',
-            showCancelButton: true,
-            preConfirm: result => {
-                if (!result) return Swal.showValidationMessage("This field cannot be empty!");
-                if (result.length > 200) return Swal.showValidationMessage("Comment cannot exceed 200 characters!");
-
-                return result;
-            }
-        });
-
-        if (result.isConfirmed && typeof onSubmit === "function") return onSubmit(result.value);
-    }
-
-    // Reply comment
-    const replyComment = (postId, commentId) => {
-        inputComment({
-            title: "Add reply:",
-            onSubmit: async (content) => {
-                const replyResponse = await NS.fetch({
-                    url: `/api/v1/reply/comment/post/${postId}`,
-                    method: "POST",
-                    body: { reply: content, rootId: commentId }
-                });
-
-                if (!replyResponse.success) return Swal.fire(replyResponse.error);
-                Swal.fire("Success", "Reply added!", "success");
-            }
-        });
-    }
-
     // Posts
     posts.forEach(async post => {
         // Elements
         const postCard = NS(NS.createEl("div", postsContainer, { className: "card" }));
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
         NS(NS.createEl("h2", postHeader, { className: "overflow" })).setText(post.title);
-        const postHeaderIconsGroup = NS.createEl("div", postHeader, { className: "center" });
-        if (!post.rootId) {
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })).on("click", (async function () {
-                const bookmarkResponse = await NS.fetch({
-                    url: `/api/v1/bookmark/post/${post._id}`,
-                    method: "POST"
-                });
+        const postIconsGroup = NS.createEl("div", postHeader, { className: "center" });
 
-                if (!bookmarkResponse.success) return Swal.fire(bookmarkResponse.error);
-                Swal.fire("Success", "Post bookmarked!", "success");
-            }));
-        } else {
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-clock-rotate-left icon-post", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
-                const postResponse = await NS.fetch({
-                    url: `/api/v1/get/post/${post.rootId}`
-                });
+        // Icons
+        // Bookmark
+        NS(NS.createEl("i", postIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })).on("click", (async function () {
+            const bookmarkResponse = await NS.fetch({
+                url: `/api/v1/bookmark/post/${post._id}`,
+                method: "POST"
+            });
 
-                if (!postResponse.success) return Swal.fire(postResponse.error);
-                renderPosts(Array.isArray(postResponse.posts) ? postResponse.posts : [postResponse.posts]);
-                Swal.fire("Success", "Successfully loaded the root post!", "success");
-            }));
+            if (!bookmarkResponse.success) return Swal.fire(bookmarkResponse.error);
+            Swal.fire("Success", "Post bookmarked!", "success");
+        }));
 
-            NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-trash icon-post", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
-                const result = await Swal.fire({
-                    title: "Are you sure you want to delete the fork?",
-                    showCancelButton: true
-                });
-
-                if (!result.isConfirmed) return;
-                const forkDeleteResponse = await NS.fetch({
-                    url: `/api/v1/delete/fork/${post._id}`,
-                    method: "DELETE"
-                });
-
-                if (!forkDeleteResponse.success) return Swal.fire(forkDeleteResponse.error);
-                Swal.fire("Success", "Successfully deleted!", "success");
-            }));
-        }
-        NS(NS.createEl("i", postHeaderIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })).on("click", async function () {
+        // Copy link
+        NS(NS.createEl("i", postIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })).on("click", async function () {
             NS.copy({
                 text: generatePostLink(post._id),
                 onSuccess: () => { Swal.fire("Success", "Copied!", "success") },
@@ -102,30 +43,21 @@ async function renderPosts(posts = []) {
         });
 
         // Content
-        const isLongPost = post.content.length >= 500;
-        const chattingWith = post?.forkerId?.username === window?.currentUserQuickInfo?.username ? `${post?.receiverId?.emoji} ${post?.receiverId?.username}` : `${post?.forkerId?.emoji} ${post?.forkerId?.username}`;
         const content = cleanHTML(post.content) || "No content found";
-        const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" })).html(
-            post.spoilers
-                ? "<button class='btn-danger w-full'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>"
-                : isLongPost ? "<button class='show-long-post-btn w-full'><i class='fas fa-up-long'></i> Show Long Post</button>"
-                    : content);
+        const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" }))
+            .html(post.spoilers ? "<button id='show-spoilers' class='btn-danger w-full'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>" : content);
 
         // Show spoliers/long posts
-        NS(postCard.get(".btn-danger")[0]).on("click", function () {
-            contentEl.html(content);
-        });
-
-        NS(postCard.get(".show-long-post-btn")[0]).on("click", function () {
+        NS(postCard.get(".show-spoilers")[0]).on("click", function () {
             contentEl.html(content);
         });
 
         // Author
         NS(NS.createEl("p", postCard, {
-            style: `color: ${post.rootId ? "green" : "#ff0000"}; display:block; margin-bottom: 8px; cursor: pointer`,
+            style: `color: red; display:block; margin-bottom: 8px; cursor: pointer`,
             role: "button", tabIndex: "0"
         }))
-            .html(`Created by: ${post.by.emoji || "🚀"} <span class='author-name'>${capitalizeFirstLetter(post.by?.username) || "Someone"}</span> ${post.rootId ? `- You're chatting with <span class='user-chatting-with'>${chattingWith}</span>` : ""}`).on("click", async function () {
+            .html(`Created by: ${post.by.emoji || "🚀"} <span class='author-name'>${capitalizeFirstLetter(post.by.username)}</span>`).on("click", async function () {
                 const authorProfileData = await NS.fetch({
                     url: `/api/v1/get/user-profile/${post.by._id}/?skip=0`
                 });
@@ -136,21 +68,23 @@ async function renderPosts(posts = []) {
 
         // Replies
         const renderReplies = async (id) => {
+            // Get replies
             const data = await NS.fetch({
                 url: `/api/v1/get/post/replies/${post._id}/${id}`
             });
 
             if (!data.success) return Swal.fire(data.error);
-            if (data.replies.length <= 0) return Swal.fire("No replies yet");
+            if (data.replies.length <= 0) return Swal.fire("No replies yet!");
+
+            // Show replies
             Swal.fire({
                 title: "Replies",
                 html: "<div id='replies-container' class='scroll-postsContainer'></div>",
                 confirmButtonText: "Close"
             });
 
-            const repliesList = NS("#replies-container");
             data.replies.forEach(reply => {
-                const replyItem = NS(NS.createEl("div", repliesList, { className: "comment-item space-between" }));
+                const replyItem = NS(NS.createEl("div", NS("#replies-container"), { className: "comment-item space-between" }));
                 replyItem.html(`
 <div class="center" style="gap: 5px">
   <div class="comment-item-author">
@@ -183,7 +117,7 @@ async function renderPosts(posts = []) {
                             NS(replyItem.get(".reply-item-content")[0]).setText(content || "No content found");
                         }
                     });
-                });
+                })
 
                 NS(replyItem.get(".reply-item-content")[0]).setText(reply.content);
                 NS(replyItem.get(".reply-btn")[0]).on("click", function (e) {
@@ -203,19 +137,16 @@ async function renderPosts(posts = []) {
         let commentsSkip = 0;
 
         const renderComments = async () => {
-            // Data
+            // Get comments
             const data = await NS.fetch({
                 url: `/api/v1/get/post/comments/${post._id}/?skip=${commentsSkip}`,
             });
-            if (!data.success) return Swal.fire(data.error);
 
-            // Render
-            commentsList.html(""); // Clear previous comments
-            if (!data.comments || data.comments.length <= 0) {
-                NS(NS.createEl("div", commentsList, { className: "state-no-comments" }))
-                    .setText("No comments yet.");
-                return;
-            }
+            if (!data.success) return Swal.fire(data.error);
+            if (data.comments.length <= 0) return Swal.fire("No comments yet!");
+
+            // Show comments
+            commentsList.html("");
 
             data.comments.forEach(comment => {
                 const commentItem = NS(NS.createEl("div", commentsList, { className: "comment-item space-between" }));
@@ -250,7 +181,7 @@ async function renderPosts(posts = []) {
                             NS(commentItem.get(".comment-item-content")[0]).setText(content || "No content found");
                         }
                     });
-                })
+                });
 
                 NS(commentItem.get(".comment-item-content")[0]).setText(comment.content || "No content found");
                 NS(commentItem.get(".reply-btn")[0]).on("click", function (e) {
@@ -266,16 +197,22 @@ async function renderPosts(posts = []) {
 
         // Comments navigation
         const commentsNavGroup = NS.createEl("div", postCard, { className: "center" });
+        
+        // Prev
         NS(NS.createEl("button", commentsNavGroup, { className: "comments-prev" })).on("click", async function () {
             if (commentsSkip <= 0) return;
             commentsSkip -= 10;
             renderComments();
         }).html("<i class='fa-solid fa-chevron-left'></i>");
+
+        // Next
         NS(NS.createEl("button", commentsNavGroup, { className: "comments-next" })).on("click", async function () {
             if (postCard.get(".state-no-comments")[0]) return;
             commentsSkip += 10;
             renderComments();
         }).html("<i class='fa-solid fa-chevron-right'></i>");
+
+        // Show comments
         NS(postCard.get(".show-comments-btn")[0]).on("click", async function () {
             renderComments();
         });
@@ -327,50 +264,12 @@ async function renderPosts(posts = []) {
                 }
             });
         }).html(`<i class="fa-solid fa-comment"></i> <span class="comments-count">${post.comments.toLocaleString()}</span>`);
-
-        // Fork and boost
-        if (!post.boosted && !post.rootId) {
-            NS(NS.createEl("button", optionsDiv, {})).html("<i class='fa-solid fa-code-fork'></i>").on("click", async function () {
-                const result = await Swal.fire({
-                    title: "Enter receiver username: ",
-                    input: "text",
-                    inputPlaceholder: "Enter receiver username...",
-                    showCancelButton: true,
-                    preConfirm: result => {
-                        if (!result) return Swal.showValidationMessage("Please enter a valid receiver username!");
-                        if (result.length < 3 || result.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
-                    }
-                });
-
-                if (result.value && result.isConfirmed) {
-                    const forkResponse = await NS.fetch({
-                        url: `/api/v1/fork/post/${post._id}`,
-                        method: "POST",
-                        body: { receiverUsername: result.value }
-                    });
-
-                    if (!forkResponse.success) return Swal.fire(forkResponse.error);
-                    Swal.fire("Success", "Fork created!", "success");
-                    getPosts();
-                }
-            });
-
-            NS(NS.createEl("button", optionsDiv, {})).html("<i class='fa-solid fa-repeat'></i>").on("click", function () {
-                window.scrollTo({
-                    top: 0,
-                    behavior: "smooth"
-                });
-
-                createPostTitle.setVal("[BOOST]");
-                createPostKeywords.setVal("boost");
-                createPostContent.setVal(`View ${generatePostLink(post._id)}`);
-                createPostContentCount.setText(`${createPostContent.getVal()[0].length}/${window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
-            });
-        }
     });
 
-    // Themes
+    // Theme
     applyTheme(currentTheme, "postsElements");
+
+    // Accessibility
     initAccessibility();
 }
 
