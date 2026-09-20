@@ -71,12 +71,8 @@ app.post("/api/v1/posts", checkAuth, [
         title: title,
         content: content,
         by: req.session.userId,
-        boosted: title.toLowerCase() === "[boost]",
         spoilers: spoilers,
-        keywords: keywords,
-        receiverId: null,
-        forkerId: null,
-        rootId: null
+        keywords: keywords
     });
 
     await newPost.save();
@@ -97,7 +93,6 @@ app.post("/api/v1/posts/bulk", checkAuth, [
             content: posts[i].content?.slice(0, req.currentUser.maxPostContentCharsLength),
             title: posts[i].title?.slice(0, 20),
             keywords: (Array.isArray(posts[i]?.keywords) && posts[i]?.keywords?.length <= 5) ? posts[i]?.keywords : [],
-            boosted: posts[i]?.title?.slice(0, req.currentUser.maxPostContentCharsLength)?.toLowerCase()?.trim() === "[boost]",
             spoilers: posts[i].spoilers ? true : false,
             private: posts[i].private ? true : false,
             pinned: false
@@ -115,9 +110,7 @@ app.get("/api/v1/get/post/:id", checkAuth, [
     const id = req.cleanData.id;
     const foundPost = await schemas.Posts.findOne({
         ...hotQueries.view_post(id, req.session.userId)
-    }).populate("by", "-password -recoveryCodes")
-        .populate("forkerId", "-password -recoveryCodes")
-        .populate("receiverId", "-password -recoveryCodes");
+    });
     if (!foundPost) return res.status(400).json({ error: "Post not found!" });
 
     return res.status(200).json({ success: true, posts: [foundPost] });
@@ -128,18 +121,11 @@ app.get("/api/v1/get/posts", [
 ], validateResult, async (req, res) => {
     const skip = req.cleanData.skip;
     const posts = await schemas.Posts.find({
-        private: false,
-        $or: [
-            { forkerId: null, receiverId: null },
-            { forkerId: req.session.userId },
-            { receiverId: req.session.userId }
-        ]
-    }).sort({ boosted: -1, createdAt: -1, _id: -1 })
+        private: false
+    }).sort({ createdAt: -1, _id: -1 })
         .skip(parseInt(skip))
         .limit(50)
         .populate("by", "-password -recoveryCodes")
-        .populate("forkerId", "-password -recoveryCodes")
-        .populate("receiverId", "-password -recoveryCodes")
         .lean();
 
     return res.status(200).json({ success: true, posts });
@@ -152,9 +138,7 @@ app.get("/api/v1/search/posts", [
     const regex = new RegExp(query, 'i');
     const foundPosts = await schemas.Posts.find({
         keywords: { $regex: regex },
-        private: false,
-        forkerId: null,
-        receiverId: null
+        private: false
     }).sort({
         likes: -1,
         createdAt: -1,
@@ -335,7 +319,6 @@ app.use((err, req, res, next) => {
         POST_UPDATE_FAILED: "Post update failed!",
         USER_UPDATE_FAILED: "User update failed!",
         COMMENT_UPDATE_FAILED: "Comment update failed!",
-        FORK_DELETE_FAILED: "Fork delete failed!",
         POST_NOT_FOUND: "Post not found!",
         POST_DELETE_FAILED: "Post delete failed!",
         GIFT_REDEEM_FAILED: "Gift redeem failed!"

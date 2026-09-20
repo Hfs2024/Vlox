@@ -5,6 +5,8 @@ NS("#view-active-gifts").on("click", lockEvent(async function () {
 
     if (!data.success) return Swal.fire(data.error);
     if (!data.gifts || data.gifts.length <= 0) return Swal.fire("No gifts found.");
+
+    // Show gifts
     Swal.fire({
         title: "Active Free Gifts:",
         html: "<div id='active-links-container' class='scroll-container'></div>",

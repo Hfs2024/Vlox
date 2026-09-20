@@ -9,7 +9,7 @@ async function checkAuth(req, res, next) {
     if (!req.session.isLoggedIn || !req.session.userId) return res.status(400).json({ error: "You are not logged in!" });
     const foundUser = await schemas.Users.findById(req.session.userId);
     if (!foundUser) return res.status(400).json({ error: "Can't find your account right now!" });
-    
+
     req.currentUser = foundUser;
     next();
 }
@@ -38,9 +38,7 @@ const hotQueries = {
     modify_post: (postId, userId) => {
         return {
             by: userId,
-            _id: postId,
-            forkerId: null,
-            receiverId: null
+            _id: postId
         }
     },
 
@@ -48,14 +46,8 @@ const hotQueries = {
         return {
             _id: postId,
             $or: [
-                { by: userId, forkerId: null, receiverId: null },
-                { forkerId: null, receiverId: null, private: false },
-                {
-                    $or: [
-                        { forkerId: userId },
-                        { receiverId: userId }
-                    ]
-                }
+                { by: userId },
+                { private: false },
             ]
         }
     }

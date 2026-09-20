@@ -24,18 +24,20 @@ router.post("/api/v1/bookmark/post/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const id = req.cleanData.id;
-    const isValidPost = await schemas.Posts.findOne({
-        _id: id,
-        private: false,
-        forkerId: null,
-        receiverId: null
-    });
-    if (!isValidPost) return res.status(400).json({ error: "Post not found!" });
 
+    // Find post
+    const post = await schemas.Posts.findOne({
+        _id: id,
+        private: false
+    });
+
+    if (!post) return res.status(400).json({ error: "Post not found!" });
+
+    // Insert bookmark
     const newBookmark = new schemas.Bookmarks({
         for: id,
         by: req.session.userId,
-        title: isValidPost.title
+        title: post.title
     })
 
     await newBookmark.save();

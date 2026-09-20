@@ -147,8 +147,6 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
     // Public posts
     const foundPosts = await schemas.Posts.find({
         by: user._id,
-        forkerId: null,
-        receiverId: null,
         $or: [
             { by: req.session.userId },
             { private: false }

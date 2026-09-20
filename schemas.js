@@ -41,28 +41,12 @@ const postsSchema = new mongoose.Schema({
     spoilers: { type: Boolean, default: false },
     private: { type: Boolean, default: false },
     redeemed: { type: Boolean, default: false },
-    boosted: { type: Boolean, default: false },
     pinned: { type: Boolean, default: false },
-    rootId: { type: mongoose.Schema.Types.ObjectId, default: null },
-    receiverId: { type: mongoose.Schema.Types.ObjectId, default: null, ref: "Users" },
-    forkerId: { type: mongoose.Schema.Types.ObjectId, default: null, ref: "Users" },
     keywords: { type: [String], default: [] }
 }, { timestamps: true });
-postsSchema.index({ boosted: -1, createdAt: -1, _id: -1 });
-postsSchema.index({ by: 1, createdAt: -1 });
+postsSchema.index({ by: 1 });
 postsSchema.index({ likes: 1 });
 postsSchema.index({ keywords: 1 });
-postsSchema.index(
-    { rootId: 1, receiverId: 1, forkerId: 1 },
-    {
-        unique: true,
-        partialFilterExpression: {
-            rootId: { $exists: true, $ne: null },
-            receiverId: { $exists: true, $ne: null },
-            forkerId: { $exists: true, $ne: null }
-        }
-    }
-);
 
 // Comments
 const commentsSchema = new mongoose.Schema({

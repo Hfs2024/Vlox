@@ -131,34 +131,6 @@ router.post("/api/v1/reply/comment/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-// Fork post
-router.post("/api/v1/fork/post/:id", checkAuth, [
-    param("id").exists().isMongoId(),
-    body("receiverUsername").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim()
-], validateResult, async (req, res) => {
-    const id = req.params.id;
-    const { receiverUsername } = req.body;
-    // Does the user and post exist?
-    if (receiverUsername === req.currentUser.username) return res.status(400).json({ error: "You can't chat with yourself 😅" });
-    const user = await schemas.Users.findOne({ username: receiverUsername, private: false }); // All private accounts can't be a fork receiver
-    if (!user) return res.status(400).json({ error: "User not found" });
-    const post = await schemas.Posts.findOne({ _id: id, boosted: false, private: false, receiverId: null, forkerId: null }); // All boosted/private posts can't be forked
-    if (!post) return res.status(400).json({ error: "Post not found!" });
-
-    // Fork
-    const newPost = new schemas.Posts({
-        title: post.title,
-        content: post.content,
-        by: post.by,
-        receiverId: user._id,
-        forkerId: req.session.userId,
-        rootId: post._id
-    });
-
-    await newPost.save();
-    return res.status(200).json({ success: true });
-});
-
 // Redeem post
 router.post("/api/v1/redeem/post/:id", checkAuth, [
     param("id").exists().isMongoId()
@@ -275,7 +247,7 @@ router.put("/api/v1/edit/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-// Delete post and forks
+// Delete post
 router.delete("/api/v1/delete/post/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async function (req, res) {
@@ -297,37 +269,6 @@ router.delete("/api/v1/delete/post/:id", checkAuth, [
         await schemas.Comments.deleteMany({
             for: id
         }, { session });
-    });
-
-    await session.endSession();
-    return res.status(200).json({ success: true });
-});
-
-router.delete("/api/v1/delete/fork/:id", checkAuth, [
-    param("id").exists().isMongoId()
-], validateResult, async (req, res) => {
-    const session = await mongoose.startSession();
-    const id = req.cleanData.id;
-    await session.withTransaction(async () => {
-        const result = await schemas.Posts.deleteOne({
-            _id: id,
-            $or: [
-                { forkerId: req.session.userId },
-                { receiverId: req.session.userId }
-            ] // Are you the receiver or the forker of the post?
-        }, { session });
-
-        if (result.deletedCount === 0) throw new Error("FORK_DELETE_FAILED");
-
-        // Remove reactions
-        await schemas.Reactions.deleteMany({
-            for: id
-        });
-
-        // Remove comments
-        await schemas.Comments.deleteMany({
-            for: id
-        });
     });
 
     await session.endSession();
