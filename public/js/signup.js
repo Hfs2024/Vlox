@@ -122,7 +122,7 @@ async function showSignUpModal() {
             if (email.length > 100 || !/.+\@.+\..+/.test(email)) return Swal.showValidationMessage("Email must valid and less than or equal to 100 chars!");
             if (bio.length < 5) return Swal.showValidationMessage("Bio must be higher or equal to 5 chars!");
 
-            return { username, passord, email, bio };
+            return { username, password, email, bio };
         }
     });
 
