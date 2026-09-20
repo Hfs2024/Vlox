@@ -104,13 +104,15 @@ app.post("/api/v1/posts/bulk", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-app.get("/api/v1/get/post/:id", checkAuth, [
+app.get("/api/v1/get/post/:id", [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const id = req.cleanData.id;
     const foundPost = await schemas.Posts.findOne({
         ...hotQueries.view_post(id, req.session.userId)
-    });
+    })
+        .populate("by", "-password -recoveryCodes")
+        .lean();
     if (!foundPost) return res.status(400).json({ error: "Post not found!" });
 
     return res.status(200).json({ success: true, posts: [foundPost] });
