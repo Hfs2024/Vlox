@@ -29,5 +29,3 @@ With NanoScript handling the frontend, I built **Vlox** as a clean, high-perform
 Thanks to NanoScript, the frontend architecture is finally in a state that I can easily scale without hitting a wall of messy code.
 
 If you liked the project, please drop a star on GitHub! 
-
-**Thanks for reading!**
