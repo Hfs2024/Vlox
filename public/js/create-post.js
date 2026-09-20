@@ -108,7 +108,7 @@ prevBtn.on("click", lockEvent(async () => {
     await getPosts();
 }));
 
-nextBtn.on("click", d(async () => {
+nextBtn.on("click", lockEvent(async () => {
     if (NS("#posts-container").get(".state-nothing-found")[0]) return;
     skip += 50;
     await getPosts();
