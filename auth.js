@@ -156,7 +156,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
     }).sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(10)
-        .populate("by", "-password -recoveryCodes -email")
+        .populate("by", "-password -recoveryCodes")
         .lean();
 
     // Pinned posts
@@ -166,7 +166,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
     }).sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(10)
-        .populate("by", "-password -recoveryCodes -email")
+        .populate("by", "-password -recoveryCodes")
         .lean();
 
     return res.status(200).json({

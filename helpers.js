@@ -88,7 +88,7 @@ function createLimiter(windowMs = 900000, limit = 1000, options = {}, error = "T
 // Validate result
 function validateResult(req, res, next) {
     const result = validationResult(req);
-    if (!result.isEmpty()) return res.status(400).json({ error: "Invalid payload!" });
+    if (!result.isEmpty()) return res.status(400).json({ error: "Invalid request!" });
     const cleanData = matchedData(req);
     req.cleanData = cleanData;
     next();

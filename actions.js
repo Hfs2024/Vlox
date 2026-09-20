@@ -1,11 +1,11 @@
 const schemas = require("./schemas.js");
 const { checkAuth, validateResult, hotQueries } = require("./helpers.js");
-const { body, query, param } = require("express-validator");
+const { body, param } = require("express-validator");
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
 
-// Change visibility
+// Change post visibility
 router.put("/api/v1/change-visibility/post/:id", checkAuth, [
     param("id").exists().isMongoId(),
     body("value").exists().isIn([true, false])
@@ -24,7 +24,7 @@ router.put("/api/v1/change-visibility/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-// Pin and unpin
+// Pin and unpin posts
 router.post("/api/v1/pin/post/:id", checkAuth, [
     param("id").exists().isMongoId(),
     body("value").exists().isIn([true, false])
@@ -58,7 +58,7 @@ router.post("/api/v1/pin/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-// Create comment
+// Create comments and replies
 router.post("/api/v1/comment/post/:id", checkAuth, [
     param("id").exists().isMongoId(),
     body("comment").exists().notEmpty().isString().isLength({ max: 200 }).trim()
@@ -90,7 +90,6 @@ router.post("/api/v1/comment/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-// Create reply
 router.post("/api/v1/reply/comment/post/:id", checkAuth, [
     param("id").exists().isMongoId(),
     body("rootId").exists().isMongoId(),
@@ -233,7 +232,7 @@ router.post("/api/v1/react/:action/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-// Edit comment
+// Edit posts and comments
 router.put("/api/v1/edit/post/comment/:id", checkAuth, [
     param("id").exists().isMongoId(),
     body("newComment").exists().notEmpty().isString().isLength({ max: 200 }).trim(),
@@ -252,7 +251,6 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-// Edit post
 router.put("/api/v1/edit/post/:id", checkAuth, [
     body("newTitle").exists().notEmpty().isString().isLength({ max: 20 }).trim(),
     body("newContent").exists().notEmpty().isString().trim().custom((value, { req }) => {

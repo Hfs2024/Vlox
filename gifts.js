@@ -10,7 +10,7 @@ const rl = readline.createInterface({
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 // Connect MonogDB
-mongoose.connect(process.env.PRODUCTION_MONGO_URI)
+mongoose.connect(process.env.MONGO_URI)
   .then(() => handleCreateGift())
   .catch(err => console.log(`Failed to connect MongoDB: ${err.message}`));
 
@@ -22,24 +22,15 @@ async function handleCreateGift() {
     // Auth
     const password = await rl.question("Enter Password: ");
     const isMatch = await bcrypt.compare(password, ADMIN_PASSWORD);
-    if (!isMatch) {
-      console.log("Invalid password!");
-      return;
-    }
+    if (!isMatch) return console.log("Invalid password!");
 
     // Count
     const count = parseInt(await rl.question("Enter Gift Uses Count: "));
-    if (isNaN(count) || count <= 0 || count > 100) {
-      console.error("Invalid input. Please enter a positive integer between 1 and 100.");
-      return;
-    }
+    if (Number.isNaN(count) || count <= 0 || count > 100) return console.error("Invalid input. Please enter a positive integer between 1 and 100.");
 
     // Name
-    const name = String(await rl.question("Enter Gift Name: "));
-    if (!name || name.length <= 0 || name.length > 100) {
-      console.error("Invalid input. Gift name must be a type of string between 1 and 100.");
-      return;
-    }
+    const name = await rl.question("Enter Gift Name: ");
+    if (name.length <= 0 || name.length > 100) return console.error("Invalid input. Gift name must be a type of string between 1 and 100.");
 
     // Insert
     const result = new schemas.Gifts({
