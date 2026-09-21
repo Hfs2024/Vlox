@@ -111,7 +111,7 @@ app.get("/api/v1/get/post/:id", [
     const foundPost = await schemas.Posts.findOne({
         ...hotQueries.view_post(id, req.session.userId)
     })
-        .populate("by", "-password -recoveryCodes")
+        .populate("by", "-password -recoveryCodes -email")
         .lean();
     if (!foundPost) return res.status(400).json({ error: "Post not found!" });
 
@@ -127,7 +127,7 @@ app.get("/api/v1/get/posts", [
     }).sort({ createdAt: -1, _id: -1 })
         .skip(parseInt(skip))
         .limit(50)
-        .populate("by", "-password -recoveryCodes")
+        .populate("by", "-password -recoveryCodes -email")
         .lean();
 
     return res.status(200).json({ success: true, posts });
@@ -145,7 +145,7 @@ app.get("/api/v1/search/posts", [
         likes: -1,
         createdAt: -1,
         _id: -1
-    }).limit(100).populate("by", "-password -recoveryCodes");
+    }).limit(100).populate("by", "-password -recoveryCodes -email").lean();
 
     return res.status(200).json({ success: true, posts: foundPosts });
 });
@@ -162,7 +162,7 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
         .skip(parseInt(skip))
         .limit(10)
         .select("for content by")
-        .populate("by", "-password -recoveryCodes")
+        .populate("by", "-password -recoveryCodes -email")
         .lean();
 
     return res.status(200).json({ success: true, comments });
@@ -183,7 +183,7 @@ app.get("/api/v1/get/post/replies/:id/:rootId", checkAuth, [
         for: id,
         rootId: rootId
     })
-        .populate("by", "-password -recoveryCodes")
+        .populate("by", "-password -recoveryCodes -email")
         .lean();
 
     return res.status(200).json({ success: true, replies: replies });

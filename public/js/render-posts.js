@@ -48,7 +48,7 @@ async function renderPosts(posts = []) {
             .html(post.spoilers ? "<button id='show-spoilers' class='btn-danger w-full'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>" : content);
 
         // Show spoliers/long posts
-        NS(postCard.get(".show-spoilers")[0]).on("click", function () {
+        NS(postCard.get("#show-spoilers")[0]).on("click", function () {
             contentEl.html(content);
         });
 
