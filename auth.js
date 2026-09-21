@@ -154,7 +154,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
     }).sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(10)
-        .populate("by", "-password -recoveryCodes")
+        .populate("by", "-password -recoveryCodes -email")
         .lean();
 
     // Pinned posts
@@ -164,7 +164,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
     }).sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(10)
-        .populate("by", "-password -recoveryCodes")
+        .populate("by", "-password -recoveryCodes -email")
         .lean();
 
     return res.status(200).json({
@@ -174,7 +174,6 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
         emoji: user.emoji,
         pinnedPosts: foundPinnedPosts,
         bio: user.bio,
-        email: user.email,
         private: user.private
     });
 });

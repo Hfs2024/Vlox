@@ -19,7 +19,6 @@ async function showProfile(data) {
     <p class="center-overflow"><b>Visibility:</b> ${data.private ? "Private" : "Public"}</p>
     ${isUser ? `<i class="fas fa-${data.private ? "eye" : "eye-slash"} icon-helper" id="user-profile-visibility-toggle" role="button" tabindex="0"></i>` : ""}
   </div>
-  <p class="center-overflow"><b>Email:</b> ${data.email}</p>
   ${isUser ? `
   <div class="center-overflow emoji-container"></div>
   <div class="center-overflow">
