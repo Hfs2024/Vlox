@@ -1,31 +1,27 @@
 async function showProfile(data) {
     // Profile code
     let skip = 0;
-    const username = capitalizeFirstLetter(data.username);
-    const isUser = window?.currentUserQuickInfo?.username === data.username;
+    const user = data.user;
+    const username = capitalizeFirstLetter(user.username);
+    const isUserProfile = window?.currentUserQuickInfo?.username === user.username;
     const emojis = ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"];
-    const greetings = ["Hello", "Hola", "Bonjour", "Ciao"];
-    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
 
     Swal.fire({
-        titleText: `${isUser ? `${greeting}, ${data.emoji || "🚀"} ${username}!` : `${data.emoji || "🚀"} ${username}'s profile`}`,
+        titleText: `${isUserProfile ? `Ciao, ${user.emoji || "🚀"} ${username}!` : `${user.emoji || "🚀"} ${username}'s profile`}`,
         html: `
 <div class="card">
   <div class="space-between">
-    <p class="center-overflow"><b>Bio:</b> ${capitalizeFirstLetter(data.bio) || "No bio found"}</p>
-    ${isUser ? '<i class="fas fa-pen-to-square icon-helper" id="user-profile-bio-edit" role="button" tabindex="0"></i>' : ""}
+    <p class="center-overflow"><b>Bio:</b> ${capitalizeFirstLetter(user.bio) || "No bio found"}</p>
+    ${isUserProfile ? '<i class="fas fa-pen-to-square icon-helper" id="user-profile-bio-edit" role="button" tabindex="0"></i>' : ""}
   </div>
   <div class="space-between">  
-    <p class="center-overflow"><b>Visibility:</b> ${data.private ? "Private" : "Public"}</p>
-    ${isUser ? `<i class="fas fa-${data.private ? "eye" : "eye-slash"} icon-helper" id="user-profile-visibility-toggle" role="button" tabindex="0"></i>` : ""}
+    <p class="center-overflow"><b>Visibility:</b> ${user.private ? "Private" : "Public"}</p>
+    ${isUserProfile ? `<i class="fas fa-${user.private ? "eye" : "eye-slash"} icon-helper" id="user-profile-visibility-toggle" role="button" tabindex="0"></i>` : ""}
   </div>
-  ${isUser ? `
+  ${isUserProfile ? `
   <div class="center-overflow emoji-container"></div>
-  <div class="center-overflow">
-    <button id="reset-password-recovery-codes-btn" class="w-full">Reset Recovery Codes</button>
-    <input id="insert-many-posts-input" type="file" style="display: none" accept=".json">
-    <button id="insert-many-posts-btn" class="w-full">Insert Many Posts</button>
-  </div>` : ""}
+  <button id="reset-password-recovery-codes-btn" class="w-full">Reset Recovery Codes</button>
+` : ""}
 </div>
 
 <div class="task-filter-bar">
@@ -53,7 +49,8 @@ async function showProfile(data) {
         didOpen: () => {
             const container = NS("#user-posts-container");
 
-            // Posts
+            /* Posts */
+            // Public
             const renderPosts = async () => {
                 // Data
                 data = await NS.fetch({
@@ -72,12 +69,13 @@ async function showProfile(data) {
                 data.posts.forEach(post => {
                     renderProfilePost({
                         post: post,
-                        isUser: isUser,
+                        isUserProfile: isUserProfile,
                         container: "#user-posts-container"
                     });
                 });
             }
-
+            
+            // Pinned
             const renderPinnedPosts = () => {
                 if (!data.pinnedPosts || data.pinnedPosts.length === 0) {
                     NS(NS.createEl("div", NS("#user-pinned-posts-container"), { className: "state-nothing-found" }))
@@ -85,10 +83,10 @@ async function showProfile(data) {
                     return;
                 }
 
-                data.pinnedPosts.forEach((post, index) => {
+                data.pinnedPosts.forEach(post => {
                     renderProfilePost({
                         post: post,
-                        isUser: isUser,
+                        isUserProfile: isUserProfile,
                         container: "#user-pinned-posts-container"
                     });
                 });
@@ -112,36 +110,7 @@ async function showProfile(data) {
                 Swal.fire("Sucesss", "Password Recovery Codes Reseted!", "success");
             }));
 
-            // Insert many posts
-            NS("#insert-many-posts-btn").on("click", function () {
-                NS("#insert-many-posts-input").click(1);
-            });
-
-            NS("#insert-many-posts-input").on("change", function (e) {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = async () => {
-                    try {
-                        const posts = JSON.parse(reader.result);
-                        if (!Array.isArray(posts)) return Swal.fire("Invalid Data!");
-                        if (posts.length > 10) return Swal.fire("Posts count must be less than or equal to 10!");
-                        const insertManyPostsData = await NS.fetch({
-                            url: "/api/v1/posts/bulk",
-                            method: "POST",
-                            body: { posts: posts }
-                        });
-
-                        if (!insertManyPostsData.success) return Swal.fire(insertManyPostsData.error);
-                        Swal.fire("Success!", "Posts inserted!", "success");
-                    } catch (e) {
-                        Swal.fire("Something went wrong!");
-                    }
-                }
-
-                reader.readAsText(file);
-            });
-
-            // Update bio/visibility
+            // Update bio and profile visibility
             NS("#user-profile-bio-edit").on("click", async function () {
                 const result = await Swal.fire({
                     title: "Enter new bio: ",
@@ -171,11 +140,11 @@ async function showProfile(data) {
                 const updatevisibilityResponse = await NS.fetch({
                     url: "/api/v1/change-visibility/user-profile",
                     method: "PUT",
-                    body: { value: !data.private }
+                    body: { value: !data.user.private }
                 });
 
                 if (!updatevisibilityResponse.success) return Swal.fire(updatevisibilityResponse.error);
-                Swal.fire("Sucess", `Account is ${data.private ? "public" : "private"}`, "success");
+                Swal.fire("Sucess", `Account is ${data.user.private ? "public" : "private"}`, "success");
             }));
 
             // Navigation
@@ -191,6 +160,7 @@ async function showProfile(data) {
                 renderPosts();
             }));
 
+            // Emojis
             emojis.forEach(emoji => {
                 NS(NS.createEl("button", NS(".emoji-container"), { className: "btn-emoji-container" }))
                     .setText(emoji)
@@ -206,6 +176,7 @@ async function showProfile(data) {
                     }));
             });
 
+            // Task filter bar
             NS(".btn-task-filter-bar").each((btn, index) => {
                 NS(btn).on("click", function () {
                     NS(".btn-task-filter-bar").removeClass("active-bg");

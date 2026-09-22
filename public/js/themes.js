@@ -31,11 +31,11 @@ NS("#btn-theme").on("click", function () {
     });
 
     for (let themeName in themes) {
-        if (themeName === currentTheme) continue;
-
         NS(NS.createEl("button", NS("#themes-container"), { className: "w-full" }))
             .setText(themeName)
             .on("click", function () {
+                if (themeName === currentTheme) return Swal.close();
+
                 // Apply
                 const result = applyTheme(themeName, "elements");
                 if (!result) return;

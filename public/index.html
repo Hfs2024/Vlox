@@ -31,7 +31,8 @@
             <div id="loggedIn-group">
                 <i class="fas fa-user-circle icon-helper" id="profile-btn" role="button" tabindex="0"
                     title="Profile"></i>
-                <i class="fas fa-bookmark icon-helper" id="post-bookmarks-btn" role="button" tabindex="0" title="Bookmark Posts"></i>
+                <i class="fas fa-bookmark icon-helper" id="post-bookmarks-btn" role="button" tabindex="0"
+                    title="Bookmark Posts"></i>
                 <i class="fas fa-sign-out  icon-helper" id="signout-btn" role="button" tabindex="0" title="Signout"></i>
             </div>
         </div>
@@ -40,21 +41,17 @@
     <main class="container">
         <section class="left">
             <h1>What's on your mind today?</h1>
-            <div id="create-container">
-                <input id="create-post-title" type="text" placeholder="Enter post title..." />
-                <input id="create-post-keywords" type="text" placeholder="Enter post keywords (Comma-separated)..." />
-                <textarea id="create-post-content" placeholder="Enter post content..."></textarea>
-            </div>
-            <div id="create-preview-container" class="card overflow"></div>
+            <input id="create-post-title" type="text" placeholder="Enter post title..." />
+            <input id="create-post-keywords" type="text" placeholder="Enter post keywords (Comma-separated)..." />
+            <textarea id="create-post-content" placeholder="Enter post content..."></textarea>
 
+            <!-- Helper icons -->
             <div class="space-between">
                 <div class="center" style="gap: 5px;">
                     <i id="copy-post-content-btn" class="fas fa-copy icon-helper" role="button" tabindex="0"
                         title="Copy"></i>
                     <i id="create-spoilers-btn" class="fa-solid fa-circle-exclamation icon-helper" role="button"
                         tabindex="0" title="Spoilers"></i>
-                    <i id="create-preview-mode" class="fas fa-columns icon-helper" role="button" tabindex="0"
-                        title="Peview toggle"></i>
                     <i id="view-active-gifts" class="fas fa-gift icon-helper" role="button" tabindex="0"
                         title="View active gifts"></i>
                 </div>
@@ -69,7 +66,8 @@
 
         <section class="right">
             <div class="center" style="margin-bottom: 20px;">
-                <input class="w-full" placeholder="Search by keywords... (Top 100 results only)" id="search-posts-input" />
+                <input class="w-full" placeholder="Search by keywords... (Top 100 results only)"
+                    id="search-posts-input" />
                 <button id="btn-search-posts">
                     <i class="fas fa-search"></i>
                 </button>
@@ -105,7 +103,7 @@
     <script src="nanoscript.min.js"></script>
     <script src="js/themes.js"></script>
     <script src="js/helpers.js"></script>
-    <script src="js/comments-helpers.js"></script>
+    <script src="js/comment-helpers.js"></script>
     <script src="js/render-posts.js"></script>
     <script src="js/bookmarks.js"></script>
     <script src="js/create-post.js"></script>

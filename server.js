@@ -40,11 +40,11 @@ app.use(
         }
     })
 );
-const limiter = createLimiter(900000, 1000, {
+const mainLimiter = createLimiter(900000, 1000, {
     skip: (req) => ['/api/v1/reset/password', '/api/v1/posts/bulk'].some(path => req.originalUrl.includes(path))
 });
-if (!limiter) console.log("Failed to create main limit!");
-else app.use(limiter);
+if (!mainLimiter) console.log("Failed to create main limit!");
+else app.use(mainLimiter);
 
 // Sub routes
 app.use("/", bookmarksRouter);
@@ -79,41 +79,16 @@ app.post("/api/v1/posts", checkAuth, [
     return res.status(200).json({ success: true, postId: newPost._id });
 });
 
-// Insert many posts
-const bulkPostsLimit = createLimiter(3600000, 3);
-if (!bulkPostsLimit) console.log("Failed to create bulk posts limit!");
-app.post("/api/v1/posts/bulk", checkAuth, [
-    body("posts").exists().isArray({ max: 10 })
-], bulkPostsLimit, validateResult, async (req, res) => {
-    const { posts } = req.cleanData;
-    // Clean those posts
-    for (let i = 0; i < posts.length; i++) {
-        posts[i] = {
-            by: req.session.userId,
-            content: posts[i].content?.slice(0, req.currentUser.maxPostContentCharsLength),
-            title: posts[i].title?.slice(0, 20),
-            keywords: (Array.isArray(posts[i]?.keywords) && posts[i]?.keywords?.length <= 5) ? posts[i]?.keywords : [],
-            spoilers: posts[i].spoilers ? true : false,
-            private: posts[i].private ? true : false,
-            pinned: false
-        }
-    }
-
-    // It's time to insert them
-    await schemas.Posts.insertMany(posts, { ordered: false });
-    return res.status(200).json({ success: true });
-});
-
 app.get("/api/v1/get/post/:id", [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const id = req.cleanData.id;
-    const foundPost = await schemas.Posts.findOne({
+    const post = await schemas.Posts.findOne({
         ...hotQueries.view_post(id, req.session.userId)
     })
         .populate("by", "-password -recoveryCodes -email")
         .lean();
-    if (!foundPost) return res.status(400).json({ error: "Post not found!" });
+    if (!post) return res.status(400).json({ error: "Post not found!" });
 
     return res.status(200).json({ success: true, posts: [foundPost] });
 });
@@ -136,10 +111,9 @@ app.get("/api/v1/get/posts", [
 app.get("/api/v1/search/posts", [
     query("query").exists().notEmpty().isString().isLength({ max: 100 }).customSanitizer(value => value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')).toLowerCase().trim()
 ], validateResult, async (req, res) => {
-    const query = `^${req.cleanData.query}$`;
-    const regex = new RegExp(query, 'i');
-    const foundPosts = await schemas.Posts.find({
-        keywords: { $regex: regex },
+    const query = req.cleanData.query;
+    const posts = await schemas.Posts.find({
+        keywords: query,
         private: false
     }).sort({
         likes: -1,
@@ -147,7 +121,7 @@ app.get("/api/v1/search/posts", [
         _id: -1
     }).limit(100).populate("by", "-password -recoveryCodes -email").lean();
 
-    return res.status(200).json({ success: true, posts: foundPosts });
+    return res.status(200).json({ success: true, posts: posts });
 });
 
 app.get("/api/v1/get/post/comments/:id", checkAuth, [
@@ -155,8 +129,12 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
     query("skip").exists().isInt({ min: 0 })
 ], validateResult, async (req, res) => {
     const { skip, id } = req.cleanData;
-    const isPublic = await schemas.Posts.findOne(hotQueries.view_post(id, req.session.userId));
-    if (!isPublic) return res.status(400).json({ error: "Post not found!" });
+
+    // Check permissions to see post 
+    const post = await schemas.Posts.findOne(hotQueries.view_post(id, req.session.userId));
+    if (!post) return res.status(400).json({ error: "Post not found!" });
+
+    // Find comments
     const comments = await schemas.Comments.find({ for: id, rootId: null })
         .sort({ createdAt: -1, _id: -1 })
         .skip(parseInt(skip))
@@ -174,7 +152,7 @@ app.get("/api/v1/get/post/replies/:id/:rootId", checkAuth, [
 ], validateResult, async (req, res) => {
     const { id, rootId } = req.cleanData;
 
-    // Do you have permissions to access this post?
+    // Check permissions to see post
     const post = await schemas.Posts.find(hotQueries.view_post(id, req.session.userId));
     if (!post) return res.status(400).json({ error: "Post not found or you don't have permissions to see it!" });
 
@@ -190,13 +168,14 @@ app.get("/api/v1/get/post/replies/:id/:rootId", checkAuth, [
 });
 
 // Password recovery
-const passwordRecoveryLimit = createLimiter(3600000, 5);
-if (!passwordRecoveryLimit) console.log("Failed to create passwored recovery limit!");
+const passwordRecoveryLimiter = createLimiter(3600000, 5);
+if (!passwordRecoveryLimiter) console.log("Failed to create passwored recovery limit!");
+
 app.post("/api/v1/reset/password", [
     body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
     body("newPassword").exists().notEmpty().isString().isLength({ min: 6, max: 12 }).trim(),
     body("recoveryCode").exists().notEmpty().isString().isLength({ min: 20, max: 20 }).trim()
-], passwordRecoveryLimit, validateResult, async (req, res) => {
+], passwordRecoveryLimiter, validateResult, async (req, res) => {
     const { username, recoveryCode, newPassword } = req.cleanData;
     const user = await schemas.Users.findOne({ username: username });
     if (!user) return res.status(400).json({ error: "Failed to find user!" });
@@ -204,34 +183,34 @@ app.post("/api/v1/reset/password", [
 
     for (let code of user.recoveryCodes) {
         const isValid = await bcrypt.compare(recoveryCode, code);
+        if (!isValid) continue;
 
-        if (isValid) {
-            const result = await schemas.Users.updateOne({
-                username: username,
+        // Update
+        const result = await schemas.Users.updateOne({
+            username: username,
+            recoveryCodes: code
+        }, {
+            $set: {
+                password: await bcrypt.hash(newPassword, 10)
+            },
+
+            $pull: {
                 recoveryCodes: code
-            }, {
-                $set: {
-                    password: await bcrypt.hash(newPassword, 10)
-                },
+            }
+        });
 
-                $pull: {
-                    recoveryCodes: code
-                }
-            });
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update password!" });
 
-            if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update password!" });
-            foundOne = true;
-            break;
-        }
-
-        continue;
+        // Success
+        foundOne = true;
+        break;
     }
 
     if (!foundOne) return res.status(400).json({ error: "Invalid recovery code!" });
     return res.status(200).json({ success: true });
 });
 
-app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryLimit, checkAuth, async (req, res) => {
+app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryLimiter, checkAuth, async (req, res) => {
     const newCodes = await generateRecoveryCodes(3);
     const result = await schemas.Users.updateOne({
         _id: req.session.userId,
@@ -254,6 +233,7 @@ app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
     const inc = Math.min(100, remaining);
     if (inc <= 0) return res.status(400).json({ error: "Gift redeem failed!" });
 
+    // Redeem the gift
     const session = await mongoose.startSession();
     await session.withTransaction(async () => {
         // Gift

@@ -41,46 +41,7 @@ function cleanHTML(html) {
 
 // Post links
 function generatePostLink(postId) {
-    return `https://vlox.containers.snapdeploy.app/?id=${postId}`;
-}
-
-// Init preview and spoilers
-function initPostPreview({
-    btn,
-    editContainer,
-    previewContainer,
-    titleEl,
-    contentEl,
-    onChange,
-} = {}) {
-    const toggleDisplay = () => {
-        if (btn?.hasClass("active-color")) {
-            editContainer?.css({ display: "none" });
-            previewContainer?.css({ display: "block" });
-            previewContainer?.html(`
-          <h2>${titleEl?.getVal()[0] || "No title yet"}</h2>
-          <div>${cleanHTML(contentEl?.getVal()[0] || "No content yet")}</div>    
-        `);
-        } else {
-            editContainer?.css({ display: "block" });
-            previewContainer?.css({ display: "none" });
-        }
-
-        if (typeof onChange === "function") onChange(btn?.hasClass("active-color"));
-    }
-
-    btn?.on("click", function () {
-        btn?.toggleClass("active-color");
-        toggleDisplay();
-    });
-
-    toggleDisplay(); // Must run to hide preview container
-}
-
-function initToggle(btn) {
-    btn?.on("click", function () {
-        btn?.toggleClass("active-color");
-    });
+    return `${window.location.origin + window.location.pathname}?id=${postId}`;
 }
 
 // Init live coutner

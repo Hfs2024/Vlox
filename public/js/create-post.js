@@ -6,10 +6,8 @@ const createPostTitle = NS("#create-post-title");
 const copyPostContentBtn = NS("#copy-post-content-btn");
 const searchPostsInput = NS("#search-posts-input");
 const searchPostsBtn = NS("#btn-search-posts");
-const createPreviewBtn = NS("#create-preview-mode");
 const createSpoilersBtn = NS("#create-spoilers-btn");
 const createContainer = NS("#create-container");
-const previewContainer = NS("#create-preview-container");
 const prevBtn = NS("#prev-btn");
 const nextBtn = NS("#next-btn");
 
@@ -35,16 +33,10 @@ searchPostsBtn.on("click", lockEvent(async function () {
     await search();
 }));
 
-// Preview mode and spoliers 
-initPostPreview({
-    btn: createPreviewBtn,
-    editContainer: createContainer,
-    previewContainer: previewContainer,
-    titleEl: createPostTitle,
-    contentEl: createPostContent
+// Spoilers
+createSpoilersBtn.on("click", function () {
+    createSpoilersBtn.toggleClass("active-color");
 });
-
-initToggle(createSpoilersBtn);
 
 // Copy post content
 copyPostContentBtn.on("click", function () {
@@ -87,8 +79,6 @@ createPostBtn.on("click", lockEvent(async function () {
     createPostContent.setVal("");
     createPostKeywords.setVal("");
     createContainer.css({ display: "block" });
-    previewContainer.css({ display: "none" });
-    createPreviewBtn.removeClass("active-color");
     createSpoilersBtn.removeClass("active-color");
     createPostContentCount.setText(`0/${window.currentUserQuickInfo.maxPostContentCharsLength}`);
 
