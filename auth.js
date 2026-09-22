@@ -141,11 +141,14 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
             { _id: req.session.userId },
             { private: false }
         ]
-    });
+    })
+        .select("username emoji bio private")
+        .lean();
+        console.log(user);
     if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
 
     // Public posts
-    const foundPosts = await schemas.Posts.find({
+    const posts = await schemas.Posts.find({
         by: user._id,
         $or: [
             { by: req.session.userId },
@@ -158,7 +161,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
         .lean();
 
     // Pinned posts
-    const foundPinnedPosts = await schemas.Posts.find({
+    const pinnedPosts = await schemas.Posts.find({
         by: user._id,
         pinned: true // Pinned!
     }).sort({ createdAt: -1, _id: -1 })
@@ -169,12 +172,9 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
 
     return res.status(200).json({
         success: true,
-        posts: foundPosts,
-        username: user.username,
-        emoji: user.emoji,
-        pinnedPosts: foundPinnedPosts,
-        bio: user.bio,
-        private: user.private
+        posts: posts,
+        pinnedPosts: pinnedPosts,
+        user: user
     });
 });
 

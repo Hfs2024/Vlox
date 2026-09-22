@@ -58,7 +58,7 @@ async function showLoginModal() {
         showCancelButton: true,
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
-        didOpen: () => { initAccessibility(); },
+        didOpen: initAccessibility,
         preConfirm: () => {
             const username = Swal.getPopup().querySelector('#username').value;
             const password = Swal.getPopup().querySelector('#password').value;
@@ -179,12 +179,12 @@ signUpBtn.on("click", function () {
 });
 
 signOutBtn.on("click", lockEvent(async function () {
-    const data = await NS.fetch({
+    const response = await NS.fetch({
         url: "/api/v1/signout",
         method: "DELETE"
     });
 
-    if (!data.success) return Swal.fire(data.error);
+    if (!response.success) return Swal.fire(response.error);
     checkUserStatus();
     getQuickInfo();
     Swal.fire("Success", "You have been logged out!", "success");

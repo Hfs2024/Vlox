@@ -40,7 +40,7 @@ async function viewAnalytics(post) {
 }
 
 async function renderProfilePost({
-    post, isUser, container
+    post, isUserProfile, container
 } = {}) {
     const postCard = NS.createEl("div", NS(container), { className: "card" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
@@ -59,7 +59,7 @@ async function renderProfilePost({
     });
     NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
 
-    if (isUser) {
+    if (isUserProfile) {
         NS(NS.createEl("p", postCard, {
             style: "font-size: 15px;"
         })).html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
@@ -88,22 +88,13 @@ async function renderProfilePost({
             const result = await Swal.fire({
                 title: "Update post: ",
                 html: `
-<div id="edit-container">
-  <input id="edit-post-title" type="text" placeholder="Enter new title..." aria-label="Post Title">
-  <input id="edit-post-keywords" type="text" placeholder="Enter new keyword (Separated by comma)..."
-    aria-label="Keywords">
-  <textarea id="edit-post-content" placeholder="Enter new content" aria-label="Post Content"></textarea>
-</div>
-
-<div id="edit-preview-container" class="card center-overflow"></div>
+<input id="edit-post-title" type="text" placeholder="Enter new title...">
+<input id="edit-post-keywords" type="text" placeholder="Enter new keyword (Comma-separated)...">
+<textarea id="edit-post-content" placeholder="Enter new content"></textarea>
 
 <div class="space-between">
-  <div class="center">
     <i id="edit-spoilers-btn" class="fa-solid fa-circle-exclamation icon-helper" role="button" tabindex="0"
-      title="Spoilers" aria-label="Toggle Spoilers"></i>
-    <i id="edit-preview-mode" class="fas fa-columns icon-helper" role="button" tabindex="0" title="Preview toggle"
-      aria-label="Toggle Preview Mode"></i>
-  </div>
+      title="Spoilers"></i>
 
   <p class="text-count">
     Count: <span class="count" id="edit-post-content-count">0/2000</span>
@@ -112,18 +103,14 @@ async function renderProfilePost({
                 `,
                 showCancelButton: true,
                 didOpen: () => {
-                    const editSpoilersBtn = NS("#edit-spoilers-btn")
-                    initPostPreview({
-                        btn: NS("#edit-preview-mode"),
-                        editContainer: NS("#edit-container"),
-                        previewContainer: NS("#edit-preview-container"),
-                        titleEl: NS("#edit-post-title"),
-                        contentEl: NS("#edit-post-content")
+                    // Spoilers
+                    const editSpoilersBtn = NS("#edit-spoilers-btn");
+                    editSpoilersBtn.on("click", function () {
+                        editSpoilersBtn.toggleClass("active-color");
                     });
-
-                    initToggle(editSpoilersBtn);
                     if (post.spoilers) editSpoilersBtn.addClass("active-color");
 
+                    // Default values
                     NS("#edit-post-title").setVal(post.title);
                     NS("#edit-post-content").setVal(post.content);
                     NS("#edit-post-keywords").setVal(post.keywords.join(", "));

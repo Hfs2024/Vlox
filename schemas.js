@@ -47,6 +47,7 @@ const postsSchema = new mongoose.Schema({
 postsSchema.index({ by: 1 });
 postsSchema.index({ likes: 1 });
 postsSchema.index({ keywords: 1 });
+postsSchema.index({ createdAt: -1, _id: -1 });
 
 // Comments
 const commentsSchema = new mongoose.Schema({
