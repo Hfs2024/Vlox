@@ -90,7 +90,7 @@ app.get("/api/v1/get/post/:id", [
         .lean();
     if (!post) return res.status(400).json({ error: "Post not found!" });
 
-    return res.status(200).json({ success: true, posts: [foundPost] });
+    return res.status(200).json({ success: true, posts: [post] });
 });
 
 app.get("/api/v1/get/posts", [
