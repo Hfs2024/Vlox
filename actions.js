@@ -63,15 +63,15 @@ router.post("/api/v1/comment/post/:id", checkAuth, [
     param("id").exists().isMongoId(),
     body("comment").exists().notEmpty().isString().isLength({ max: 200 }).trim()
 ], validateResult, async (req, res) => {
-    const session = await mongoose.startSession();
     const { id, comment } = req.cleanData;
+
+    const session = await mongoose.startSession();
     await session.withTransaction(async () => {
         // Insert comment
         const newComment = new schemas.Comments({
             content: comment,
             for: id,
-            by: req.session.userId,
-            rootId: null
+            by: req.session.userId
         });
 
         await newComment.save({ session });
@@ -90,24 +90,24 @@ router.post("/api/v1/comment/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/reply/comment/post/:id", checkAuth, [
-    param("id").exists().isMongoId(),
-    body("rootId").exists().isMongoId(),
+router.post("/api/v1/reply/comment/:parentId/post/:postId", checkAuth, [
+    param("postId").exists().isMongoId(),
+    param("parentId").exists().isMongoId(),
     body("reply").exists().notEmpty().isString().isLength({ max: 200 }).trim()
 ], validateResult, async (req, res) => {
-    const session = await mongoose.startSession();
-    const { id, reply, rootId } = req.cleanData;
+    const { postId, reply, parentId } = req.cleanData;
 
+    const session = await mongoose.startSession();
     await session.withTransaction(async () => {
         // Find post
-        const post = await schemas.Posts.findOne(hotQueries.view_post(id, req.session.userId));
+        const post = await schemas.Posts.findOne(hotQueries.view_post(postId, req.session.userId));
         if (!post) throw new Error("POST_NOT_FOUND");
 
         // Add reply
         const newReply = new schemas.Comments({
             content: reply,
-            rootId: rootId,
-            for: id,
+            parentId: parentId,
+            for: postId,
             by: req.session.userId
         });
 
@@ -115,8 +115,8 @@ router.post("/api/v1/reply/comment/post/:id", checkAuth, [
 
         // Inc comments
         const result = await schemas.Comments.updateOne({
-            _id: rootId,
-            for: id,
+            _id: parentId,
+            for: postId,
             repliesCount: { $lt: 10 }
         }, {
             $inc: {

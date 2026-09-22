@@ -54,10 +54,10 @@ const commentsSchema = new mongoose.Schema({
     content: String,
     for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts" },
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
-    rootId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    parentId: { type: mongoose.Schema.Types.ObjectId, default: null },
     repliesCount: { type: Number, default: 0 }
 }, { timestamps: true });
-commentsSchema.index({ for: 1, rootId: 1 });
+commentsSchema.index({ for: 1, parentId: 1 });
 
 // Bookmarks
 const bookmarksSchema = new mongoose.Schema({

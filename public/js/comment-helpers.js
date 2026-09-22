@@ -19,14 +19,14 @@ async function inputComment({ title = "Add comment", value = "", onSubmit }) {
 }
 
 // Reply comment
-function replyComment(postId, commentId) {
+function replyComment(postId, parentId) {
     inputComment({
         title: "Add reply:",
         onSubmit: async (content) => {
             const replyResponse = await NS.fetch({
-                url: `/api/v1/reply/comment/post/${postId}`,
+                url: `/api/v1/reply/comment/${parentId}/post/${postId}`,
                 method: "POST",
-                body: { reply: content, rootId: commentId }
+                body: { reply: content }
             });
 
             if (!replyResponse.success) return Swal.fire(replyResponse.error);

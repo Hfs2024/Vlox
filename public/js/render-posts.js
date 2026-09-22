@@ -70,7 +70,7 @@ async function renderPosts(posts = []) {
         const renderReplies = async (id) => {
             // Get replies
             const data = await NS.fetch({
-                url: `/api/v1/get/post/replies/${post._id}/${id}`
+                url: `/api/v1/get/post/${post._id}/replies/${id}`
             });
 
             if (!data.success) return Swal.fire(data.error);
