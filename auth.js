@@ -142,9 +142,8 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
             { private: false }
         ]
     })
-        .select("username emoji bio private")
+        .select("username emoji bio private -_id")
         .lean();
-        console.log(user);
     if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
 
     // Public posts
