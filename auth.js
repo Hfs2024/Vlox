@@ -26,7 +26,7 @@ router.put("/api/v1/change-visibility/user-profile", checkAuth, [
 // Login and signup
 router.post("/api/v1/login", [
     body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
-    body("password").exists().notEmpty().isString().isLength({ min: 6, max: 12 }).trim()
+    body("password").exists().notEmpty().isString().isLength({ max: 64 }).trim()
 ], validateResult, async (req, res) => {
     const { username, password } = req.cleanData;
     const user = await schemas.Users.findOne({ username: username });
@@ -47,7 +47,7 @@ router.post("/api/v1/login", [
 
 router.post("/api/v1/signup", [
     body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
-    body("password").exists().notEmpty().isString().isLength({ min: 6, max: 12 }).trim(),
+    body("password").exists().notEmpty().isString().isLength({ min: 12, max: 64 }).trim(),
     body("bio").exists().notEmpty().isString().isLength({ min: 5, max: 20 }).trim(),
     body("email").exists().notEmpty().isEmail().isLength({ max: 100 }).normalizeEmail().trim()
 ], validateResult, async (req, res) => {

@@ -135,7 +135,7 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
     if (!post) return res.status(400).json({ error: "Post not found!" });
 
     // Find comments
-    const comments = await schemas.Comments.find({ for: id, rootId: null })
+    const comments = await schemas.Comments.find({ for: id, parentId: null })
         .sort({ createdAt: -1, _id: -1 })
         .skip(parseInt(skip))
         .limit(10)
@@ -146,20 +146,20 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
     return res.status(200).json({ success: true, comments });
 });
 
-app.get("/api/v1/get/post/replies/:id/:rootId", checkAuth, [
-    param("id").exists().isMongoId(),
-    param("rootId").exists().isMongoId()
+app.get("/api/v1/get/post/:postId/replies/:parentId", checkAuth, [
+    param("postId").exists().isMongoId(),
+    param("parentId").exists().isMongoId()
 ], validateResult, async (req, res) => {
-    const { id, rootId } = req.cleanData;
+    const { postId, parentId } = req.cleanData;
 
     // Check permissions to see post
-    const post = await schemas.Posts.find(hotQueries.view_post(id, req.session.userId));
+    const post = await schemas.Posts.find(hotQueries.view_post(postId, req.session.userId));
     if (!post) return res.status(400).json({ error: "Post not found or you don't have permissions to see it!" });
 
     // Find replies
     const replies = await schemas.Comments.find({
-        for: id,
-        rootId: rootId
+        for: postId,
+        parentId: parentId
     })
         .populate("by", "-password -recoveryCodes -email")
         .lean();
@@ -173,7 +173,7 @@ if (!passwordRecoveryLimiter) console.log("Failed to create passwored recovery l
 
 app.post("/api/v1/reset/password", [
     body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
-    body("newPassword").exists().notEmpty().isString().isLength({ min: 6, max: 12 }).trim(),
+    body("newPassword").exists().notEmpty().isString().isLength({ min: 12, max: 64 }).trim(),
     body("recoveryCode").exists().notEmpty().isString().isLength({ min: 20, max: 20 }).trim()
 ], passwordRecoveryLimiter, validateResult, async (req, res) => {
     const { username, recoveryCode, newPassword } = req.cleanData;

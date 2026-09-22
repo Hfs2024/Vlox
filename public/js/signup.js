@@ -20,7 +20,7 @@ async function showResetPasswordModal() {
 
             if (!username || !newPassword || !recoveryCode) return Swal.showValidationMessage("You must enter a username, password and one of your recovery code!");
             if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
-            if (newPassword.length < 6 || newPassword.length > 12) return Swal.showValidationMessage("Password must be between 6 and 12 chars!");
+            if (newPassword.length < 12 || newPassword.length > 64) return Swal.showValidationMessage("Password must be between 12 and 64 chars!");
             if (recoveryCode.length !== 20) return Swal.showValidationMessage("Recovery code must be exactly 20 chars long!");
 
             return { username, newPassword, recoveryCode };
@@ -65,7 +65,7 @@ async function showLoginModal() {
 
             if (!username || !password) return Swal.showValidationMessage("You must enter a username and a password!");
             if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
-            if (password.length < 6 || password.length > 12) return Swal.showValidationMessage("Password must be between 6 and 12 chars!");
+            if (password.length > 64) return Swal.showValidationMessage("Password must be between 12 and 64 chars!");
 
             return { username, password };
         }
@@ -118,7 +118,7 @@ async function showSignUpModal() {
 
             if (!username || !password || !email || !bio) return Swal.showValidationMessage("You must enter a username, password, email and bio!");
             if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
-            if (password.length < 6 || password.length > 12) return Swal.showValidationMessage("Password must be between 6 and 12 chars!");
+            if (password.length < 12 || password.length > 64) return Swal.showValidationMessage("Password must be between 12 and 64 chars!");
             if (email.length > 100 || !/.+\@.+\..+/.test(email)) return Swal.showValidationMessage("Email must valid and less than or equal to 100 chars!");
             if (bio.length < 5) return Swal.showValidationMessage("Bio must be higher or equal to 5 chars!");
 
