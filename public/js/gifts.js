@@ -1,5 +1,8 @@
+import NS from "../nanoscript.min.js";
+import { sendRequest, lockEvent } from "./helpers.js";
+
 NS("#view-active-gifts").on("click", lockEvent(async function () {
-    const data = await NS.fetch({
+    const data = await sendRequest({
         url: "/api/v1/get/gifts"
     });
 
@@ -13,12 +16,12 @@ NS("#view-active-gifts").on("click", lockEvent(async function () {
         confirmButtonText: "Close",
         didOpen: () => {
             data.gifts.forEach(gift => {
-                const giftCard = NS(NS.createEl("div", NS("#active-links-container"), { className: "card" }));
-                NS(NS.createEl("h2", giftCard, { className: "overflow" })).setText(gift.name);
-                NS(NS.createEl("p", giftCard, {})).html(`<b>Max Uses:</b> ${gift.usesCount} times`);
-                NS(NS.createEl("p", giftCard, {})).html(`<b>Used:</b> ${gift.usedCount} times`);
-                NS(NS.createEl("button", giftCard, { className: "w-full" })).setText("Redeem").on("click", lockEvent(async function () {
-                    const redeemData = await NS.fetch({
+                const giftCard = NS.createEl("div", NS("#active-links-container"), { className: "card" });
+                NS.createEl("h2", giftCard, { className: "overflow" }).text(gift.name);
+                NS.createEl("p", giftCard, {}).html(`<b>Max Uses:</b> ${gift.usesCount} times`);
+                NS.createEl("p", giftCard, {}).html(`<b>Used:</b> ${gift.usedCount} times`);
+                NS.createEl("button", giftCard, { className: "w-full" }).text("Redeem").on("click", lockEvent(async function () {
+                    const redeemData = await sendRequest({
                         url: `/api/v1/redeem/gift-link/${gift._id}`,
                         method: "POST"
                     });

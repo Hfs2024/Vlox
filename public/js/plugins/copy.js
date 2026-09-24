@@ -1,10 +1,4 @@
-/**
- * Copies some text
- * @param {string} text - Provided text to copy 
- * @param {Function} onSuccess - Action triggered when text is successfully copied
- * @param {Function} onFailure - Action triggered on failure
- * @returns {boolean} Returns true if successfully copied, and false if it fails
- */
+import NS from "../../nanoscript.min.js";
 
 NS.copy = async ({
     text,

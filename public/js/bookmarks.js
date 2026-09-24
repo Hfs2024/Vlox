@@ -1,3 +1,7 @@
+import NS from "../nanoscript.min.js";
+import { sendRequest, capitalizeFirstLetter, initAccessibility, lockEvent } from "./helpers.js";
+import { renderPosts } from "./render-posts.js";
+
 NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
     let skip = 0;
 
@@ -20,7 +24,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
             // Bookmarks
             const renderBookmarks = async () => {
                 // Data
-                const data = await NS.fetch({
+                const data = await sendRequest({
                     url: `/api/v1/get/bookmarks/?skip=${skip}`,
                     method: "POST"
                 });
@@ -29,9 +33,9 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                 // Render
                 container.html("");
                 if (!data.bookmarks || data.bookmarks.length <= 0) {
-                    NS(NS.createEl("div", container, {
+                    NS.createEl("div", container, {
                         className: "state-nothing-found",
-                    })).html("<b>You don't have any bookmarks yet.</b>");
+                    }).html("<b>You don't have any bookmarks yet.</b>");
                     return;
                 }
 
@@ -41,9 +45,9 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                     const buttonGroup = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
 
                     // Header buttons
-                    NS(NS.createEl("h2", bookmarkHeader, { className: "overflow" })).setText(capitalizeFirstLetter(bookmark.title));
-                    NS(NS.createEl("i", bookmarkHeader, { className: "fas fa-eye icon-helper", role: "button", tabIndex: "0" })).on("click", lockEvent(async function () {
-                        const postData = await NS.fetch({
+                    NS.createEl("h2", bookmarkHeader, { className: "overflow" }).text(capitalizeFirstLetter(bookmark.title));
+                    NS.createEl("i", bookmarkHeader, { className: "fas fa-eye icon-helper", role: "button", tabIndex: "0" }).on("click", lockEvent(async function () {
+                        const postData = await sendRequest({
                             url: `/api/v1/get/post/${bookmark.for}`
                         });
 
@@ -53,8 +57,8 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                     }));
 
                     // Main buttons
-                    NS(NS.createEl("button", buttonGroup, { className: "btn-danger w-full" })).setText("Delete").on("click", lockEvent(async function () {
-                        const deleteData = await NS.fetch({
+                    NS.createEl("button", buttonGroup, { className: "btn-danger w-full" }).text("Delete").on("click", lockEvent(async function () {
+                        const deleteData = await sendRequest({
                             url: `/api/v1/delete/bookmark/${bookmark._id}`,
                             method: "DELETE"
                         });
@@ -63,7 +67,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                         Swal.fire("Success", "Bookmark deleted!", "success");
                     }));
 
-                    NS(NS.createEl("button", buttonGroup, { className: "w-full" })).setText("Rename").on("click", async function () {
+                    NS.createEl("button", buttonGroup, { className: "w-full" }).text("Rename").on("click", async function () {
                         const result = await Swal.fire({
                             title: "Enter new title: ",
                             input: "text",
@@ -76,7 +80,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                         });
 
                         if (!result.isConfirmed) return;
-                        const renameData = await NS.fetch({
+                        const renameData = await sendRequest({
                             url: `/api/v1/rename/bookmark/${bookmark._id}`,
                             method: "PUT",
                             body: { title: result.value }
@@ -96,7 +100,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
             }));
 
             NS("#user-bookmarks-next-btn").on("click", lockEvent(async function () {
-                if (container.get(".state-nothing-found")[0]) return;
+                if (container.get(".state-nothing-found")?.elements) return;
                 skip += 10;
                 renderBookmarks();
             }));

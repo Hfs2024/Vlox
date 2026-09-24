@@ -1,5 +1,21 @@
+import NS from "../nanoscript.min.js";
+import "./plugins/live-counter.js";
+
+// Send requests
+export async function sendRequest({ body, ...config }) {
+    const response = await axios({
+        ...config,
+        validateStatus: function (status) {
+            return (status >= 200 && status < 300) || status === 400;
+        },
+        data: body
+    });
+
+    return response.data;
+}
+
 // Accessibility
-function initAccessibility() {
+export function initAccessibility() {
     NS("[role='button']").each(btn => {
         NS(btn).on("keydown", function (e) {
             if (e.key === "Enter" || e.key === ' ') btn.click();
@@ -8,27 +24,29 @@ function initAccessibility() {
 }
 
 // Quick info
-async function getQuickInfo() {
-    const quickInfo = await NS.fetch({
+export async function getQuickInfo() {
+    // Get data
+    const quickInfo = await sendRequest({
         url: "/api/v1/get/current-user-quick-info"
     });
 
+    // Attach data
     window.currentUserQuickInfo = quickInfo;
     const maxPostContentCharsLength = window?.currentUserQuickInfo?.maxPostContentCharsLength;
-    NS("#create-post-content-count").setText(`${NS("#create-post-content").getVal()[0].length}/${maxPostContentCharsLength || 2000}`);
+    NS("#create-post-content-count").text(`${NS("#create-post-content").value().length}/${maxPostContentCharsLength || 2000}`);
     initLiveCounter("#create-post-content", "#create-post-content-count", maxPostContentCharsLength);
 
     return quickInfo;
 }
 
 // Capitalize strings
-function capitalizeFirstLetter(string) {
+export function capitalizeFirstLetter(string) {
     if (typeof string !== "string") return console.error("Invalid string");
     return string.split("")[0].toUpperCase() + string.slice(1) || "";
 }
 
 // Clean HTML
-function cleanHTML(html) {
+export function cleanHTML(html) {
     return DOMPurify.sanitize(marked.parse(html), {
         ALLOWED_TAGS: [
             "pre", "code", "b", "table", "tr", "td", "th", "thead", "tfoot", "tbody",
@@ -40,22 +58,22 @@ function cleanHTML(html) {
 }
 
 // Post links
-function generatePostLink(postId) {
+export function generatePostLink(postId) {
     return `${window.location.origin + window.location.pathname}?id=${postId}`;
 }
 
 // Init live coutner
-function initLiveCounter(element, countElement, maxChars) {
+export function initLiveCounter(element, countElement, maxChars = 2000) {
     NS.liveCounter({
         selector: element,
         counterSelector: countElement,
         showCounter: true,
-        max: maxChars || 2000
+        max: maxChars
     });
 }
 
 // Lock on click
-function lockEvent(fn) {
+export function lockEvent(fn) {
     if (typeof fn !== "function") return;
 
     return async function (e) {
@@ -64,7 +82,8 @@ function lockEvent(fn) {
 
         try {
             await fn(e);
-        } catch {
+        } catch (e) {
+            console.error(e);
             Swal.fire("Something went wrong!");
         } finally {
             el.removeAttr("inert");

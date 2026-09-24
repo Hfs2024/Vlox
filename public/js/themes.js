@@ -1,3 +1,5 @@
+import NS from "../nanoscript.min.js";
+
 // Define themes
 const themes = {
     default: [],
@@ -16,7 +18,7 @@ const themes = {
 };
 
 // Track current theme
-let currentTheme = localStorage.getItem("theme") || "default";
+export let currentTheme = localStorage.getItem("theme") || "default";
 if (!themes[currentTheme]) currentTheme = "default";
 
 // Apply on initial page load
@@ -31,8 +33,8 @@ NS("#btn-theme").on("click", function () {
     });
 
     for (let themeName in themes) {
-        NS(NS.createEl("button", NS("#themes-container"), { className: "w-full" }))
-            .setText(themeName)
+        NS.createEl("button", NS("#themes-container"), { className: "w-full" })
+            .text(themeName)
             .on("click", function () {
                 if (themeName === currentTheme) return Swal.close();
 
@@ -51,7 +53,7 @@ NS("#btn-theme").on("click", function () {
 });
 
 // Apply function
-function applyTheme(newThemeName, category) {
+export function applyTheme(newThemeName, category) {
     if (!Array.isArray(themes[newThemeName]) || !["elements", "postsElements"].includes(category)) return false;
     const isObject = obj => Object.prototype.toString.call(obj) === "[object Object]";
 
