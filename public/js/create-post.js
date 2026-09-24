@@ -10,7 +10,6 @@ const createPostTitle = NS("#create-post-title");
 const copyPostContentBtn = NS("#copy-post-content-btn");
 const searchPostsInput = NS("#search-posts-input");
 const searchPostsBtn = NS("#btn-search-posts");
-const createSpoilersBtn = NS("#create-spoilers-btn");
 const createContainer = NS("#create-container");
 const prevBtn = NS("#prev-btn");
 const nextBtn = NS("#next-btn");
@@ -37,11 +36,6 @@ searchPostsBtn.on("click", lockEvent(async function () {
     await search();
 }));
 
-// Spoilers
-createSpoilersBtn.on("click", function () {
-    createSpoilersBtn.toggleClass("active-color");
-});
-
 // Copy post content
 copyPostContentBtn.on("click", function () {
     if (!createPostContent.value()) return Swal.fire("No content!");
@@ -58,10 +52,10 @@ createPostBtn.on("click", lockEvent(async function () {
     const title = createPostTitle.value()?.trim();
     const content = createPostContent.value()?.trim();
     const keywords = createPostKeywords.value()?.trim().split(",").filter(Boolean).map(kw => kw.toLowerCase().trim());
-    const maxPostContentCharsLength = window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000;
+    const maxPostLength = window?.quickInfo?.maxPostLength || 2000;
 
     if (!title || !content) return Swal.fire("Title and content are required!");
-    if (title.length > 20 || content.length > maxPostContentCharsLength) return Swal.fire(`Title must be less than 20 chars and content should not exceed ${maxPostContentCharsLength} chars`);
+    if (title.length > 20 || content.length > maxPostLength) return Swal.fire(`Title must be less than 20 chars and content should not exceed ${maxPostLength} chars`);
     if (keywords.length > 5) return Swal.fire("Keywords count should be less than 5!");
 
     // Create post
@@ -71,8 +65,7 @@ createPostBtn.on("click", lockEvent(async function () {
         body: {
             title,
             content,
-            keywords,
-            spoilers: createSpoilersBtn.hasClass("active-color")
+            keywords
         }
     });
 
@@ -82,9 +75,7 @@ createPostBtn.on("click", lockEvent(async function () {
     createPostTitle.value("");
     createPostContent.value("");
     createPostKeywords.value("");
-    createContainer.css({ display: "block" });
-    createSpoilersBtn.removeClass("active-color");
-    createPostContentCount.text(`0/${window.currentUserQuickInfo.maxPostContentCharsLength}`);
+    createPostContentCount.text(`0/${window.quickInfo.maxPostLength}`);
 
     // Success
     const link = generatePostLink(data.postId);

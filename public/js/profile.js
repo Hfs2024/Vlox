@@ -6,9 +6,10 @@ export async function showProfile(data) {
     // Profile code
     let skip = 0;
     const user = data.user;
+    const id = data.user._id;
     const username = capitalizeFirstLetter(user.username);
-    const isUserProfile = window?.currentUserQuickInfo?.username === user.username;
-    const emojis = ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"];
+    const isUserProfile = window?.quickInfo?.username === user.username;
+    const emojis = ["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"];
 
     Swal.fire({
         titleText: `${isUserProfile ? `Ciao, ${user.emoji || "🚀"} ${username}!` : `${user.emoji || "🚀"} ${username}'s profile`}`,
@@ -34,8 +35,14 @@ export async function showProfile(data) {
 </div>
 
 <div class="panel-task-filter-bar panel-task-filter-bar-active">
-  <div id="user-posts-container" class="scroll-container"></div>
-  <div class="center">
+  <div id="user-posts-container" class="scroll-container">
+    <button id="user-load-posts-btn" class="w-full">
+       <i class="fas fa-download"></i>
+       Load Posts
+    </button>
+  </div>
+
+  <div class="center" style="margin-top: 10px">
     <button id="user-posts-prev-btn"> 
       <i class="fas fa-caret-left"></i>
     </button>
@@ -58,13 +65,14 @@ export async function showProfile(data) {
             const renderPosts = async () => {
                 // Data
                 data = await sendRequest({
-                    url: `/api/v1/get/user-profile/${window?.currentUserQuickInfo?._id}/?skip=${skip}`
+                    url: `/api/v1/get/user-posts/${id}/?skip=${skip}`
                 });
+
                 if (!data.success) return Swal.fire(data.error);
 
                 // Render
                 container.html(""); // Clear the container
-                if (!data.posts || data.posts.length === 0) {
+                if (!data.posts || data.posts.length <= 0) {
                     NS.createEl("div", container, { className: "state-nothing-found" })
                         .html("<b>No posts yet.</b>");
                     return;
@@ -78,10 +86,10 @@ export async function showProfile(data) {
                     });
                 });
             }
-            
+
             // Pinned
             const renderPinnedPosts = () => {
-                if (!data.pinnedPosts || data.pinnedPosts.length === 0) {
+                if (!data.pinnedPosts || data.pinnedPosts.length <= 0) {
                     NS.createEl("div", NS("#user-pinned-posts-container"), { className: "state-nothing-found" })
                         .html("<b>No pinned posts yet.</b>");
                     return;
@@ -140,6 +148,11 @@ export async function showProfile(data) {
                 }
             });
 
+            // Load user posts
+            NS("#user-load-posts-btn").on("click", function () {
+                renderPosts();
+            });
+
             NS("#user-profile-visibility-toggle").on("click", lockEvent(async function () {
                 const updatevisibilityResponse = await sendRequest({
                     url: "/api/v1/change-visibility/user-profile",
@@ -164,22 +177,6 @@ export async function showProfile(data) {
                 renderPosts();
             }));
 
-            // Emojis
-            emojis.forEach(emoji => {
-                NS.createEl("button", NS(".emoji-container"), { className: "btn-emoji-container" })
-                    .text(emoji)
-                    .on("click", lockEvent(async function () {
-                        const updateEmojidata = await sendRequest({
-                            url: "/api/v1/update/user",
-                            method: "PUT",
-                            body: { newEmoji: emoji }
-                        });
-
-                        if (!updateEmojidata.success) return Swal.fire(updateEmojidata.error);
-                        return Swal.fire("Success", "Emoji successfully changed!", "success");
-                    }));
-            });
-
             // Task filter bar
             NS(".btn-task-filter-bar").each((btn, index) => {
                 NS(btn).on("click", function () {
@@ -190,8 +187,25 @@ export async function showProfile(data) {
                 });
             });
 
+            // Emojis
+            if (isUserProfile) {
+                emojis.forEach(emoji => {
+                    NS.createEl("button", NS(".emoji-container"), { className: "btn-emoji-container" })
+                        .text(emoji)
+                        .on("click", lockEvent(async function () {
+                            const updateEmojidata = await sendRequest({
+                                url: "/api/v1/update/user",
+                                method: "PUT",
+                                body: { newEmoji: emoji }
+                            });
+
+                            if (!updateEmojidata.success) return Swal.fire(updateEmojidata.error);
+                            return Swal.fire("Success", "Emoji successfully changed!", "success");
+                        }));
+                });
+            }
+
             // Init
-            renderPosts();
             renderPinnedPosts();
             initAccessibility();
         }

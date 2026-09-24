@@ -86,13 +86,6 @@ button:hover {
     background-color: #222;
 }
 
-#btn-theme {
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    border: 2px solid #eee;
-}
-
 .btn-danger {
     background-color: red;
 }
