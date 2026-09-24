@@ -136,7 +136,7 @@ router.post("/api/v1/redeem/post/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const session = await mongoose.startSession();
-    const remaining = Math.max(0, 4000 - req.currentUser.maxPostContentCharsLength);
+    const remaining = Math.max(0, 4000 - req.currentUser.maxPostLength);
     const inc = Math.min(100, remaining);
     if (inc <= 0) return res.status(400).json({ error: "Post redeem failed!" });
     const id = req.cleanData.id;
@@ -156,10 +156,10 @@ router.post("/api/v1/redeem/post/:id", checkAuth, [
 
         const userResult = await schemas.Users.updateOne({
             _id: req.session.userId,
-            maxPostContentCharsLength: { $lt: 4000 }
+            maxPostLength: { $lt: 4000 }
         }, {
             $inc: {
-                maxPostContentCharsLength: inc
+                maxPostLength: inc
             }
         }, { session });
 
@@ -226,20 +226,18 @@ router.put("/api/v1/edit/post/comment/:id", checkAuth, [
 router.put("/api/v1/edit/post/:id", checkAuth, [
     body("newTitle").exists().notEmpty().isString().isLength({ max: 20 }).trim(),
     body("newContent").exists().notEmpty().isString().trim().custom((value, { req }) => {
-        if (value?.length > req.currentUser.maxPostContentCharsLength) return false;
+        if (value?.length > req.currentUser.maxPostLength) return false;
         return true;
     }),
-    body("newSpoilers").exists().isIn([true, false]),
     body("newKeywords").exists().isArray({ max: 5 }).customSanitizer(value => value?.filter(Boolean)?.map(kw => kw.toLowerCase().trim())),
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
-    const { newContent, newTitle, id, newKeywords, newSpoilers } = req.cleanData;
+    const { newContent, newTitle, id, newKeywords } = req.cleanData;
     const result = await schemas.Posts.updateOne(hotQueries.modify_post(id, req.session.userId), {
         $set: {
             content: newContent,
             title: newTitle,
-            keywords: newKeywords,
-            spoilers: newSpoilers
+            keywords: newKeywords
         }
     });
 

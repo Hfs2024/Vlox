@@ -1,7 +1,7 @@
 const schemas = require("./schemas.js");
 const bcrypt = require("bcrypt");
 const { body, param, query } = require("express-validator");
-const { checkAuth, generateRecoveryCodes, validateResult } = require("./helpers.js");
+const { checkAuth, generateRecoveryCodes, validateResult, createLimiter } = require("./helpers.js");
 const express = require("express");
 const router = express.Router();
 
@@ -24,7 +24,9 @@ router.put("/api/v1/change-visibility/user-profile", checkAuth, [
 });
 
 // Login and signup
-router.post("/api/v1/login", [
+const authRateLimiter = createLimiter(900000, 10);
+
+router.post("/api/v1/login", authRateLimiter, [
     body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
     body("password").exists().notEmpty().isString().isLength({ max: 64 }).trim()
 ], validateResult, async (req, res) => {
@@ -45,7 +47,7 @@ router.post("/api/v1/login", [
     });
 });
 
-router.post("/api/v1/signup", [
+router.post("/api/v1/signup", authRateLimiter, [
     body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
     body("password").exists().notEmpty().isString().isLength({ min: 12, max: 64 }).trim(),
     body("bio").exists().notEmpty().isString().isLength({ min: 5, max: 20 }).trim(),
@@ -81,7 +83,7 @@ router.post("/api/v1/signup", [
 
 // Update user
 router.put("/api/v1/update/user", checkAuth, [
-    body("newEmoji").optional({ values: "falsy" }).isString().isIn(["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"]).trim(),
+    body("newEmoji").optional({ values: "falsy" }).isString().isIn(["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"]).trim(),
     body("newBio").optional({ values: "falsy" }).isString().isLength({ max: 20 }).trim()
 ], validateResult, async (req, res) => {
     let { newBio, newEmoji } = req.cleanData;
@@ -122,7 +124,7 @@ router.get("/api/v1/get/current-user-quick-info", checkAuth, async (req, res) =>
         username: req.currentUser.username,
         emoji: req.currentUser.emoji,
         bio: req.currentUser.bio,
-        maxPostContentCharsLength: req.currentUser.maxPostContentCharsLength,
+        maxPostLength: req.currentUser.maxPostLength,
         _id: req.currentUser._id
     });
 });
@@ -134,6 +136,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
 ], validateResult, async function (req, res) {
     const skip = parseInt(req.cleanData.skip);
     const id = req.cleanData.id;
+
     // User
     const user = await schemas.Users.findOne({
         _id: id,
@@ -146,9 +149,31 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
         .lean();
     if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
 
-    // Public posts
+    // Pinned posts
+    const pinnedPosts = await schemas.Posts.find({
+        by: id,
+        pinned: true // Pinned!
+    }).sort({ createdAt: -1, _id: -1 })
+        .skip(skip)
+        .limit(10)
+        .populate("by", "-password -recoveryCodes -email")
+        .lean();
+
+    return res.status(200).json({
+        success: true,
+        pinnedPosts: pinnedPosts,
+        user: user
+    });
+});
+
+router.get("/api/v1/get/user-posts/:id", checkAuth, [
+    query("skip").exists().isInt({ min: 0 }),
+    param("id").exists().isMongoId()
+], validateResult, async function (req, res) {
+    const { id, skip } = req.cleanData;
     const posts = await schemas.Posts.find({
-        by: user._id,
+        by: id,
+        pinned: false,
         $or: [
             { by: req.session.userId },
             { private: false }
@@ -159,22 +184,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
         .populate("by", "-password -recoveryCodes -email")
         .lean();
 
-    // Pinned posts
-    const pinnedPosts = await schemas.Posts.find({
-        by: user._id,
-        pinned: true // Pinned!
-    }).sort({ createdAt: -1, _id: -1 })
-        .skip(skip)
-        .limit(10)
-        .populate("by", "-password -recoveryCodes -email")
-        .lean();
-
-    return res.status(200).json({
-        success: true,
-        posts: posts,
-        pinnedPosts: pinnedPosts,
-        user: user
-    });
+    return res.json({ success: true, posts: posts })
 });
 
 // User status

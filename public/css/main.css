@@ -1,7 +1,6 @@
 /* Basic stylesheet */
 :root {
     --accent-charcoal: #1f2933;
-    --accent-green: #0e490e;
     --accent-main-blue: #214198;
     --accent-secondary-blue: #10204c;
     --accent-main-gray: #aaa;
@@ -19,19 +18,10 @@ body {
     transition: background-color 0.3s ease;
 }
 
-/* Themes */
-.theme-charcoal {
-    background-color: var(--accent-charcoal) !important;
-}
-
-.theme-green {
-    background-color: var(--accent-green) !important;
-}
-
 /* Header/footer */
 header,
 footer {
-    background-color: var(--accent-main-blue);
+    background-color: var(--accent-charcoal);
     padding: 10px;
     color: var(--accent-white);
     margin: 10px;

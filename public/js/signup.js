@@ -104,7 +104,7 @@ async function showSignUpModal() {
 <input type="email" id="email" placeholder="Email">
 <input type="text" id="bio" placeholder="Bio (Max 20 chars)" maxlength="20" autocomplete="off">
 <p class="text-count">
-  Count: <span class="count" id="user-bio-content-count">0/20</span>
+  Count: <span class="count" id="user-bio-content-count">0</span>
 </p>           
 <p class="text-swal-toggle">
     Already have an account? <span class="link-swal-toggle" role="button" tabindex="0">Log in</span>
@@ -201,7 +201,7 @@ signOutBtn.on("click", lockEvent(async function () {
 
 profileBtn.on("click", lockEvent(async function () {
     const response = await sendRequest({
-        url: `/api/v1/get/user-profile/${window?.currentUserQuickInfo?._id}/?skip=0`
+        url: `/api/v1/get/user-profile/${window?.quickInfo?._id}/?skip=0`
     });
 
     if (!response.success) return Swal.fire(response.error);

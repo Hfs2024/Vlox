@@ -1,7 +1,6 @@
 import NS from "../nanoscript.min.js";
 import { sendRequest, capitalizeFirstLetter, cleanHTML, generatePostLink, initAccessibility, lockEvent } from "./helpers.js";
 import { inputComment, replyComment } from "./comment-helpers.js";
-import { applyTheme, currentTheme } from "./themes.js";
 import { showProfile } from "./profile.js";
 
 export const postsState = { skip: 0 };
@@ -49,21 +48,15 @@ export async function renderPosts(posts = []) {
         });
 
         // Content
-        const content = cleanHTML(post.content) || "No content found";
-        const contentEl = NS.createEl("div", postCard, { className: "overflow" })
-            .html(post.spoilers ? "<button id='show-spoilers' class='btn-danger w-full'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>" : content);
-
-        // Show spoliers/long posts
-        postCard.get("#show-spoilers")?.on("click", function () {
-            contentEl.html(content);
-        });
+        NS.createEl("div", postCard, {}).html(cleanHTML(post.content) || "No content found");;
 
         // Author
         NS.createEl("p", postCard, {
-            style: `color: red; display:block; margin-bottom: 8px; cursor: pointer`,
+            style: "color: red; cursor: pointer",
             role: "button", tabIndex: "0"
         })
-            .html(`Created by: ${post.by.emoji || "🚀"} <span class='author-name'>${capitalizeFirstLetter(post.by.username)}</span>`).on("click", async function () {
+            .html(`Created by: ${post.by.emoji || "🚀"} <span class='author-name'>${capitalizeFirstLetter(post.by.username)}</span>`)
+            .on("click", async function () {
                 const authorProfileData = await sendRequest({
                     url: `/api/v1/get/user-profile/${post.by._id}/?skip=0`
                 });
@@ -106,7 +99,7 @@ export async function renderPosts(posts = []) {
 </div>
                     `).on("click", function (e) {
                     e.preventDefault();
-                    if (reply.by.username !== window?.currentUserQuickInfo?.username) return;
+                    if (reply.by.username !== window?.quickInfo?.username) return;
 
                     inputComment({
                         title: "Update reply:",
@@ -170,7 +163,7 @@ export async function renderPosts(posts = []) {
   <i class="fas fa-eye icon-post view-reply-btn" role="button" tabindex="0" aria-label="View reply"></i>
 </div>
                     `).on("click", function () {
-                    if (comment.by.username !== window?.currentUserQuickInfo?.username) return;
+                    if (comment.by.username !== window?.quickInfo?.username) return;
 
                     inputComment({
                         title: "Update comment:",
@@ -203,20 +196,23 @@ export async function renderPosts(posts = []) {
 
         // Comments navigation
         const commentsNavGroup = NS.createEl("div", postCard, { className: "center" });
-        
+
         // Prev
-        NS.createEl("button", commentsNavGroup, { className: "comments-prev" }).on("click", async function () {
-            if (commentsSkip <= 0) return;
-            commentsSkip -= 10;
-            renderComments();
-        }).html("<i class='fa-solid fa-chevron-left'></i>");
+        NS.createEl("button", commentsNavGroup, { className: "comments-prev" })
+            ?.html("<i class='fa-solid fa-chevron-left'></i>")
+            ?.on("click", async function () {
+                if (commentsSkip <= 0) return;
+                commentsSkip -= 10;
+                renderComments();
+            });
 
         // Next
-        NS.createEl("button", commentsNavGroup, { className: "comments-next" }).on("click", async function () {
-            if (postCard.get(".state-no-comments")) return;
-            commentsSkip += 10;
-            renderComments();
-        }).html("<i class='fa-solid fa-chevron-right'></i>");
+        NS.createEl("button", commentsNavGroup, { className: "comments-next" })
+            .html("<i class='fa-solid fa-chevron-right'></i>")
+            .on("click", async function () {
+                commentsSkip += 10;
+                renderComments();
+            });
 
         // Show comments
         postCard.get(".show-comments-btn").on("click", async function () {
@@ -227,7 +223,8 @@ export async function renderPosts(posts = []) {
         const optionsDiv = NS.createEl("div", postCard, { className: "options" });
 
         // Like
-        const likesBtn = NS.createEl("button", optionsDiv, {}).on("click", lockEvent(async function () {
+        const likesBtn = NS.createEl("button", optionsDiv, {}).html(`<i class="fa-solid fa-thumbs-up"></i> <span class="likes-count">${post.likes.toLocaleString()}</span>`);;
+        likesBtn.on("click", lockEvent(async function () {
             const likesResponse = await sendRequest({
                 url: `/api/v1/react/like/post/${post._id}`,
                 method: "POST"
@@ -236,10 +233,12 @@ export async function renderPosts(posts = []) {
             if (likesResponse.error) return Swal.fire(likesResponse.error);
             const newLikes = post.likes + 1;
             likesBtn.get(".likes-count").text(newLikes.toLocaleString());
-        })).html(`<i class="fa-solid fa-thumbs-up"></i> <span class="likes-count">${post.likes.toLocaleString()}</span>`);
+        }))
 
         // Report
-        const reportBtn = NS.createEl("button", optionsDiv, {}).on("click", lockEvent(async function () {
+        const reportBtn = NS.createEl("button", optionsDiv, {})
+            .html(`<i class="fa-solid fa-warning"></i> <span class="reports-count">${post.reports.toLocaleString()}</span>`);
+        reportBtn.on("click", lockEvent(async function () {
             const reportResponse = await sendRequest({
                 url: `/api/v1/react/report/post/${post._id}`,
                 method: "POST"
@@ -248,10 +247,12 @@ export async function renderPosts(posts = []) {
             if (!reportResponse.success) return Swal.fire(reportResponse.error);
             const newReports = post.reports + 1;
             reportBtn.get(".reports-count").text(newReports.toLocaleString());
-        })).html(`<i class="fa-solid fa-warning"></i> <span class="reports-count">${post.reports.toLocaleString()}</span>`);
+        }));
 
         // Comment
-        const commentBtn = NS.createEl("button", optionsDiv, {}).on("click", function () {
+        const commentBtn = NS.createEl("button", optionsDiv, {})
+            .html(`<i class="fa-solid fa-comment"></i> <span class="comments-count">${post.comments.toLocaleString()}</span>`);
+        commentBtn.on("click", function () {
             inputComment({
                 title: "Add a comment:",
                 onSubmit: async (content) => {
@@ -269,11 +270,8 @@ export async function renderPosts(posts = []) {
                     renderComments();
                 }
             });
-        }).html(`<i class="fa-solid fa-comment"></i> <span class="comments-count">${post.comments.toLocaleString()}</span>`);
+        });
     });
-
-    // Theme
-    applyTheme(currentTheme, "postsElements");
 
     // Accessibility
     initAccessibility();

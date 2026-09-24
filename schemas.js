@@ -6,7 +6,7 @@ const usersSchema = new mongoose.Schema({
     password: { type: String, required: true },
     bio: { type: String, required: true, trim: true },
     emoji: {
-        type: String, default: "🚀", enum: ["🚀", "👦🏻", "👧🏻", "👩🏻", "👨🏻", "🐣", "🏇🏻"]
+        type: String, default: "🚀", enum: ["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"]
     },
     email: {
         type: String,
@@ -15,7 +15,7 @@ const usersSchema = new mongoose.Schema({
     },
     pinnedPostsCount: { type: Number, default: 0 },
     recoveryCodes: { type: [String], default: [] },
-    maxPostContentCharsLength: { type: Number, default: 2000 },
+    maxPostLength: { type: Number, default: 2000 },
     private: { type: Boolean, default: false }
 }, { timestamps: true });
 
@@ -38,7 +38,6 @@ const postsSchema = new mongoose.Schema({
     reports: { type: Number, default: 0 },
     comments: { type: Number, default: 0 },
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
-    spoilers: { type: Boolean, default: false },
     private: { type: Boolean, default: false },
     redeemed: { type: Boolean, default: false },
     pinned: { type: Boolean, default: false },

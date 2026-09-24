@@ -1,5 +1,4 @@
 import NS from "../nanoscript.min.js";
-import "./plugins/live-counter.js";
 
 // Send requests
 export async function sendRequest({ body, ...config }) {
@@ -31,30 +30,28 @@ export async function getQuickInfo() {
     });
 
     // Attach data
-    window.currentUserQuickInfo = quickInfo;
-    const maxPostContentCharsLength = window?.currentUserQuickInfo?.maxPostContentCharsLength;
-    NS("#create-post-content-count").text(`${NS("#create-post-content").value().length}/${maxPostContentCharsLength || 2000}`);
-    initLiveCounter("#create-post-content", "#create-post-content-count", maxPostContentCharsLength);
-
+    window.quickInfo = quickInfo;
+    const maxPostLength = window?.quickInfo?.maxPostLength;
+    initLiveCounter("#create-post-content", "#create-post-content-count", maxPostLength);
     return quickInfo;
 }
 
 // Capitalize strings
 export function capitalizeFirstLetter(string) {
-    if (typeof string !== "string") return console.error("Invalid string");
-    return string.split("")[0].toUpperCase() + string.slice(1) || "";
+    if (typeof string !== "string" || !string) return "";
+    return string.at(0).toUpperCase() + string.slice(1);
 }
 
 // Clean HTML
 export function cleanHTML(html) {
     return DOMPurify.sanitize(marked.parse(html), {
         ALLOWED_TAGS: [
-            "pre", "code", "b", "table", "tr", "td", "th", "thead", "tfoot", "tbody",
-            "b", "i", "br", "span", "em", "strong", "u", "s", "sub", "sup", "small",
+            "pre", "code", "b", "i", "br", "span", "em", "strong", "u", "s", "sub", "sup", "small",
             "p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "ul", "ol", "li",
-            "blockquote", "cite", "q", "img", "video", "audio", "source", "a"
-        ]
-    });
+            "blockquote", "cite", "q", "img", "video", "audio", "source", "a", "#text"
+        ],
+        KEEP_CONTENT: false
+    }).trim();
 }
 
 // Post links
@@ -62,14 +59,14 @@ export function generatePostLink(postId) {
     return `${window.location.origin + window.location.pathname}?id=${postId}`;
 }
 
-// Init live coutner
-export function initLiveCounter(element, countElement, maxChars = 2000) {
-    NS.liveCounter({
-        selector: element,
-        counterSelector: countElement,
-        showCounter: true,
-        max: maxChars
-    });
+// Live coutner
+export function initLiveCounter(inputElement, countElement, max) {
+    const inputEl = NS(inputElement);
+    max = Number.isInteger(max) ? max : 2000;
+    inputEl.on("input", function () {
+        const length = NS(inputElement).value().length;
+        NS(countElement).text(length);
+    }).attr("maxLength", max);
 }
 
 // Lock on click
@@ -82,8 +79,7 @@ export function lockEvent(fn) {
 
         try {
             await fn(e);
-        } catch (e) {
-            console.error(e);
+        } catch {
             Swal.fire("Something went wrong!");
         } finally {
             el.removeAttr("inert");

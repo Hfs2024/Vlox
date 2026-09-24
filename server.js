@@ -43,8 +43,8 @@ app.use(
 const mainLimiter = createLimiter(900000, 1000, {
     skip: (req) => ['/api/v1/reset/password', '/api/v1/posts/bulk'].some(path => req.originalUrl.includes(path))
 });
-if (!mainLimiter) console.log("Failed to create main limit!");
-else app.use(mainLimiter);
+
+app.use(mainLimiter);
 
 // Sub routes
 app.use("/", bookmarksRouter);
@@ -60,18 +60,16 @@ app.get("/", (req, res) => {
 app.post("/api/v1/posts", checkAuth, [
     body("title").notEmpty().isString().isLength({ max: 20 }).trim(),
     body("content").notEmpty().isString().custom((value, { req }) => {
-        if (value?.length > req.currentUser.maxPostContentCharsLength) return false;
+        if (value?.length > req.currentUser.maxPostLength) return false;
         return true;
     }).trim(),
-    body("spoilers").exists().isIn([true, false]),
     body("keywords").exists().isArray({ max: 5 }).customSanitizer(value => value?.filter(Boolean)?.map(kw => kw.toLowerCase().trim()))
 ], validateResult, async (req, res) => {
-    const { title, content, spoilers, keywords } = req.cleanData;
+    const { title, content, keywords } = req.cleanData;
     const newPost = new schemas.Posts({
         title: title,
         content: content,
         by: req.session.userId,
-        spoilers: spoilers,
         keywords: keywords
     });
 
@@ -169,7 +167,6 @@ app.get("/api/v1/get/post/:postId/replies/:parentId", checkAuth, [
 
 // Password recovery
 const passwordRecoveryLimiter = createLimiter(3600000, 5);
-if (!passwordRecoveryLimiter) console.log("Failed to create passwored recovery limit!");
 
 app.post("/api/v1/reset/password", [
     body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
@@ -229,7 +226,7 @@ app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const id = req.cleanData.id;
-    const remaining = Math.max(0, 4000 - req.currentUser.maxPostContentCharsLength);
+    const remaining = Math.max(0, 4000 - req.currentUser.maxPostLength);
     const inc = Math.min(100, remaining);
     if (inc <= 0) return res.status(400).json({ error: "Gift redeem failed!" });
 
@@ -272,10 +269,10 @@ app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
         // User
         const userResult = await schemas.Users.updateOne({
             _id: req.session.userId,
-            maxPostContentCharsLength: { $lt: 4000 }
+            maxPostLength: { $lt: 4000 }
         }, {
             $inc: {
-                maxPostContentCharsLength: inc
+                maxPostLength: inc
             }
         }, { session });
         if (userResult.matchedCount === 0) throw new Error("USER_UPDATE_FAILED");
@@ -306,11 +303,11 @@ app.use((err, req, res, next) => {
         GIFT_REDEEM_FAILED: "Gift redeem failed!"
     }
 
-    if (err.code === 11000) return res.status(400).json({ error: "A record with this value already exists." });
+    if (err.code === 11000) return res.status(400).json({ error: "A record with this value already exists" });
     if (errors[err.message]) return res.status(400).json({ error: errors[err.message] });
 
     console.error("Error:", err.stack);
-    return res.status(400).json({ error: "An unexpected error occurred." });
+    return res.status(400).json({ error: "An unexpected error occurred" });
 });
 
 // Start the server

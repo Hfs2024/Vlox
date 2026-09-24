@@ -56,10 +56,6 @@ const hotQueries = {
 // Create limiter
 function createLimiter(windowMs = 900000, limit = 1000, options = {}, error = "Too Many Requests. Please try again later.") {
     try {
-        if (typeof options !== 'object' || options === null) return false;
-        if (typeof error !== "string") return false;
-        if (!Number.isInteger(limit) || !Number.isInteger(windowMs)) return false;
-
         return rateLimit({
             windowMs: windowMs,
             limit: limit,
@@ -73,7 +69,7 @@ function createLimiter(windowMs = 900000, limit = 1000, options = {}, error = "T
         });
     } catch (e) {
         console.log("Error:", e);
-        return false;
+        return null;
     }
 }
 
