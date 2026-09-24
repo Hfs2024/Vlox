@@ -1,29 +1,35 @@
-let skip = 0;
+import NS from "../nanoscript.min.js";
+import { sendRequest, capitalizeFirstLetter, cleanHTML, generatePostLink, initAccessibility, lockEvent } from "./helpers.js";
+import { inputComment, replyComment } from "./comment-helpers.js";
+import { applyTheme, currentTheme } from "./themes.js";
+import { showProfile } from "./profile.js";
 
-async function renderPosts(posts = []) {
+export const postsState = { skip: 0 };
+
+export async function renderPosts(posts = []) {
     const postsContainer = NS("#posts-container");
     postsContainer.html("");
 
     // Nothing found
     if (!posts || posts.length === 0) {
-        NS(NS.createEl("div", postsContainer, {
+        NS.createEl("div", postsContainer, {
             className: "state-nothing-found"
-        })).html("<b>No posts yet. Be the first one to post!</b>");
+        }).html("<b>No posts yet. Be the first one to post!</b>");
         return;
     }
 
     // Posts
     posts.forEach(async post => {
         // Elements
-        const postCard = NS(NS.createEl("div", postsContainer, { className: "card" }));
+        const postCard = NS.createEl("div", postsContainer, { className: "card" });
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-        NS(NS.createEl("h2", postHeader, { className: "overflow" })).setText(post.title);
+        NS.createEl("h2", postHeader, { className: "overflow" }).text(post.title);
         const postIconsGroup = NS.createEl("div", postHeader, { className: "center" });
 
         // Icons
         // Bookmark
-        NS(NS.createEl("i", postIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })).on("click", (async function () {
-            const bookmarkResponse = await NS.fetch({
+        NS.createEl("i", postIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" }).on("click", (async function () {
+            const bookmarkResponse = await sendRequest({
                 url: `/api/v1/bookmark/post/${post._id}`,
                 method: "POST"
             });
@@ -33,7 +39,7 @@ async function renderPosts(posts = []) {
         }));
 
         // Copy link
-        NS(NS.createEl("i", postIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })).on("click", async function () {
+        NS.createEl("i", postIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" }).on("click", async function () {
             NS.copy({
                 text: generatePostLink(post._id),
                 onSuccess: () => { Swal.fire("Success", "Copied!", "success") },
@@ -44,21 +50,21 @@ async function renderPosts(posts = []) {
 
         // Content
         const content = cleanHTML(post.content) || "No content found";
-        const contentEl = NS(NS.createEl("div", postCard, { className: "overflow" }))
+        const contentEl = NS.createEl("div", postCard, { className: "overflow" })
             .html(post.spoilers ? "<button id='show-spoilers' class='btn-danger w-full'><i class='fas fa-circle-exclamation'></i> Show Spoilers</button>" : content);
 
         // Show spoliers/long posts
-        NS(postCard.get("#show-spoilers")[0]).on("click", function () {
+        postCard.get("#show-spoilers")?.on("click", function () {
             contentEl.html(content);
         });
 
         // Author
-        NS(NS.createEl("p", postCard, {
+        NS.createEl("p", postCard, {
             style: `color: red; display:block; margin-bottom: 8px; cursor: pointer`,
             role: "button", tabIndex: "0"
-        }))
+        })
             .html(`Created by: ${post.by.emoji || "🚀"} <span class='author-name'>${capitalizeFirstLetter(post.by.username)}</span>`).on("click", async function () {
-                const authorProfileData = await NS.fetch({
+                const authorProfileData = await sendRequest({
                     url: `/api/v1/get/user-profile/${post.by._id}/?skip=0`
                 });
 
@@ -69,7 +75,7 @@ async function renderPosts(posts = []) {
         // Replies
         const renderReplies = async (id) => {
             // Get replies
-            const data = await NS.fetch({
+            const data = await sendRequest({
                 url: `/api/v1/get/post/${post._id}/replies/${id}`
             });
 
@@ -84,7 +90,7 @@ async function renderPosts(posts = []) {
             });
 
             data.replies.forEach(reply => {
-                const replyItem = NS(NS.createEl("div", NS("#replies-container"), { className: "comment-item space-between" }));
+                const replyItem = NS.createEl("div", NS("#replies-container"), { className: "comment-item space-between" });
                 replyItem.html(`
 <div class="center" style="gap: 5px">
   <div class="comment-item-author">
@@ -104,9 +110,9 @@ async function renderPosts(posts = []) {
 
                     inputComment({
                         title: "Update reply:",
-                        value: NS(replyItem.get(".reply-item-content")[0]).getText()[0],
+                        value: replyItem.get(".reply-item-content").text(),
                         onSubmit: async (content) => {
-                            const updateReplyResponse = await NS.fetch({
+                            const updateReplyResponse = await sendRequest({
                                 url: `/api/v1/edit/post/comment/${reply._id}`,
                                 method: "PUT",
                                 body: { newComment: content }
@@ -114,17 +120,17 @@ async function renderPosts(posts = []) {
 
                             if (!updateReplyResponse.success) return Swal.fire(updateReplyResponse.error);
                             Swal.fire("Success", "Reply updated!", "success");
-                            NS(replyItem.get(".reply-item-content")[0]).setText(content || "No content found");
+                            replyItem.get(".reply-item-content").text(content || "No content found");
                         }
                     });
                 })
 
-                NS(replyItem.get(".reply-item-content")[0]).setText(reply.content);
-                NS(replyItem.get(".reply-btn")[0]).on("click", function (e) {
+                replyItem.get(".reply-item-content").text(reply.content);
+                replyItem.get(".reply-btn").on("click", function (e) {
                     e.stopPropagation();
                     replyComment(post._id, reply._id);
                 });
-                NS(replyItem.get(".view-reply-btn")[0]).on("click", async function (e) {
+                replyItem.get(".view-reply-btn").on("click", async function (e) {
                     e.stopPropagation();
                     renderReplies(reply._id);
                 });
@@ -132,13 +138,13 @@ async function renderPosts(posts = []) {
         }
 
         // Comments
-        const commentsList = NS(NS.createEl("div", postCard, { className: "comments-list" }))
+        const commentsList = NS.createEl("div", postCard, { className: "comments-list" })
             .html("<button class='show-comments-btn w-full'><i class='fas fa-comment'></i> Show Comments</button>");
         let commentsSkip = 0;
 
         const renderComments = async () => {
             // Get comments
-            const data = await NS.fetch({
+            const data = await sendRequest({
                 url: `/api/v1/get/post/comments/${post._id}/?skip=${commentsSkip}`,
             });
 
@@ -149,7 +155,7 @@ async function renderPosts(posts = []) {
             commentsList.html("");
 
             data.comments.forEach(comment => {
-                const commentItem = NS(NS.createEl("div", commentsList, { className: "comment-item space-between" }));
+                const commentItem = NS.createEl("div", commentsList, { className: "comment-item space-between" });
                 commentItem.html(`
 <div class="center" style="gap: 5px">
   <div class="comment-item-author">
@@ -168,9 +174,9 @@ async function renderPosts(posts = []) {
 
                     inputComment({
                         title: "Update comment:",
-                        value: NS(commentItem.get(".comment-item-content")[0]).getText()[0],
+                        value: commentItem.get(".comment-item-content").text(),
                         onSubmit: async (content) => {
-                            const updateCommentResponse = await NS.fetch({
+                            const updateCommentResponse = await sendRequest({
                                 url: `/api/v1/edit/post/comment/${comment._id}`,
                                 method: "PUT",
                                 body: { newComment: content }
@@ -178,17 +184,17 @@ async function renderPosts(posts = []) {
 
                             if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
                             Swal.fire("Success", "Comment updated!", "success");
-                            NS(commentItem.get(".comment-item-content")[0]).setText(content || "No content found");
+                            commentItem.get(".comment-item-content").text(content || "No content found");
                         }
                     });
                 });
 
-                NS(commentItem.get(".comment-item-content")[0]).setText(comment.content || "No content found");
-                NS(commentItem.get(".reply-btn")[0]).on("click", function (e) {
+                commentItem.get(".comment-item-content").text(comment.content || "No content found");
+                commentItem.get(".reply-btn").on("click", function (e) {
                     e.stopPropagation();
                     replyComment(post._id, comment._id);
                 });
-                NS(commentItem.get(".view-reply-btn")[0]).on("click", async function (e) {
+                commentItem.get(".view-reply-btn").on("click", async function (e) {
                     e.stopPropagation();
                     renderReplies(comment._id);
                 });
@@ -199,21 +205,21 @@ async function renderPosts(posts = []) {
         const commentsNavGroup = NS.createEl("div", postCard, { className: "center" });
         
         // Prev
-        NS(NS.createEl("button", commentsNavGroup, { className: "comments-prev" })).on("click", async function () {
+        NS.createEl("button", commentsNavGroup, { className: "comments-prev" }).on("click", async function () {
             if (commentsSkip <= 0) return;
             commentsSkip -= 10;
             renderComments();
         }).html("<i class='fa-solid fa-chevron-left'></i>");
 
         // Next
-        NS(NS.createEl("button", commentsNavGroup, { className: "comments-next" })).on("click", async function () {
-            if (postCard.get(".state-no-comments")[0]) return;
+        NS.createEl("button", commentsNavGroup, { className: "comments-next" }).on("click", async function () {
+            if (postCard.get(".state-no-comments")) return;
             commentsSkip += 10;
             renderComments();
         }).html("<i class='fa-solid fa-chevron-right'></i>");
 
         // Show comments
-        NS(postCard.get(".show-comments-btn")[0]).on("click", async function () {
+        postCard.get(".show-comments-btn").on("click", async function () {
             renderComments();
         });
 
@@ -221,44 +227,44 @@ async function renderPosts(posts = []) {
         const optionsDiv = NS.createEl("div", postCard, { className: "options" });
 
         // Like
-        const likesBtn = NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
-            const likesResponse = await NS.fetch({
+        const likesBtn = NS.createEl("button", optionsDiv, {}).on("click", lockEvent(async function () {
+            const likesResponse = await sendRequest({
                 url: `/api/v1/react/like/post/${post._id}`,
                 method: "POST"
             });
 
             if (likesResponse.error) return Swal.fire(likesResponse.error);
             const newLikes = post.likes + 1;
-            NS(likesBtn.get(".likes-count")[0]).setText(newLikes.toLocaleString());
+            likesBtn.get(".likes-count").text(newLikes.toLocaleString());
         })).html(`<i class="fa-solid fa-thumbs-up"></i> <span class="likes-count">${post.likes.toLocaleString()}</span>`);
 
         // Report
-        const reportBtn = NS(NS.createEl("button", optionsDiv, {})).on("click", lockEvent(async function () {
-            const reportResponse = await NS.fetch({
+        const reportBtn = NS.createEl("button", optionsDiv, {}).on("click", lockEvent(async function () {
+            const reportResponse = await sendRequest({
                 url: `/api/v1/react/report/post/${post._id}`,
                 method: "POST"
             });
 
             if (!reportResponse.success) return Swal.fire(reportResponse.error);
             const newReports = post.reports + 1;
-            NS(reportBtn.get(".reports-count")[0]).setText(newReports.toLocaleString());
+            reportBtn.get(".reports-count").text(newReports.toLocaleString());
         })).html(`<i class="fa-solid fa-warning"></i> <span class="reports-count">${post.reports.toLocaleString()}</span>`);
 
         // Comment
-        const commentBtn = NS(NS.createEl("button", optionsDiv, {})).on("click", function () {
+        const commentBtn = NS.createEl("button", optionsDiv, {}).on("click", function () {
             inputComment({
                 title: "Add a comment:",
                 onSubmit: async (content) => {
-                    const commentResponse = await NS.fetch({
+                    const commentResponse = await sendRequest({
                         url: `/api/v1/comment/post/${post._id}`,
                         method: "POST",
                         body: { comment: content }
                     });
 
                     if (!commentResponse.success) return Swal.fire(commentResponse.error);
-                    const comments = NS(commentBtn.get(".comments-count")[0]);
-                    const newComments = parseInt(comments.getText()[0]) + 1;
-                    comments.setText(newComments.toLocaleString());
+                    const comments = commentBtn.get(".comments-count");
+                    const newComments = parseInt(comments.text()) + 1;
+                    comments.text(newComments.toLocaleString());
                     Swal.fire("Success", "Your comment has been added!", "success");
                     renderComments();
                 }
@@ -273,12 +279,12 @@ async function renderPosts(posts = []) {
     initAccessibility();
 }
 
-async function getPosts() {
+export async function getPosts() {
     const query = new URLSearchParams(window.location.search);
     const id = query.get("id");
 
-    const data = await NS.fetch({
-        url: id ? `/api/v1/get/post/${id}` : `/api/v1/get/posts/?skip=${skip}`,
+    const data = await sendRequest({
+        url: id ? `/api/v1/get/post/${id}` : `/api/v1/get/posts/?skip=${postsState.skip}`,
     });
 
     if (!data.success) return Swal.fire(data.error);

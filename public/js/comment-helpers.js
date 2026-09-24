@@ -1,5 +1,7 @@
+import { sendRequest } from "./helpers.js";
+
 // Input comment
-async function inputComment({ title = "Add comment", value = "", onSubmit }) {
+export async function inputComment({ title = "Add comment", value = "", onSubmit }) {
     const result = await Swal.fire({
         title: title,
         input: 'text',
@@ -19,11 +21,11 @@ async function inputComment({ title = "Add comment", value = "", onSubmit }) {
 }
 
 // Reply comment
-function replyComment(postId, parentId) {
+export function replyComment(postId, parentId) {
     inputComment({
         title: "Add reply:",
         onSubmit: async (content) => {
-            const replyResponse = await NS.fetch({
+            const replyResponse = await sendRequest({
                 url: `/api/v1/reply/comment/${parentId}/post/${postId}`,
                 method: "POST",
                 body: { reply: content }

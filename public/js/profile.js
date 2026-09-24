@@ -1,4 +1,8 @@
-async function showProfile(data) {
+import NS from "../nanoscript.min.js";
+import { sendRequest, capitalizeFirstLetter, getQuickInfo, initAccessibility, lockEvent } from "./helpers.js";
+import { renderProfilePost } from "./render-profile-post.js";
+
+export async function showProfile(data) {
     // Profile code
     let skip = 0;
     const user = data.user;
@@ -53,7 +57,7 @@ async function showProfile(data) {
             // Public
             const renderPosts = async () => {
                 // Data
-                data = await NS.fetch({
+                data = await sendRequest({
                     url: `/api/v1/get/user-profile/${window?.currentUserQuickInfo?._id}/?skip=${skip}`
                 });
                 if (!data.success) return Swal.fire(data.error);
@@ -61,7 +65,7 @@ async function showProfile(data) {
                 // Render
                 container.html(""); // Clear the container
                 if (!data.posts || data.posts.length === 0) {
-                    NS(NS.createEl("div", container, { className: "state-nothing-found" }))
+                    NS.createEl("div", container, { className: "state-nothing-found" })
                         .html("<b>No posts yet.</b>");
                     return;
                 }
@@ -78,7 +82,7 @@ async function showProfile(data) {
             // Pinned
             const renderPinnedPosts = () => {
                 if (!data.pinnedPosts || data.pinnedPosts.length === 0) {
-                    NS(NS.createEl("div", NS("#user-pinned-posts-container"), { className: "state-nothing-found" }))
+                    NS.createEl("div", NS("#user-pinned-posts-container"), { className: "state-nothing-found" })
                         .html("<b>No pinned posts yet.</b>");
                     return;
                 }
@@ -94,7 +98,7 @@ async function showProfile(data) {
 
             // Reset password recovery codes
             NS("#reset-password-recovery-codes-btn").on("click", lockEvent(async function () {
-                const newCodesResponse = await NS.fetch({
+                const newCodesResponse = await sendRequest({
                     url: "/api/v1/reset/password/recovery-codes",
                     method: "POST"
                 });
@@ -102,7 +106,7 @@ async function showProfile(data) {
                 if (!newCodesResponse.success) return Swal.fire(newCodesResponse.error);
                 const blob = new Blob([newCodesResponse.codes.join("\n")], { type: "text/plain" });
                 const url = URL.createObjectURL(blob);
-                NS(NS.createEl("a", document.body, {}))
+                NS.createEl("a", document.body, {})
                     .attr("href", url)
                     .attr("download", "recovery-codes.txt")
                     .click()
@@ -124,7 +128,7 @@ async function showProfile(data) {
                 });
 
                 if (result.isConfirmed) {
-                    const updateBioResponse = await NS.fetch({
+                    const updateBioResponse = await sendRequest({
                         url: "/api/v1/update/user",
                         method: "PUT",
                         body: { newBio: result.value }
@@ -137,7 +141,7 @@ async function showProfile(data) {
             });
 
             NS("#user-profile-visibility-toggle").on("click", lockEvent(async function () {
-                const updatevisibilityResponse = await NS.fetch({
+                const updatevisibilityResponse = await sendRequest({
                     url: "/api/v1/change-visibility/user-profile",
                     method: "PUT",
                     body: { value: !data.user.private }
@@ -155,17 +159,17 @@ async function showProfile(data) {
             }));
 
             NS("#user-posts-next-btn").on("click", lockEvent(async function () {
-                if (container.get(".state-nothing-found")[0]) return;
+                if (container.get(".state-nothing-found")?.elements) return;
                 skip += 10;
                 renderPosts();
             }));
 
             // Emojis
             emojis.forEach(emoji => {
-                NS(NS.createEl("button", NS(".emoji-container"), { className: "btn-emoji-container" }))
-                    .setText(emoji)
+                NS.createEl("button", NS(".emoji-container"), { className: "btn-emoji-container" })
+                    .text(emoji)
                     .on("click", lockEvent(async function () {
-                        const updateEmojidata = await NS.fetch({
+                        const updateEmojidata = await sendRequest({
                             url: "/api/v1/update/user",
                             method: "PUT",
                             body: { newEmoji: emoji }
@@ -182,7 +186,7 @@ async function showProfile(data) {
                     NS(".btn-task-filter-bar").removeClass("active-bg");
                     NS(".panel-task-filter-bar").removeClass("panel-task-filter-bar-active");
                     NS(btn).addClass("active-bg");
-                    NS(NS(".panel-task-filter-bar")[index]).addClass("panel-task-filter-bar-active");
+                    NS(NS(".panel-task-filter-bar")?.elements?.[index]).addClass("panel-task-filter-bar-active");
                 });
             });
 

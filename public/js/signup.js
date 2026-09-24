@@ -1,3 +1,7 @@
+import NS from "../nanoscript.min.js";
+import { sendRequest, getQuickInfo, initAccessibility, initLiveCounter, lockEvent } from "./helpers.js";
+import { showProfile } from "./profile.js";
+
 const signUpBtn = NS("#signup-btn");
 const signOutBtn = NS("#signout-btn");
 const profileBtn = NS("#profile-btn");
@@ -28,7 +32,7 @@ async function showResetPasswordModal() {
     });
 
     if (!result.isConfirmed) return;
-    const resetData = await NS.fetch({
+    const resetData = await sendRequest({
         url: "/api/v1/reset/password",
         method: "POST",
         body: {
@@ -48,17 +52,21 @@ async function showLoginModal() {
 <h2>Login</h2>
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
-<p class="text-forget-password" onclick="showResetPasswordModal()" role="button" tabindex="0">
+<p class="text-forget-password" role="button" tabindex="0">
   Forgot your password?
 </p>
 <p class="text-swal-toggle">
-  Need an account? <span class="link-swal-toggle" onclick="showSignUpModal()" role="button" tabindex="0">Sign up</span>
+    Need an account? <span class="link-swal-toggle" role="button" tabindex="0">Sign up</span>
 </p>
         `,
         showCancelButton: true,
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
-        didOpen: initAccessibility,
+        didOpen: () => {
+            initAccessibility();
+            NS(".text-forget-password").on("click", showResetPasswordModal);
+            NS(".link-swal-toggle").on("click", showSignUpModal);
+        },
         preConfirm: () => {
             const username = Swal.getPopup().querySelector('#username').value;
             const password = Swal.getPopup().querySelector('#password').value;
@@ -72,7 +80,7 @@ async function showLoginModal() {
     });
 
     if (!result.isConfirmed) return;
-    const data = await NS.fetch({
+    const data = await sendRequest({
         url: `/api/v1/login`,
         method: "POST",
         body: {
@@ -99,7 +107,7 @@ async function showSignUpModal() {
   Count: <span class="count" id="user-bio-content-count">0/20</span>
 </p>           
 <p class="text-swal-toggle">
-  Already have an account? <span class="link-swal-toggle" onclick="showLoginModal()" role="button" tabindex="0">Log in</span>
+    Already have an account? <span class="link-swal-toggle" role="button" tabindex="0">Log in</span>
 </p>
         `,
         showCancelButton: true,
@@ -107,6 +115,7 @@ async function showSignUpModal() {
         cancelButtonText: 'Cancel',
         didOpen: () => {
             initLiveCounter("#bio", "#user-bio-content-count", 20);
+            NS(".link-swal-toggle").on("click", showLoginModal);
             initAccessibility();
         },
 
@@ -127,7 +136,7 @@ async function showSignUpModal() {
     });
 
     if (!result.isConfirmed) return;
-    const data = await NS.fetch({
+    const data = await sendRequest({
         url: `/api/v1/signup`,
         method: "POST",
         body: {
@@ -141,7 +150,7 @@ async function showSignUpModal() {
     if (!data.success) return Swal.fire(data.error);
     const blob = new Blob([data.recoveryCodes.join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    NS(NS.createEl("a", document.body, {}))
+    NS.createEl("a", document.body, {})
         .attr("href", url)
         .attr("download", "recovery-codes.txt")
         .click()
@@ -154,7 +163,7 @@ async function showSignUpModal() {
 
 // User status
 async function getUserStatus() {
-    const status = await NS.fetch({
+    const status = await sendRequest({
         url: "/api/v1/get/user-status"
     });
 
@@ -165,11 +174,11 @@ async function getUserStatus() {
 async function checkUserStatus() {
     const status = await getUserStatus();
     if (status.loggedIn) {
-        signUpBtn.hide();
-        loggedInGroup.show();
+        signUpBtn.css("display", "none");
+        loggedInGroup.css("display", "");
     } else {
-        signUpBtn.show();
-        loggedInGroup.hide();
+        signUpBtn.css("display", "");
+        loggedInGroup.css("display", "none");
     }
 }
 
@@ -179,7 +188,7 @@ signUpBtn.on("click", function () {
 });
 
 signOutBtn.on("click", lockEvent(async function () {
-    const response = await NS.fetch({
+    const response = await sendRequest({
         url: "/api/v1/signout",
         method: "DELETE"
     });
@@ -191,7 +200,7 @@ signOutBtn.on("click", lockEvent(async function () {
 }));
 
 profileBtn.on("click", lockEvent(async function () {
-    const response = await NS.fetch({
+    const response = await sendRequest({
         url: `/api/v1/get/user-profile/${window?.currentUserQuickInfo?._id}/?skip=0`
     });
 

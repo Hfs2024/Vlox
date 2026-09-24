@@ -1,3 +1,6 @@
+import NS from "../nanoscript.min.js";
+import { sendRequest, cleanHTML, generatePostLink, initLiveCounter, lockEvent } from "./helpers.js";
+
 async function viewAnalytics(post) {
     Swal.fire({
         title: "Post analytics",
@@ -6,17 +9,17 @@ async function viewAnalytics(post) {
     });
 
     const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "card" });
-    NS(NS.createEl("h2", postCard, { className: "overflow" })).setText(post.title);
-    NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
+    NS.createEl("h2", postCard, { className: "overflow" }).text(post.title);
+    NS.createEl("div", postCard, { className: "overflow" }).html(cleanHTML(post.content) || "Not content found");
     const panelAnalyticsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
     const likesPercent = post.likes === 0 ? 0 : post.likes >= 100 ? 100 : post.likes >= 80 ? 80 : post.likes >= 60 ? 60 : post.likes >= 40 ? 40 : 20;
     const barFilled = likesPercent === 100;
 
     // Quick analytics
-    NS(NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" })).setText(`Likes: ${post.likes.toLocaleString()}`);
-    NS(NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" })).setText(`Reports: ${post.reports.toLocaleString()}`);
-    NS(NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" })).setText(`Comments: ${post.comments.toLocaleString()}`);
-    NS(NS.createEl("p", postCard, { style: "text-align: center" }))
+    NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" }).text(`Likes: ${post.likes.toLocaleString()}`);
+    NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" }).text(`Reports: ${post.reports.toLocaleString()}`);
+    NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" }).text(`Comments: ${post.comments.toLocaleString()}`);
+    NS.createEl("p", postCard, { style: "text-align: center" })
         .html(
             barFilled ?
                 `You filled the bar! You're a <b>LEGEND!!</b>`
@@ -24,12 +27,12 @@ async function viewAnalytics(post) {
         );
 
     // Likes bar
-    NS(NS.createEl("div", postCard, { className: "analytics-likes-bar" }))
+    NS.createEl("div", postCard, { className: "analytics-likes-bar" })
         .html("<div class='analytics-likes-bar-fill'></div>");
     NS(".analytics-likes-bar-fill").css("width", `${likesPercent}%`);
 
-    if (!post.redeemed && barFilled) NS(NS.createEl("button", postCard, { style: "width: 100%" })).setText("One time redeem!").on("click", lockEvent(async function () {
-        const redeemResponse = await NS.fetch({
+    if (!post.redeemed && barFilled) NS.createEl("button", postCard, { style: "width: 100%" }).text("One time redeem!").on("click", lockEvent(async function () {
+        const redeemResponse = await sendRequest({
             url: `/api/v1/redeem/post/${post._id}`,
             method: "POST"
         });
@@ -39,13 +42,13 @@ async function viewAnalytics(post) {
     }));
 }
 
-async function renderProfilePost({
+export async function renderProfilePost({
     post, isUserProfile, container
 } = {}) {
     const postCard = NS.createEl("div", NS(container), { className: "card" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-    NS(NS.createEl("h2", postHeader, { className: "overflow" })).setText(post.title);
-    NS(NS.createEl("i", postHeader, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })).on("click", async function () {
+    NS.createEl("h2", postHeader, { className: "overflow" }).text(post.title);
+    NS.createEl("i", postHeader, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" }).on("click", async function () {
         NS.copy({
             text: generatePostLink(post._id),
             onSuccess: () => {
@@ -57,22 +60,22 @@ async function renderProfilePost({
             }
         });
     });
-    NS(NS.createEl("div", postCard, { className: "overflow" })).html(cleanHTML(post.content) || "Not content found");
+    NS.createEl("div", postCard, { className: "overflow" }).html(cleanHTML(post.content) || "Not content found");
 
     if (isUserProfile) {
-        NS(NS.createEl("p", postCard, {
+        NS.createEl("p", postCard, {
             style: "font-size: 15px;"
-        })).html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
+        }).html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
 
         const primaryButtonsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
         const secondaryButtonsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
 
         // Primary buttons
-        NS(NS.createEl("button", primaryButtonsGroup, {
+        NS.createEl("button", primaryButtonsGroup, {
             id: "delete-user-post-btn",
             className: "btn-danger w-full"
-        })).setText("Delete").on("click", lockEvent(async function () {
-            const deletedData = await NS.fetch({
+        }).text("Delete").on("click", lockEvent(async function () {
+            const deletedData = await sendRequest({
                 url: `/api/v1/delete/post/${post._id}`,
                 method: "DELETE"
             });
@@ -81,10 +84,10 @@ async function renderProfilePost({
             Swal.fire("Success", "Post deleted!", "success");
         }));
 
-        NS(NS.createEl("button", primaryButtonsGroup, {
+        NS.createEl("button", primaryButtonsGroup, {
             id: "edit-user-post-btn",
             className: "w-full"
-        })).setText("Edit").on("click", async function () {
+        }).text("Edit").on("click", async function () {
             const result = await Swal.fire({
                 title: "Update post: ",
                 html: `
@@ -111,10 +114,10 @@ async function renderProfilePost({
                     if (post.spoilers) editSpoilersBtn.addClass("active-color");
 
                     // Default values
-                    NS("#edit-post-title").setVal(post.title);
-                    NS("#edit-post-content").setVal(post.content);
-                    NS("#edit-post-keywords").setVal(post.keywords.join(", "));
-                    NS("#edit-post-content-count").setText(`${NS("#edit-post-content").getVal()[0].length}/${window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
+                    NS("#edit-post-title").value(post.title);
+                    NS("#edit-post-content").value(post.content);
+                    NS("#edit-post-keywords").value(post.keywords.join(", "));
+                    NS("#edit-post-content-count").text(`${NS("#edit-post-content").value().length}/${window?.currentUserQuickInfo?.maxPostContentCharsLength || 2000}`);
                     initLiveCounter("#edit-post-content", "#edit-post-content-count", window?.currentUserQuickInfo?.maxPostContentCharsLength);
                 },
                 preConfirm: () => {
@@ -132,7 +135,7 @@ async function renderProfilePost({
             });
 
             if (!result.isConfirmed) return;
-            const editPostData = await NS.fetch({
+            const editPostData = await sendRequest({
                 url: `/api/v1/edit/post/${post._id}`,
                 method: "PUT",
                 body: {
@@ -147,11 +150,11 @@ async function renderProfilePost({
             Swal.fire("Success", `Post updated!`, "success");
         });
 
-        if (!post.private) NS(NS.createEl("button", primaryButtonsGroup, {
+        if (!post.private) NS.createEl("button", primaryButtonsGroup, {
             id: "pin-user-post-btn",
             className: "w-full"
-        })).setText(post.pinned ? "Unpin" : "Pin").on("click", async function () {
-            const pinData = await NS.fetch({
+        }).text(post.pinned ? "Unpin" : "Pin").on("click", async function () {
+            const pinData = await sendRequest({
                 url: `/api/v1/pin/post/${post._id}`,
                 method: "POST",
                 body: { value: !post.pinned }
@@ -162,18 +165,18 @@ async function renderProfilePost({
         });
 
         // Secondary buttons
-        NS(NS.createEl("button", secondaryButtonsGroup, {
+        NS.createEl("button", secondaryButtonsGroup, {
             id: "view-mini-analytics-post-btn",
             className: "w-full"
-        })).setText("View mini analytics").on("click", async function () {
+        }).text("View mini analytics").on("click", async function () {
             viewAnalytics(post);
         });
 
-        if (!post.pinned) NS(NS.createEl("button", secondaryButtonsGroup, {
+        if (!post.pinned) NS.createEl("button", secondaryButtonsGroup, {
             id: "change-visibility-user-post-btn",
             className: "w-full"
-        })).setText("Change visibility").on("click", async function () {
-            const visibilityData = await NS.fetch({
+        }).text("Change visibility").on("click", async function () {
+            const visibilityData = await sendRequest({
                 url: `/api/v1/change-visibility/post/${post._id}`,
                 method: "PUT",
                 body: { value: !post.private } // Force a boolean
