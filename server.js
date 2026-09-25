@@ -60,10 +60,11 @@ app.get("/", (req, res) => {
 app.post("/api/v1/posts", checkAuth, [
     body("title").notEmpty().isString().isLength({ max: 20 }).trim(),
     body("content").notEmpty().isString().custom((value, { req }) => {
-        if (value?.length > req.currentUser.maxPostLength) return false;
+        const maxPostLength = req.currentUser.maxPostLength || 2000;
+        if (value.length > maxPostLength) return false;
         return true;
     }).trim(),
-    body("keywords").exists().isArray({ max: 5 }).customSanitizer(value => value?.filter(Boolean)?.map(kw => kw.toLowerCase().trim()))
+    body("keywords").exists().isArray({ max: 5 }).customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim()))
 ], validateResult, async (req, res) => {
     const { title, content, keywords } = req.cleanData;
     const newPost = new schemas.Posts({
