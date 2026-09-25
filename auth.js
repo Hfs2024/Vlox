@@ -86,7 +86,7 @@ router.put("/api/v1/update/user", checkAuth, [
     body("newEmoji").optional({ values: "falsy" }).isString().isIn(["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"]).trim(),
     body("newBio").optional({ values: "falsy" }).isString().isLength({ max: 20 }).trim()
 ], validateResult, async (req, res) => {
-    let { newBio, newEmoji } = req.cleanData;
+    const { newBio, newEmoji } = req.cleanData;
     const updateQuery = {};
     if (newEmoji) updateQuery.emoji = newEmoji.normalize("NFC");
     if (newBio) updateQuery.bio = newBio;
@@ -118,12 +118,10 @@ router.delete("/api/v1/signout", checkAuth, async (req, res) => {
 });
 
 // User quick info
-router.get("/api/v1/get/current-user-quick-info", checkAuth, async (req, res) => {
+router.get("/api/v1/get/user-quick-info", checkAuth, async (req, res) => {
     return res.status(200).json({
         success: true,
         username: req.currentUser.username,
-        emoji: req.currentUser.emoji,
-        bio: req.currentUser.bio,
         maxPostLength: req.currentUser.maxPostLength,
         _id: req.currentUser._id
     });
@@ -147,21 +145,11 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
     })
         .select("username emoji bio private")
         .lean();
-    if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
 
-    // Pinned posts
-    const pinnedPosts = await schemas.Posts.find({
-        by: id,
-        pinned: true // Pinned!
-    }).sort({ createdAt: -1, _id: -1 })
-        .skip(skip)
-        .limit(10)
-        .populate("by", "-password -recoveryCodes -email")
-        .lean();
+    if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
 
     return res.status(200).json({
         success: true,
-        pinnedPosts: pinnedPosts,
         user: user
     });
 });
@@ -173,7 +161,6 @@ router.get("/api/v1/get/user-posts/:id", checkAuth, [
     const { id, skip } = req.cleanData;
     const posts = await schemas.Posts.find({
         by: id,
-        pinned: false,
         $or: [
             { by: req.session.userId },
             { private: false }

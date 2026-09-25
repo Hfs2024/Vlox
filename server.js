@@ -74,7 +74,7 @@ app.post("/api/v1/posts", checkAuth, [
     });
 
     await newPost.save();
-    return res.status(200).json({ success: true, postId: newPost._id });
+    return res.status(200).json({ success: true });
 });
 
 app.get("/api/v1/get/post/:id", [
@@ -133,7 +133,7 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
     if (!post) return res.status(400).json({ error: "Post not found!" });
 
     // Find comments
-    const comments = await schemas.Comments.find({ for: id, parentId: null })
+    const comments = await schemas.Comments.find({ for: id, parentCommentId: null })
         .sort({ createdAt: -1, _id: -1 })
         .skip(parseInt(skip))
         .limit(10)
@@ -144,11 +144,11 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
     return res.status(200).json({ success: true, comments });
 });
 
-app.get("/api/v1/get/post/:postId/replies/:parentId", checkAuth, [
+app.get("/api/v1/get/post/:postId/replies/:parentCommentId", checkAuth, [
     param("postId").exists().isMongoId(),
-    param("parentId").exists().isMongoId()
+    param("parentCommentId").exists().isMongoId()
 ], validateResult, async (req, res) => {
-    const { postId, parentId } = req.cleanData;
+    const { postId, parentCommentId } = req.cleanData;
 
     // Check permissions to see post
     const post = await schemas.Posts.find(hotQueries.view_post(postId, req.session.userId));
@@ -157,7 +157,7 @@ app.get("/api/v1/get/post/:postId/replies/:parentId", checkAuth, [
     // Find replies
     const replies = await schemas.Comments.find({
         for: postId,
-        parentId: parentId
+        parentCommentId: parentCommentId
     })
         .populate("by", "-password -recoveryCodes -email")
         .lean();

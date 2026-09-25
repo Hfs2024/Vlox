@@ -10,7 +10,6 @@ const createPostTitle = NS("#create-post-title");
 const copyPostContentBtn = NS("#copy-post-content-btn");
 const searchPostsInput = NS("#search-posts-input");
 const searchPostsBtn = NS("#btn-search-posts");
-const createContainer = NS("#create-container");
 const prevBtn = NS("#prev-btn");
 const nextBtn = NS("#next-btn");
 
@@ -25,7 +24,8 @@ async function search() {
     });
 
     if (!searchData.success) return Swal.fire(searchData.error);
-    renderPosts(Array.isArray(searchData.posts) ? searchData.posts : [searchData.posts]);
+    const posts = Array.isArray(searchData.posts) ? searchData.posts : (searchData.posts ? [searchData.posts] : []);
+    renderPosts(posts);
 }
 
 searchPostsBtn.on("click", lockEvent(async function () {
@@ -49,9 +49,9 @@ copyPostContentBtn.on("click", function () {
 
 // Create post
 createPostBtn.on("click", lockEvent(async function () {
-    const title = createPostTitle.value()?.trim();
-    const content = createPostContent.value()?.trim();
-    const keywords = createPostKeywords.value()?.trim().split(",").filter(Boolean).map(kw => kw.toLowerCase().trim());
+    const title = createPostTitle.value().trim();
+    const content = createPostContent.value().trim();
+    const keywords = createPostKeywords.value().trim().split(",").filter(Boolean).map(kw => kw.toLowerCase().trim());
     const maxPostLength = window?.quickInfo?.maxPostLength || 2000;
 
     if (!title || !content) return Swal.fire("Title and content are required!");
@@ -75,13 +75,12 @@ createPostBtn.on("click", lockEvent(async function () {
     createPostTitle.value("");
     createPostContent.value("");
     createPostKeywords.value("");
-    createPostContentCount.text(`0/${window.quickInfo.maxPostLength}`);
+    createPostContentCount.text("0");
 
     // Success
-    const link = generatePostLink(data.postId);
     Swal.fire({
-        title: "Post created!",
-        html: `<a href="${link}">${link}</a>`,
+        title: "Success",
+        text: "Post created!",
         icon: "success"
     });
 }));

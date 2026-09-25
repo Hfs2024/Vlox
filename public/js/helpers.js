@@ -10,7 +10,7 @@ export async function sendRequest({ body, ...config }) {
         data: body
     });
 
-    return response.data;
+    return response && response.data ? response.data : {};
 }
 
 // Accessibility
@@ -26,25 +26,27 @@ export function initAccessibility() {
 export async function getQuickInfo() {
     // Get data
     const quickInfo = await sendRequest({
-        url: "/api/v1/get/current-user-quick-info"
+        url: "/api/v1/get/user-quick-info"
     });
 
     // Attach data
-    window.quickInfo = quickInfo;
+    window.quickInfo = quickInfo || {};
     const maxPostLength = window?.quickInfo?.maxPostLength;
     initLiveCounter("#create-post-content", "#create-post-content-count", maxPostLength);
-    return quickInfo;
+    return quickInfo || {};
 }
 
 // Capitalize strings
 export function capitalizeFirstLetter(string) {
     if (typeof string !== "string" || !string) return "";
-    return string.at(0).toUpperCase() + string.slice(1);
+    const newString = string.at(0).toUpperCase() + string.slice(1);
+    return newString.trim();
 }
 
 // Clean HTML
 export function cleanHTML(html) {
-    return DOMPurify.sanitize(marked.parse(html), {
+    const safeHTML = typeof html === "string" ? html : "";
+    return DOMPurify.sanitize(marked.parse(safeHTML), {
         ALLOWED_TAGS: [
             "pre", "code", "b", "i", "br", "span", "em", "strong", "u", "s", "sub", "sup", "small",
             "p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "ul", "ol", "li",
@@ -56,7 +58,8 @@ export function cleanHTML(html) {
 
 // Post links
 export function generatePostLink(postId) {
-    return `${window.location.origin + window.location.pathname}?id=${postId}`;
+    const safePostId = postId || "";
+    return `${window.location.origin + window.location.pathname}?id=${safePostId}`;
 }
 
 // Live coutner
@@ -64,7 +67,7 @@ export function initLiveCounter(inputElement, countElement, max) {
     const inputEl = NS(inputElement);
     max = Number.isInteger(max) ? max : 2000;
     inputEl.on("input", function () {
-        const length = NS(inputElement).value().length;
+        const length = (NS(inputElement).value() || "").length;
         NS(countElement).text(length);
     }).attr("maxLength", max);
 }
