@@ -13,7 +13,6 @@ const usersSchema = new mongoose.Schema({
         match: [/.+\@.+\..+/, 'Please fill a valid email address'],
         required: true
     },
-    pinnedPostsCount: { type: Number, default: 0 },
     recoveryCodes: { type: [String], default: [] },
     maxPostLength: { type: Number, default: 2000 },
     private: { type: Boolean, default: false }
@@ -40,7 +39,6 @@ const postsSchema = new mongoose.Schema({
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
     private: { type: Boolean, default: false },
     redeemed: { type: Boolean, default: false },
-    pinned: { type: Boolean, default: false },
     keywords: { type: [String], default: [] }
 }, { timestamps: true });
 postsSchema.index({ by: 1 });
@@ -53,10 +51,10 @@ const commentsSchema = new mongoose.Schema({
     content: String,
     for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts" },
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
-    parentId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    parentCommentId: { type: mongoose.Schema.Types.ObjectId, default: null },
     repliesCount: { type: Number, default: 0 }
 }, { timestamps: true });
-commentsSchema.index({ for: 1, parentId: 1 });
+commentsSchema.index({ for: 1, parentCommentId: 1 });
 
 // Bookmarks
 const bookmarksSchema = new mongoose.Schema({

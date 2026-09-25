@@ -11,50 +11,13 @@ router.put("/api/v1/change-visibility/post/:id", checkAuth, [
     body("value").exists().isIn([true, false])
 ], validateResult, async (req, res) => {
     const { id, value } = req.cleanData;
-    const result = await schemas.Posts.updateOne({
-        ...hotQueries.modify_post(id, req.session.userId),
-        pinned: false
-    }, {
+    const result = await schemas.Posts.updateOne(hotQueries.modify_post(id, req.session.userId), {
         $set: {
             private: value
         }
     });
 
     if (result.matchedCount === 0) return res.status(400).json({ error: "Post not found or post is private!" });
-    return res.status(200).json({ success: true });
-});
-
-// Pin and unpin posts
-router.post("/api/v1/pin/post/:id", checkAuth, [
-    param("id").exists().isMongoId(),
-    body("value").exists().isIn([true, false])
-], validateResult, async function (req, res) {
-    const session = await mongoose.startSession();
-    const { id, value } = req.cleanData;
-
-    await session.withTransaction(async () => {
-        // Save
-        const postUpdate = await schemas.Posts.updateOne({
-            ...hotQueries.modify_post(id, req.session.userId),
-            private: false,
-            pinned: value ? false : true // Opposite!
-        }, { pinned: value }, { session });
-        if (postUpdate.matchedCount === 0) throw new Error("POST_UPDATE_FAILED");
-
-        // Inc
-        const userFindQuery = { _id: req.session.userId }
-        if (value) userFindQuery.pinnedPostsCount = { $lt: 10 };
-
-        const userUpdate = await schemas.Users.updateOne(userFindQuery, {
-            $inc: {
-                pinnedPostsCount: value ? 1 : -1
-            }
-        }, { session });
-
-        if (userUpdate.matchedCount === 0) throw new Error("USER_UPDATE_FAILED");
-    });
-
-    session.endSession();
     return res.status(200).json({ success: true });
 });
 
@@ -67,6 +30,15 @@ router.post("/api/v1/comment/post/:id", checkAuth, [
 
     const session = await mongoose.startSession();
     await session.withTransaction(async () => {
+        // Inc comments and check for permissions to see the post
+        const postUpdate = await schemas.Posts.updateOne(hotQueries.view_post(id, req.session.userId), {
+            $inc: {
+                comments: 1
+            }
+        }, { session });
+
+        if (postUpdate.matchedCount === 0) throw new Error("COMMENT_UPDATE_FAILED");
+
         // Insert comment
         const newComment = new schemas.Comments({
             content: comment,
@@ -75,27 +47,18 @@ router.post("/api/v1/comment/post/:id", checkAuth, [
         });
 
         await newComment.save({ session });
-
-        // Inc comments
-        const result = await schemas.Posts.updateOne(hotQueries.view_post(id, req.session.userId), {
-            $inc: {
-                comments: 1
-            }
-        }, { session });
-
-        if (result.matchedCount === 0) throw new Error("COMMENT_UPDATE_FAILED");
     });
 
     await session.endSession();
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/reply/comment/:parentId/post/:postId", checkAuth, [
+router.post("/api/v1/reply/comment/:parentCommentId/post/:postId", checkAuth, [
     param("postId").exists().isMongoId(),
-    param("parentId").exists().isMongoId(),
+    param("parentCommentId").exists().isMongoId(),
     body("reply").exists().notEmpty().isString().isLength({ max: 200 }).trim()
 ], validateResult, async (req, res) => {
-    const { postId, reply, parentId } = req.cleanData;
+    const { postId, reply, parentCommentId } = req.cleanData;
 
     const session = await mongoose.startSession();
     await session.withTransaction(async () => {
@@ -106,7 +69,7 @@ router.post("/api/v1/reply/comment/:parentId/post/:postId", checkAuth, [
         // Add reply
         const newReply = new schemas.Comments({
             content: reply,
-            parentId: parentId,
+            parentCommentId: parentCommentId,
             for: postId,
             by: req.session.userId
         });
@@ -115,7 +78,7 @@ router.post("/api/v1/reply/comment/:parentId/post/:postId", checkAuth, [
 
         // Inc comments
         const result = await schemas.Comments.updateOne({
-            _id: parentId,
+            _id: parentCommentId,
             for: postId,
             repliesCount: { $lt: 10 }
         }, {
@@ -205,13 +168,20 @@ router.post("/api/v1/react/:action/post/:id", checkAuth, [
 });
 
 // Edit posts and comments
-router.put("/api/v1/edit/post/comment/:id", checkAuth, [
-    param("id").exists().isMongoId(),
+router.put("/api/v1/edit/post/:postId/comment/:commentId", checkAuth, [
+    param("postId").exists().isMongoId(),
+    param("commentId").exists().isMongoId(),
     body("newComment").exists().notEmpty().isString().isLength({ max: 200 }).trim(),
 ], validateResult, async (req, res) => {
-    const { newComment, id } = req.cleanData;
+    const { newComment, postId, commentId } = req.cleanData;
+
+    // Check post permissions
+    const post = await schemas.Posts.find(hotQueries.view_post(postId, req.session.userId));
+    if (!post) return res.status(400).json({ error: "Post not found or you don't have permissions to see it" });
+
+    // Update comment
     const result = await schemas.Comments.updateOne({
-        _id: id,
+        _id: commentId,
         by: req.session.userId
     }, {
         $set: {
@@ -252,10 +222,7 @@ router.delete("/api/v1/delete/post/:id", checkAuth, [
     const session = await mongoose.startSession();
     const id = req.cleanData.id;
     await session.withTransaction(async () => {
-        const result = await schemas.Posts.deleteOne({
-            ...hotQueries.modify_post(id, req.session.userId),
-            pinned: false
-        }, { session });
+        const result = await schemas.Posts.deleteOne(hotQueries.modify_post(id, req.session.userId), { session });
         if (result.deletedCount === 0) throw new Error("POST_DELETE_FAILED");
 
         // Remove reactions

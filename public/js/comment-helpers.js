@@ -1,11 +1,11 @@
 import { sendRequest } from "./helpers.js";
 
 // Input comment
-export async function inputComment({ title = "Add comment", value = "", onSubmit }) {
+export async function inputComment(title = "Add comment", initialValue = "", onSubmit) {
     const result = await Swal.fire({
         title: title,
         input: 'text',
-        inputValue: value,
+        inputValue: initialValue,
         inputPlaceholder: 'Type your comment here...',
         showCancelButton: true,
         preConfirm: result => {
@@ -21,18 +21,15 @@ export async function inputComment({ title = "Add comment", value = "", onSubmit
 }
 
 // Reply comment
-export function replyComment(postId, parentId) {
-    inputComment({
-        title: "Add reply:",
-        onSubmit: async (content) => {
-            const replyResponse = await sendRequest({
-                url: `/api/v1/reply/comment/${parentId}/post/${postId}`,
-                method: "POST",
-                body: { reply: content }
-            });
+export function replyComment(postId, parentCommentId) {
+    inputComment("Add reply:", "", async (content) => {
+        const replyResponse = await sendRequest({
+            url: `/api/v1/reply/comment/${parentCommentId}/post/${postId}`,
+            method: "POST",
+            body: { reply: content }
+        });
 
-            if (!replyResponse.success) return Swal.fire(replyResponse.error);
-            Swal.fire("Success", "Reply added!", "success");
-        }
+        if (!replyResponse.success) return Swal.fire(replyResponse.error);
+        Swal.fire("Success", "Reply added!", "success");
     });
 }

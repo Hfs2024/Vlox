@@ -148,7 +148,8 @@ async function showSignUpModal() {
     });
 
     if (!data.success) return Swal.fire(data.error);
-    const blob = new Blob([data.recoveryCodes.join("\n")], { type: "text/plain" });
+    const recoveryCodes = Array.isArray(data.recoveryCodes) ? data.recoveryCodes : [];
+    const blob = new Blob([recoveryCodes.join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     NS.createEl("a", document.body, {})
         .attr("href", url)
@@ -173,7 +174,7 @@ async function getUserStatus() {
 
 async function checkUserStatus() {
     const status = await getUserStatus();
-    if (status.loggedIn) {
+    if (status && status.loggedIn) {
         signUpBtn.css("display", "none");
         loggedInGroup.css("display", "");
     } else {

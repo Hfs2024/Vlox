@@ -28,38 +28,43 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                     url: `/api/v1/get/bookmarks/?skip=${skip}`,
                     method: "POST"
                 });
+
                 if (!data.success) return Swal.fire(data.error);
 
                 // Render
                 container.html("");
-                if (!data.bookmarks || data.bookmarks.length <= 0) {
+
+                const bookmarks = Array.isArray(data.bookmarks) ? data.bookmarks : [];
+                if (bookmarks.length <= 0) {
                     NS.createEl("div", container, {
                         className: "state-nothing-found",
                     }).html("<b>You don't have any bookmarks yet.</b>");
                     return;
                 }
 
-                data.bookmarks.forEach(bookmark => {
+                bookmarks.forEach(bookmark => {
+                    const safeBookmark = bookmark || {};
                     const bookmarkCard = NS.createEl("div", container, { className: "card" });
                     const bookmarkHeader = NS.createEl("div", bookmarkCard, { className: "space-between" });
                     const buttonGroup = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
 
                     // Header buttons
-                    NS.createEl("h2", bookmarkHeader, { className: "overflow" }).text(capitalizeFirstLetter(bookmark.title));
+                    const title = capitalizeFirstLetter(safeBookmark.title || "No title");
+                    NS.createEl("h2", bookmarkHeader, { className: "overflow" }).text(title || "No title");
                     NS.createEl("i", bookmarkHeader, { className: "fas fa-eye icon-helper", role: "button", tabIndex: "0" }).on("click", lockEvent(async function () {
                         const postData = await sendRequest({
-                            url: `/api/v1/get/post/${bookmark.for}`
+                            url: `/api/v1/get/post/${safeBookmark.for}`
                         });
 
                         if (!postData.success) return Swal.fire(postData.error);
-                        renderPosts(Array.isArray(postData.posts) ? postData.posts : [postData.posts]);
+                        renderPosts(Array.isArray(postData.posts) ? postData.posts : (postData.posts ? [postData.posts] : []));
                         Swal.fire("Success", "Post loaded!", "success");
                     }));
 
                     // Main buttons
                     NS.createEl("button", buttonGroup, { className: "btn-danger w-full" }).text("Delete").on("click", lockEvent(async function () {
                         const deleteData = await sendRequest({
-                            url: `/api/v1/delete/bookmark/${bookmark._id}`,
+                            url: `/api/v1/delete/bookmark/${safeBookmark._id}`,
                             method: "DELETE"
                         });
 
@@ -72,6 +77,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                             title: "Enter new title: ",
                             input: "text",
                             inputPlaceholder: "Enter new title...",
+                            inputValue: title || "",
                             showCancelButton: true,
                             preConfirm: result => {
                                 if (!result) return Swal.showValidationMessage("Please enter title before proceeding!");
@@ -81,7 +87,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
 
                         if (!result.isConfirmed) return;
                         const renameData = await sendRequest({
-                            url: `/api/v1/rename/bookmark/${bookmark._id}`,
+                            url: `/api/v1/rename/bookmark/${safeBookmark._id}`,
                             method: "PUT",
                             body: { title: result.value }
                         });

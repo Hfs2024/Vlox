@@ -19,46 +19,51 @@ export async function renderPosts(posts = []) {
 
     // Posts
     posts.forEach(async post => {
+        const safePost = post || {};
+        const safeBy = safePost.by || {};
+
         // Elements
         const postCard = NS.createEl("div", postsContainer, { className: "card" });
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-        NS.createEl("h2", postHeader, { className: "overflow" }).text(post.title);
+        NS.createEl("h2", postHeader, { className: "overflow" }).text(safePost.title || "No title found");
         const postIconsGroup = NS.createEl("div", postHeader, { className: "center" });
 
         // Icons
         // Bookmark
-        NS.createEl("i", postIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" }).on("click", (async function () {
-            const bookmarkResponse = await sendRequest({
-                url: `/api/v1/bookmark/post/${post._id}`,
-                method: "POST"
-            });
+        NS.createEl("i", postIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })
+            .on("click", (async function () {
+                const bookmarkResponse = await sendRequest({
+                    url: `/api/v1/bookmark/post/${safePost._id}`,
+                    method: "POST"
+                });
 
-            if (!bookmarkResponse.success) return Swal.fire(bookmarkResponse.error);
-            Swal.fire("Success", "Post bookmarked!", "success");
-        }));
+                if (!bookmarkResponse.success) return Swal.fire(bookmarkResponse.error);
+                Swal.fire("Success", "Post bookmarked!", "success");
+            }));
 
         // Copy link
-        NS.createEl("i", postIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" }).on("click", async function () {
-            NS.copy({
-                text: generatePostLink(post._id),
-                onSuccess: () => { Swal.fire("Success", "Copied!", "success") },
+        NS.createEl("i", postIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })
+            .on("click", async function () {
+                NS.copy({
+                    text: generatePostLink(safePost._id || ""),
+                    onSuccess: () => { Swal.fire("Success", "Copied!", "success") },
 
-                onFailure: () => { Swal.fire("Error", "Failed to copy. Try again later", "error") }
+                    onFailure: () => { Swal.fire("Error", "Failed to copy. Try again later", "error") }
+                });
             });
-        });
 
         // Content
-        NS.createEl("div", postCard, {}).html(cleanHTML(post.content) || "No content found");;
+        NS.createEl("div", postCard, {}).html(cleanHTML(safePost.content) || "No content found");;
 
         // Author
         NS.createEl("p", postCard, {
             style: "color: red; cursor: pointer",
             role: "button", tabIndex: "0"
         })
-            .html(`Created by: ${post.by.emoji || "🚀"} <span class='author-name'>${capitalizeFirstLetter(post.by.username)}</span>`)
+            .html(`Created by: ${safeBy.emoji || "🚀"} <span class='author-name'>${capitalizeFirstLetter(safeBy.username || "User")}</span>`)
             .on("click", async function () {
                 const authorProfileData = await sendRequest({
-                    url: `/api/v1/get/user-profile/${post.by._id}/?skip=0`
+                    url: `/api/v1/get/user-profile/${safeBy._id}/?skip=0`
                 });
 
                 if (!authorProfileData.success) return Swal.fire(authorProfileData.error);
@@ -69,11 +74,12 @@ export async function renderPosts(posts = []) {
         const renderReplies = async (id) => {
             // Get replies
             const data = await sendRequest({
-                url: `/api/v1/get/post/${post._id}/replies/${id}`
+                url: `/api/v1/get/post/${safePost._id}/replies/${id}`
             });
 
             if (!data.success) return Swal.fire(data.error);
-            if (data.replies.length <= 0) return Swal.fire("No replies yet!");
+            const replies = Array.isArray(data.replies) ? data.replies : [];
+            if (replies.length <= 0) return Swal.fire("No replies yet!");
 
             // Show replies
             Swal.fire({
@@ -82,13 +88,15 @@ export async function renderPosts(posts = []) {
                 confirmButtonText: "Close"
             });
 
-            data.replies.forEach(reply => {
+            replies.forEach(reply => {
+                const safeReply = reply || {};
+                const safeReplyBy = safeReply.by || {};
                 const replyItem = NS.createEl("div", NS("#replies-container"), { className: "comment-item space-between" });
                 replyItem.html(`
 <div class="center" style="gap: 5px">
   <div class="comment-item-author">
     <i class="fas fa-medal" title="Author"></i>
-    ${capitalizeFirstLetter(reply.by.username)}:
+    ${capitalizeFirstLetter(safeReplyBy.username || "User")}:
   </div>
   <div class="reply-item-content"></div>
 </div>
@@ -99,14 +107,13 @@ export async function renderPosts(posts = []) {
 </div>
                     `).on("click", function (e) {
                     e.preventDefault();
-                    if (reply.by.username !== window?.quickInfo?.username) return;
+                    if (safeReplyBy.username !== window?.quickInfo?.username) return;
 
-                    inputComment({
-                        title: "Update reply:",
-                        value: replyItem.get(".reply-item-content").text(),
-                        onSubmit: async (content) => {
+                    inputComment("Update reply:",
+                        replyItem.get(".reply-item-content").text(),
+                        async (content) => {
                             const updateReplyResponse = await sendRequest({
-                                url: `/api/v1/edit/post/comment/${reply._id}`,
+                                url: `/api/v1/edit/post/${safePost._id}/comment/${safeReply._id}`,
                                 method: "PUT",
                                 body: { newComment: content }
                             });
@@ -114,19 +121,20 @@ export async function renderPosts(posts = []) {
                             if (!updateReplyResponse.success) return Swal.fire(updateReplyResponse.error);
                             Swal.fire("Success", "Reply updated!", "success");
                             replyItem.get(".reply-item-content").text(content || "No content found");
-                        }
-                    });
+                        });
                 })
 
-                replyItem.get(".reply-item-content").text(reply.content);
-                replyItem.get(".reply-btn").on("click", function (e) {
-                    e.stopPropagation();
-                    replyComment(post._id, reply._id);
-                });
-                replyItem.get(".view-reply-btn").on("click", async function (e) {
-                    e.stopPropagation();
-                    renderReplies(reply._id);
-                });
+                replyItem.get(".reply-item-content").text(safeReply.content || "No content found");
+                replyItem.get(".reply-btn")
+                    .on("click", function (e) {
+                        e.stopPropagation();
+                        replyComment(safePost._id, safeReply._id);
+                    });
+                replyItem.get(".view-reply-btn")
+                    .on("click", async function (e) {
+                        e.stopPropagation();
+                        renderReplies(safeReply._id);
+                    });
             });
         }
 
@@ -138,22 +146,25 @@ export async function renderPosts(posts = []) {
         const renderComments = async () => {
             // Get comments
             const data = await sendRequest({
-                url: `/api/v1/get/post/comments/${post._id}/?skip=${commentsSkip}`,
+                url: `/api/v1/get/post/comments/${safePost._id}/?skip=${commentsSkip}`,
             });
 
             if (!data.success) return Swal.fire(data.error);
-            if (data.comments.length <= 0) return Swal.fire("No comments yet!");
+            const comments = Array.isArray(data.comments) ? data.comments : [];
+            if (comments.length <= 0) return Swal.fire("No comments yet!");
 
             // Show comments
             commentsList.html("");
 
-            data.comments.forEach(comment => {
+            comments.forEach(comment => {
+                const safeComment = comment || {};
+                const safeCommentBy = safeComment.by || {};
                 const commentItem = NS.createEl("div", commentsList, { className: "comment-item space-between" });
                 commentItem.html(`
 <div class="center" style="gap: 5px">
   <div class="comment-item-author">
-    ${comment.by.username === post.by.username ? '<i class="fas fa-medal" title="Author"></i>' : comment.by.emoji}
-    ${capitalizeFirstLetter(comment.by.username)}:
+    ${safeCommentBy.emoji || "🚀"}
+    ${capitalizeFirstLetter(safeCommentBy.username || "User")}:
   </div>
   <div class="comment-item-content"></div>
 </div>
@@ -163,14 +174,13 @@ export async function renderPosts(posts = []) {
   <i class="fas fa-eye icon-post view-reply-btn" role="button" tabindex="0" aria-label="View reply"></i>
 </div>
                     `).on("click", function () {
-                    if (comment.by.username !== window?.quickInfo?.username) return;
+                    if (safeCommentBy.username !== window?.quickInfo?.username) return;
 
-                    inputComment({
-                        title: "Update comment:",
-                        value: commentItem.get(".comment-item-content").text(),
-                        onSubmit: async (content) => {
+                    inputComment("Update comment:",
+                        commentItem.get(".comment-item-content").text(),
+                        async (content) => {
                             const updateCommentResponse = await sendRequest({
-                                url: `/api/v1/edit/post/comment/${comment._id}`,
+                                url: `/api/v1/edit/post/${safePost._id}/comment/${safeComment._id}`,
                                 method: "PUT",
                                 body: { newComment: content }
                             });
@@ -178,18 +188,17 @@ export async function renderPosts(posts = []) {
                             if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
                             Swal.fire("Success", "Comment updated!", "success");
                             commentItem.get(".comment-item-content").text(content || "No content found");
-                        }
-                    });
+                        });
                 });
 
-                commentItem.get(".comment-item-content").text(comment.content || "No content found");
+                commentItem.get(".comment-item-content").text(safeComment.content || "No content found");
                 commentItem.get(".reply-btn").on("click", function (e) {
                     e.stopPropagation();
-                    replyComment(post._id, comment._id);
+                    replyComment(safePost._id || "", safeComment._id || "");
                 });
                 commentItem.get(".view-reply-btn").on("click", async function (e) {
                     e.stopPropagation();
-                    renderReplies(comment._id);
+                    renderReplies(safeComment._id || "");
                 });
             });
         }
@@ -199,8 +208,8 @@ export async function renderPosts(posts = []) {
 
         // Prev
         NS.createEl("button", commentsNavGroup, { className: "comments-prev" })
-            ?.html("<i class='fa-solid fa-chevron-left'></i>")
-            ?.on("click", async function () {
+            .html("<i class='fa-solid fa-chevron-left'></i>")
+            .on("click", async function () {
                 if (commentsSkip <= 0) return;
                 commentsSkip -= 10;
                 renderComments();
@@ -223,53 +232,54 @@ export async function renderPosts(posts = []) {
         const optionsDiv = NS.createEl("div", postCard, { className: "options" });
 
         // Like
-        const likesBtn = NS.createEl("button", optionsDiv, {}).html(`<i class="fa-solid fa-thumbs-up"></i> <span class="likes-count">${post.likes.toLocaleString()}</span>`);;
+        const likes = Number(safePost.likes ?? 0);
+        const likesBtn = NS.createEl("button", optionsDiv, {}).html(`<i class="fa-solid fa-thumbs-up"></i> <span class="likes-count">${likes.toLocaleString()}</span>`);
         likesBtn.on("click", lockEvent(async function () {
             const likesResponse = await sendRequest({
-                url: `/api/v1/react/like/post/${post._id}`,
+                url: `/api/v1/react/like/post/${safePost._id || ""}`,
                 method: "POST"
             });
 
             if (likesResponse.error) return Swal.fire(likesResponse.error);
-            const newLikes = post.likes + 1;
+            const newLikes = likes + 1;
             likesBtn.get(".likes-count").text(newLikes.toLocaleString());
         }))
 
         // Report
+        const reports = Number(safePost.reports ?? 0);
         const reportBtn = NS.createEl("button", optionsDiv, {})
-            .html(`<i class="fa-solid fa-warning"></i> <span class="reports-count">${post.reports.toLocaleString()}</span>`);
+            .html(`<i class="fa-solid fa-warning"></i> <span class="reports-count">${reports.toLocaleString()}</span>`);
         reportBtn.on("click", lockEvent(async function () {
             const reportResponse = await sendRequest({
-                url: `/api/v1/react/report/post/${post._id}`,
+                url: `/api/v1/react/report/post/${safePost._id || ""}`,
                 method: "POST"
             });
 
             if (!reportResponse.success) return Swal.fire(reportResponse.error);
-            const newReports = post.reports + 1;
+            const newReports = reports + 1;
             reportBtn.get(".reports-count").text(newReports.toLocaleString());
         }));
 
         // Comment
+        const commentsCount = Number(safePost.comments ?? 0);
         const commentBtn = NS.createEl("button", optionsDiv, {})
-            .html(`<i class="fa-solid fa-comment"></i> <span class="comments-count">${post.comments.toLocaleString()}</span>`);
+            .html(`<i class="fa-solid fa-comment"></i> <span class="comments-count">${commentsCount.toLocaleString()}</span>`);
         commentBtn.on("click", function () {
-            inputComment({
-                title: "Add a comment:",
-                onSubmit: async (content) => {
+            inputComment("Add a comment:", "",
+                async (content) => {
                     const commentResponse = await sendRequest({
-                        url: `/api/v1/comment/post/${post._id}`,
+                        url: `/api/v1/comment/post/${safePost._id || ""}`,
                         method: "POST",
                         body: { comment: content }
                     });
 
                     if (!commentResponse.success) return Swal.fire(commentResponse.error);
-                    const comments = commentBtn.get(".comments-count");
-                    const newComments = parseInt(comments.text()) + 1;
-                    comments.text(newComments.toLocaleString());
+                    const commentsCounter = commentBtn.get(".comments-count");
+                    const newComments = parseInt(commentsCounter.text()) + 1;
+                    commentsCounter.text(newComments.toLocaleString());
                     Swal.fire("Success", "Your comment has been added!", "success");
                     renderComments();
-                }
-            });
+                });
         });
     });
 
@@ -286,7 +296,7 @@ export async function getPosts() {
     });
 
     if (!data.success) return Swal.fire(data.error);
-    renderPosts(Array.isArray(data.posts) ? data.posts : [data.posts]);
+    renderPosts(Array.isArray(data.posts) ? data.posts : (data.posts ? [data.posts] : []));
 }
 
 getPosts();
