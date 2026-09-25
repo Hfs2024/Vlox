@@ -13,7 +13,7 @@ router.post("/api/v1/get/bookmarks", checkAuth, [
         by: req.session.userId
     })
         .sort({ createdAt: -1, _id: -1 })
-        .skip(parseInt(skip))
+        .skip(skip)
         .limit(10)
         .lean();
 

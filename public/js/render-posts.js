@@ -63,7 +63,7 @@ export async function renderPosts(posts = []) {
             .html(`Created by: ${safeBy.emoji || "🚀"} <span class='author-name'>${capitalizeFirstLetter(safeBy.username || "User")}</span>`)
             .on("click", async function () {
                 const authorProfileData = await sendRequest({
-                    url: `/api/v1/get/user-profile/${safeBy._id}/?skip=0`
+                    url: `/api/v1/get/user-profile/${safeBy._id}`
                 });
 
                 if (!authorProfileData.success) return Swal.fire(authorProfileData.error);

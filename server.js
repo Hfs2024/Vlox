@@ -98,7 +98,7 @@ app.get("/api/v1/get/posts", [
     const posts = await schemas.Posts.find({
         private: false
     }).sort({ createdAt: -1, _id: -1 })
-        .skip(parseInt(skip))
+        .skip(skip)
         .limit(50)
         .populate("by", "-password -recoveryCodes -email")
         .lean();
@@ -135,7 +135,7 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
     // Find comments
     const comments = await schemas.Comments.find({ for: id, parentCommentId: null })
         .sort({ createdAt: -1, _id: -1 })
-        .skip(parseInt(skip))
+        .skip(skip)
         .limit(10)
         .select("for content by")
         .populate("by", "-password -recoveryCodes -email")

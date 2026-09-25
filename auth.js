@@ -129,10 +129,8 @@ router.get("/api/v1/get/user-quick-info", checkAuth, async (req, res) => {
 
 // Profiles
 router.get("/api/v1/get/user-profile/:id", checkAuth, [
-    query("skip").exists().isInt({ min: 0 }),
     param("id").exists().isMongoId()
 ], validateResult, async function (req, res) {
-    const skip = parseInt(req.cleanData.skip);
     const id = req.cleanData.id;
 
     // User
