@@ -53,7 +53,7 @@ export async function renderPosts(posts = []) {
             });
 
         // Content
-        NS.createEl("div", postCard, {}).html(cleanHTML(safePost.content) || "No content found");;
+        NS.createEl("div", postCard, {}).html(cleanHTML(safePost.content) || "No content found");
 
         // Author
         NS.createEl("p", postCard, {

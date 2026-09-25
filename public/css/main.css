@@ -6,12 +6,12 @@
     --accent-main-gray: #aaa;
     --accent-secondary-gray: #555;
     --accent-white: #f0f8ff;
-    --card-background: #f0f0f0;
-    --bg-main: white;
+    --accent-secondary-white: #f4f2f2;
+    --border-card: rgba(0, 0, 0, 0.12);
 }
 
 body {
-    background-color: var(--bg-main);
+    background-color: white;
     margin: 0;
     padding: 0;
     font-family: "Roboto Slab", serif;
@@ -52,7 +52,7 @@ footer {
 .left,
 .right {
     margin: 20px;
-    background-color: var(--accent-white);
+    background-color: var(--accent-secondary-white);
     border-radius: 20px;
     padding: 20px;
     height: 100vh;

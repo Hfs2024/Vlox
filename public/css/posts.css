@@ -1,7 +1,7 @@
 /* Basic */
 .card,
 .state-nothing-found {
-    background-color: var(--card-background);
+    background-color: white;
     border-radius: 10px;
     padding: 15px;
     text-align: left;
@@ -9,6 +9,7 @@
     transition: transform 0.3s ease;
     margin-bottom: 20px;
     word-break: break-all;
+    border: 1px solid var(border-card);
 }
 
 .state-nothing-found {
