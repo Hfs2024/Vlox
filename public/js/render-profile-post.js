@@ -1,5 +1,5 @@
 import NS from "../nanoscript.min.js";
-import { sendRequest, cleanHTML, generatePostLink, initLiveCounter, lockEvent } from "./helpers.js";
+import { sendRequest, cleanHTML, generatePostLink, initLiveCounter, lockEvent, capitalizeFirstLetter } from "./helpers.js";
 
 async function viewAnalytics(post = {}) {
     const safePost = post || {};
@@ -57,7 +57,7 @@ export async function renderProfilePost({
     const safeKeywords = Array.isArray(safePost.keywords) ? safePost.keywords : [];
     const postCard = NS.createEl("div", NS(container), { className: "card" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-    NS.createEl("h2", postHeader, { className: "overflow" }).text(safePost.title || "Untitled post");
+    NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(safePost.title) || "Untitled post");
 
     // Copy
     NS.createEl("i", postHeader, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })

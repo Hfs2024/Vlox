@@ -49,8 +49,8 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                     const buttonGroup = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
 
                     // Header buttons
-                    const title = capitalizeFirstLetter(safeBookmark.title || "No title");
-                    NS.createEl("h2", bookmarkHeader, { className: "overflow" }).text(title || "No title");
+                    const title = capitalizeFirstLetter(safeBookmark.title) || "No title";
+                    NS.createEl("h2", bookmarkHeader, { className: "overflow" }).text(title) || "No title";
                     NS.createEl("i", bookmarkHeader, { className: "fas fa-eye icon-helper", role: "button", tabIndex: "0" }).on("click", lockEvent(async function () {
                         const postData = await sendRequest({
                             url: `/api/v1/get/post/${safeBookmark.for}`
