@@ -44,9 +44,10 @@ export function capitalizeFirstLetter(string) {
 }
 
 // Clean HTML
-export function cleanHTML(html) {
+export function cleanHTML(html, parseMarkdown = true) {
     const safeHTML = typeof html === "string" ? html : "";
-    return DOMPurify.sanitize(marked.parse(safeHTML), {
+    const code = parseMarkdown ? marked.parse(safeHTML) : safeHTML; 
+    return DOMPurify.sanitize(code, {
         ALLOWED_TAGS: [
             "pre", "code", "b", "i", "br", "span", "em", "strong", "u", "s", "sub", "sup", "small",
             "p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "ul", "ol", "li",
@@ -65,11 +66,11 @@ export function generatePostLink(postId) {
 // Live coutner
 export function initLiveCounter(inputElement, countElement, max) {
     const inputEl = NS(inputElement);
-    max = Number.isInteger(max) ? max : 2000;
+    const safeMax = Number.isInteger(max) ? max : 2000;
     inputEl.on("input", function () {
-        const length = (NS(inputElement).value() || "").length;
+        const length = (inputEl.value() || "").length;
         NS(countElement).text(length);
-    }).attr("maxLength", max);
+    }).attr("maxLength", safeMax);
 }
 
 // Lock on click

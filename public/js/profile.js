@@ -14,16 +14,16 @@ export async function showProfile(data) {
     const emojis = ["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"];
 
     Swal.fire({
-        titleText: `${isUserProfile ? `Ciao, ${emoji} ${username}!` : `${emoji} ${username}'s profile`}`,
+        titleText: `Hello, ${emoji} ${username}!`,
         html: `
 <div class="card">
   <div class="space-between">
-    <p class="center-overflow"><b>Bio:</b> ${user.bio ? cleanHTML(user.bio) : "No bio found"}</p>
-    ${isUserProfile ? '<i class="fas fa-pen-to-square icon-helper" id="user-profile-bio-edit" role="button" tabindex="0"></i>' : ""}
+    <p class="center-overflow"><b>Bio:</b> ${cleanHTML(user.bio, false) || "No bio found"}</p>
+    ${isUserProfile ? '<i class="fas fa-pen-to-square icon-helper" id="user-profile-bio-edit-btn" role="button" tabindex="0"></i>' : ""}
   </div>
   <div class="space-between">  
     <p class="center-overflow"><b>Visibility:</b> ${user.private ? "Private" : "Public"}</p>
-    ${isUserProfile ? `<i class="fas fa-${user.private ? "eye" : "eye-slash"} icon-helper" id="user-profile-visibility-toggle" role="button" tabindex="0"></i>` : ""}
+    ${isUserProfile ? `<i class="fas fa-${user.private ? "eye" : "eye-slash"} icon-helper" id="user-profile-visibility-toggle-btn" role="button" tabindex="0"></i>` : ""}
   </div>
   ${isUserProfile ? `
   <div class="center-overflow emoji-container"></div>
@@ -99,7 +99,7 @@ export async function showProfile(data) {
             }));
 
             // Update bio and profile visibility
-            NS("#user-profile-bio-edit").on("click", async function () {
+            NS("#user-profile-bio-edit-btn").on("click", async function () {
                 const result = await Swal.fire({
                     title: "Enter new bio: ",
                     input: "text",
@@ -125,7 +125,7 @@ export async function showProfile(data) {
                 }
             });
 
-            NS("#user-profile-visibility-toggle").on("click", lockEvent(async function () {
+            NS("#user-profile-visibility-toggle-btn").on("click", lockEvent(async function () {
                 const updatevisibilityResponse = await sendRequest({
                     url: "/api/v1/change-visibility/user-profile",
                     method: "PUT",
