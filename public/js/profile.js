@@ -7,7 +7,7 @@ export async function showProfile(data) {
     let skip = 0;
     const safeData = data || {};
     const user = safeData.user || {};
-    const id = user._id || "";
+    const id = user._id;
     const username = capitalizeFirstLetter(user.username) || "User";
     const emoji = user.emoji || "🚀";
     const isUserProfile = window?.quickInfo?.username === user.username;

@@ -18,9 +18,9 @@ async function showResetPasswordModal() {
         showCancelButton: true,
         confirmButtonText: "Submit",
         preConfirm: () => {
-            const username = Swal.getPopup().querySelector('#username').value;
-            const newPassword = Swal.getPopup().querySelector('#password').value;
-            const recoveryCode = Swal.getPopup().querySelector('#recovery-code').value;
+            const username = NS("#username").value();
+            const newPassword = NS("#password").value();
+            const recoveryCode = NS("#recovery-code").value();
 
             if (!username || !newPassword || !recoveryCode) return Swal.showValidationMessage("You must enter a username, password and one of your recovery code!");
             if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
@@ -68,8 +68,8 @@ async function showLoginModal() {
             NS(".link-swal-toggle").on("click", showSignUpModal);
         },
         preConfirm: () => {
-            const username = Swal.getPopup().querySelector('#username').value;
-            const password = Swal.getPopup().querySelector('#password').value;
+            const username = NS("#username").value();
+            const password = NS("#password").value();
 
             if (!username || !password) return Swal.showValidationMessage("You must enter a username and a password!");
             if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
@@ -120,10 +120,10 @@ async function showSignUpModal() {
         },
 
         preConfirm: () => {
-            const username = Swal.getPopup().querySelector('#username').value;
-            const password = Swal.getPopup().querySelector('#password').value;
-            const email = Swal.getPopup().querySelector('#email')?.value;
-            const bio = Swal.getPopup().querySelector("#bio")?.value;
+            const username = NS("#username").value();
+            const password = NS("#password").value();
+            const email = NS("#email").value();
+            const bio = NS("#bio").value();
 
             if (!username || !password || !email || !bio) return Swal.showValidationMessage("You must enter a username, password, email and bio!");
             if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");

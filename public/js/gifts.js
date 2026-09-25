@@ -19,9 +19,9 @@ NS("#view-active-gifts").on("click", lockEvent(async function () {
             gifts.forEach(gift => {
                 const safeGift = gift || {};
                 const giftCard = NS.createEl("div", NS("#active-links-container"), { className: "card" });
-                NS.createEl("h2", giftCard, { className: "overflow" }).text(safeGift.name || "Gift");
-                NS.createEl("p", giftCard, {}).html(`<b>Max Uses:</b> ${Number(safeGift.usesCount ?? 0)} times`);
-                NS.createEl("p", giftCard, {}).html(`<b>Used:</b> ${Number(safeGift.usedCount ?? 0)} times`);
+                NS.createEl("h2", giftCard, { className: "overflow" }).text(safeGift.name)  || "Gift";
+                NS.createEl("p", giftCard, {}).html(`<b>Max Uses:</b> ${Number(safeGift.usesCount) || 0} times`);
+                NS.createEl("p", giftCard, {}).html(`<b>Used:</b> ${Number(safeGift.usedCount) || 0} times`);
                 NS.createEl("button", giftCard, { className: "w-full" }).text("Redeem").on("click", lockEvent(async function () {
                     const redeemData = await sendRequest({
                         url: `/api/v1/redeem/gift-link/${safeGift._id}`,
