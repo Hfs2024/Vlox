@@ -99,7 +99,7 @@ router.post("/api/v1/redeem/post/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const session = await mongoose.startSession();
-    const remaining = Math.max(0, 4000 - req.currentUser.maxPostLength);
+    const remaining = Math.max(0, 4000 - req.currentUser.maxPostsLength);
     const inc = Math.min(100, remaining);
     if (inc <= 0) return res.status(400).json({ error: "Post redeem failed!" });
     const id = req.cleanData.id;
@@ -119,10 +119,10 @@ router.post("/api/v1/redeem/post/:id", checkAuth, [
 
         const userResult = await schemas.Users.updateOne({
             _id: req.session.userId,
-            maxPostLength: { $lt: 4000 }
+            maxPostsLength: { $lt: 4000 }
         }, {
             $inc: {
-                maxPostLength: inc
+                maxPostsLength: inc
             }
         }, { session });
 
@@ -196,7 +196,7 @@ router.put("/api/v1/edit/post/:postId/comment/:commentId", checkAuth, [
 router.put("/api/v1/edit/post/:id", checkAuth, [
     body("newTitle").exists().notEmpty().isString().isLength({ max: 20 }).trim(),
     body("newContent").exists().notEmpty().isString().trim().custom((value, { req }) => {
-        if (value?.length > req.currentUser.maxPostLength) return false;
+        if (value?.length > req.currentUser.maxPostsLength) return false;
         return true;
     }),
     body("newKeywords").exists().isArray({ max: 5 }).customSanitizer(value => value?.filter(Boolean)?.map(kw => kw.toLowerCase().trim())),
