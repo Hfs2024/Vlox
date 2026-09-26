@@ -26,11 +26,7 @@ router.post("/api/v1/bookmark/post/:id", checkAuth, [
     const id = req.cleanData.id;
 
     // Find post
-    const post = await schemas.Posts.findOne({
-        _id: id,
-        private: false
-    });
-
+    const post = await schemas.Posts.exists({ _id: id, private: false });
     if (!post) return res.status(400).json({ error: "Post not found!" });
 
     // Insert bookmark

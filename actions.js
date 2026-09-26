@@ -63,7 +63,7 @@ router.post("/api/v1/reply/comment/:parentCommentId/post/:postId", checkAuth, [
     const session = await mongoose.startSession();
     await session.withTransaction(async () => {
         // Find post
-        const post = await schemas.Posts.findOne(hotQueries.view_post(postId, req.session.userId));
+        const post = await schemas.Posts.exists(hotQueries.view_post(postId, req.session.userId));
         if (!post) throw new Error("POST_NOT_FOUND");
 
         // Add reply
