@@ -85,6 +85,7 @@ app.get("/api/v1/get/post/:id", [
     const post = await schemas.Posts.findOne({
         ...hotQueries.view_post(id, req.session.userId)
     })
+        .select("-reports")
         .populate("by", "-password -recoveryCodes -email")
         .lean();
     if (!post) return res.status(400).json({ error: "Post not found!" });
@@ -101,6 +102,7 @@ app.get("/api/v1/get/posts", [
     }).sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(50)
+        .select("-reports")
         .populate("by", "-password -recoveryCodes -email")
         .lean();
 

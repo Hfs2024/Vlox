@@ -4,7 +4,6 @@ import { sendRequest, cleanHTML, generatePostLink, initLiveCounter, lockEvent, c
 async function viewAnalytics(post = {}) {
     const safePost = post || {};
     const likes = Number(safePost.likes ?? 0);
-    const reports = Number(safePost.reports ?? 0);
     const comments = Number(safePost.comments ?? 0);
     const likesPercent = likes === 0 ? 0 : Math.min(100, Math.max(20, Math.floor(likes / 20) * 20));
     const barFilled = likesPercent === 100;
@@ -21,7 +20,6 @@ async function viewAnalytics(post = {}) {
 
             // Quick analytics
             NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" }).text(`Likes: ${likes.toLocaleString()}`);
-            NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" }).text(`Reports: ${reports.toLocaleString()}`);
             NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" }).text(`Comments: ${comments.toLocaleString()}`);
             NS.createEl("p", postCard, { style: "text-align: center" })
                 .html(
