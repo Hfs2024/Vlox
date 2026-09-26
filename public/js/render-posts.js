@@ -243,21 +243,6 @@ export async function renderPosts(posts = []) {
             if (likesResponse.error) return Swal.fire(likesResponse.error);
             const newLikes = likes + 1;
             likesBtn.get(".likes-count").text(newLikes.toLocaleString());
-        }))
-
-        // Report
-        const reports = Number(safePost.reports ?? 0);
-        const reportBtn = NS.createEl("button", optionsDiv, {})
-            .html(`<i class="fa-solid fa-warning"></i> <span class="reports-count">${reports.toLocaleString()}</span>`);
-        reportBtn.on("click", lockEvent(async function () {
-            const reportResponse = await sendRequest({
-                url: `/api/v1/react/report/post/${safePost._id || ""}`,
-                method: "POST"
-            });
-
-            if (!reportResponse.success) return Swal.fire(reportResponse.error);
-            const newReports = reports + 1;
-            reportBtn.get(".reports-count").text(newReports.toLocaleString());
         }));
 
         // Comment
@@ -281,6 +266,19 @@ export async function renderPosts(posts = []) {
                     renderComments();
                 });
         });
+
+        // Report
+        NS.createEl("button", optionsDiv, {})
+            .html("<i class='fa-solid fa-warning'></i>")
+            .on("click", lockEvent(async function () {
+                const reportResponse = await sendRequest({
+                    url: `/api/v1/react/report/post/${safePost._id || ""}`,
+                    method: "POST"
+                });
+
+                if (!reportResponse.success) return Swal.fire(reportResponse.error);
+                Swal.fire("Success", "Post reported", "success");
+            }));
     });
 
     // Accessibility
