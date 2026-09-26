@@ -132,7 +132,7 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
     const { skip, id } = req.cleanData;
 
     // Check permissions to see post 
-    const post = await schemas.Posts.findOne(hotQueries.view_post(id, req.session.userId));
+    const post = await schemas.Posts.exists(hotQueries.view_post(id, req.session.userId));
     if (!post) return res.status(400).json({ error: "Post not found!" });
 
     // Find comments
@@ -306,7 +306,7 @@ app.use((err, req, res, next) => {
         GIFT_REDEEM_FAILED: "Gift redeem failed!"
     }
 
-    if (err.code === 11000) return res.status(400).json({ error: "A record with this value already exists" });
+    if (err.code === 11000) return res.status(400).json({ error: "You've already done this action!" });
     if (errors[err.message]) return res.status(400).json({ error: errors[err.message] });
 
     console.error("Error:", err.stack);

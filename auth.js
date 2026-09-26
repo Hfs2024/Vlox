@@ -31,8 +31,12 @@ router.post("/api/v1/login", authRateLimiter, [
     body("password").exists().notEmpty().isString().isLength({ max: 64 }).trim()
 ], validateResult, async (req, res) => {
     const { username, password } = req.cleanData;
-    const user = await schemas.Users.findOne({ username: username });
+
+    // Username match
+    const user = await schemas.Users.findOne({ username: username }).select("password");
     if (!user) return res.status(400).json({ error: "Invalid username or password" });
+
+    // Password match
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: "Invalid username or password" });
 

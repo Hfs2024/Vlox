@@ -236,7 +236,7 @@ export async function renderPosts(posts = []) {
         const likesBtn = NS.createEl("button", optionsDiv, {}).html(`<i class="fa-solid fa-thumbs-up"></i> <span class="likes-count">${likes.toLocaleString()}</span>`);
         likesBtn.on("click", lockEvent(async function () {
             const likesResponse = await sendRequest({
-                url: `/api/v1/react/like/post/${safePost._id || ""}`,
+                url: `/api/v1/react/like/post/${safePost._id}`,
                 method: "POST"
             });
 
@@ -253,7 +253,7 @@ export async function renderPosts(posts = []) {
             inputComment("Add a comment:", "",
                 async (content) => {
                     const commentResponse = await sendRequest({
-                        url: `/api/v1/comment/post/${safePost._id || ""}`,
+                        url: `/api/v1/comment/post/${safePost._id}`,
                         method: "POST",
                         body: { comment: content }
                     });
@@ -272,7 +272,7 @@ export async function renderPosts(posts = []) {
             .html("<i class='fa-solid fa-warning'></i>")
             .on("click", lockEvent(async function () {
                 const reportResponse = await sendRequest({
-                    url: `/api/v1/react/report/post/${safePost._id || ""}`,
+                    url: `/api/v1/react/report/post/${safePost._id}`,
                     method: "POST"
                 });
 
