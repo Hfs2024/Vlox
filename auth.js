@@ -122,7 +122,7 @@ router.get("/api/v1/get/user-quick-info", checkAuth, async (req, res) => {
     return res.status(200).json({
         success: true,
         username: req.currentUser.username,
-        maxPostLength: req.currentUser.maxPostLength,
+        maxPostsLength: req.currentUser.maxPostsLength,
         _id: req.currentUser._id
     });
 });

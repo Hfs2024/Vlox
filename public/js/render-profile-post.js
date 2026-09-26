@@ -122,20 +122,20 @@ export async function renderProfilePost({
                     NS("#edit-post-title").value(safePost.title || "");
                     NS("#edit-post-content").value(safePost.content || "");
                     NS("#edit-post-keywords").value(safeKeywords.join(", "));
-                    const maxPostLength = window?.quickInfo?.maxPostLength || 2000;
+                    const maxPostsLength = window?.quickInfo?.maxPostsLength || 2000;
                     NS("#edit-post-content-count").text(`${(NS("#edit-post-content").value()).length}`);
 
                     // Live counter
-                    initLiveCounter("#edit-post-content", "#edit-post-content-count", maxPostLength);
+                    initLiveCounter("#edit-post-content", "#edit-post-content-count", maxPostsLength);
                 },
                 preConfirm: () => {
                     const title = Swal.getPopup().querySelector("#edit-post-title").value;
                     const content = Swal.getPopup().querySelector("#edit-post-content").value;
                     const keywords = Swal.getPopup().querySelector("#edit-post-keywords").value.split(",").filter(Boolean).map(kw => kw.toLowerCase().trim());
-                    const maxPostLength = window?.quickInfo?.maxPostLength || 2000;
+                    const maxPostsLength = window?.quickInfo?.maxPostsLength || 2000;
                     if (!title || !content) return Swal.showValidationMessage("Don't forget the title and content!");
                     if (title.length > 20) return Swal.showValidationMessage("Title must be less than 20 chars!");
-                    if (content.length > maxPostLength) return Swal.showValidationMessage(`Content must be less than ${maxPostLength} chars!`);
+                    if (content.length > maxPostsLength) return Swal.showValidationMessage(`Content must be less than ${maxPostsLength} chars!`);
                     if (keywords.length > 5) return Swal.showValidationMessage("Keywords count should be less than 5!");
 
                     return { title, content, keywords };

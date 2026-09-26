@@ -31,8 +31,8 @@ export async function getQuickInfo() {
 
     // Attach data
     window.quickInfo = quickInfo || {};
-    const maxPostLength = window?.quickInfo?.maxPostLength;
-    initLiveCounter("#create-post-content", "#create-post-content-count", maxPostLength);
+    const maxPostsLength = window?.quickInfo?.maxPostsLength;
+    initLiveCounter("#create-post-content", "#create-post-content-count", maxPostsLength);
     return quickInfo || {};
 }
 

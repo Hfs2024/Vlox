@@ -60,8 +60,8 @@ app.get("/", (req, res) => {
 app.post("/api/v1/posts", checkAuth, [
     body("title").notEmpty().isString().isLength({ max: 20 }).trim(),
     body("content").notEmpty().isString().custom((value, { req }) => {
-        const maxPostLength = req.currentUser.maxPostLength || 2000;
-        if (value.length > maxPostLength) return false;
+        const maxPostsLength = req.currentUser.maxPostsLength || 2000;
+        if (value.length > maxPostsLength) return false;
         return true;
     }).trim(),
     body("keywords").exists().isArray({ max: 5 }).customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim()))
@@ -227,7 +227,7 @@ app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const id = req.cleanData.id;
-    const remaining = Math.max(0, 4000 - req.currentUser.maxPostLength);
+    const remaining = Math.max(0, 4000 - req.currentUser.maxPostsLength);
     const inc = Math.min(100, remaining);
     if (inc <= 0) return res.status(400).json({ error: "Gift redeem failed!" });
 
@@ -270,10 +270,10 @@ app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
         // User
         const userResult = await schemas.Users.updateOne({
             _id: req.session.userId,
-            maxPostLength: { $lt: 4000 }
+            maxPostsLength: { $lt: 4000 }
         }, {
             $inc: {
-                maxPostLength: inc
+                maxPostsLength: inc
             }
         }, { session });
         if (userResult.matchedCount === 0) throw new Error("USER_UPDATE_FAILED");

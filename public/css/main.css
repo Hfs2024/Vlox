@@ -7,7 +7,6 @@
     --accent-secondary-gray: #555;
     --accent-white: #f0f8ff;
     --accent-secondary-white: #f4f2f2;
-    --border-card: rgba(0, 0, 0, 0.12);
 }
 
 body {
@@ -52,13 +51,14 @@ footer {
 .left,
 .right {
     margin: 20px;
-    background-color: var(--accent-secondary-white);
+    background-color: white;
     border-radius: 20px;
     padding: 20px;
     height: 100vh;
     text-align: center;
     box-sizing: border-box;
     overflow: auto;
+    border: 1px solid gray;
 }
 
 .right {

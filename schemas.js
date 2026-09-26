@@ -14,7 +14,7 @@ const usersSchema = new mongoose.Schema({
         required: true
     },
     recoveryCodes: { type: [String], default: [] },
-    maxPostLength: { type: Number, default: 2000 },
+    maxPostsLength: { type: Number, default: 2000 },
     private: { type: Boolean, default: false }
 }, { timestamps: true });
 
