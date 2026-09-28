@@ -31,8 +31,7 @@ export async function getQuickInfo() {
 
     // Attach data
     window.quickInfo = quickInfo || {};
-    const maxPostsLength = window?.quickInfo?.maxPostsLength;
-    initLiveCounter("#create-post-content", "#create-post-content-count", maxPostsLength);
+    initLiveCounter("#create-post-content", "#create-post-content-count", 1000);
     return quickInfo || {};
 }
 
@@ -66,7 +65,7 @@ export function generatePostLink(postId) {
 // Live coutner
 export function initLiveCounter(inputElement, countElement, max) {
     const inputEl = NS(inputElement);
-    const safeMax = Number.isInteger(max) ? max : 2000;
+    const safeMax = Number.isInteger(max) ? max : 1000;
     inputEl.on("input", function () {
         const length = (inputEl.value() || "").length;
         NS(countElement).text(length);

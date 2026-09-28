@@ -58,12 +58,8 @@ app.get("/", (req, res) => {
 
 // Posts
 app.post("/api/v1/posts", checkAuth, [
-    body("title").notEmpty().isString().isLength({ max: 20 }).trim(),
-    body("content").notEmpty().isString().custom((value, { req }) => {
-        const maxPostsLength = req.currentUser.maxPostsLength || 2000;
-        if (value.length > maxPostsLength) return false;
-        return true;
-    }).trim(),
+    body("title").notEmpty().isString().trim().isLength({ max: 20 }),
+    body("content").notEmpty().isString().trim().isLength({ max: 1000 }),
     body("keywords").exists().isArray({ max: 5 }).customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim()))
 ], validateResult, async (req, res) => {
     const { title, content, keywords } = req.cleanData;
@@ -177,15 +173,17 @@ app.post("/api/v1/reset/password", [
     body("recoveryCode").exists().notEmpty().isString().isLength({ min: 20, max: 20 }).trim()
 ], passwordRecoveryLimiter, validateResult, async (req, res) => {
     const { username, recoveryCode, newPassword } = req.cleanData;
-    const user = await schemas.Users.findOne({ username: username });
+    const user = await schemas.Users.findOne({ username: username })
+        .select("recoveryCodes")
+        .lean();
     if (!user) return res.status(400).json({ error: "Failed to find user!" });
-    let foundOne = false;
 
-    for (let code of user.recoveryCodes) {
+    // Find the recovery code
+    for (const code of user.recoveryCodes) {
         const isValid = await bcrypt.compare(recoveryCode, code);
         if (!isValid) continue;
 
-        // Update
+        // Update user
         const result = await schemas.Users.updateOne({
             username: username,
             recoveryCodes: code
@@ -202,12 +200,10 @@ app.post("/api/v1/reset/password", [
         if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update password!" });
 
         // Success
-        foundOne = true;
-        break;
+        return res.status(200).json({ success: true });
     }
 
-    if (!foundOne) return res.status(400).json({ error: "Invalid recovery code!" });
-    return res.status(200).json({ success: true });
+    return res.status(400).json({ error: "Invalid recovery code!" });
 });
 
 app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryLimiter, checkAuth, async (req, res) => {
@@ -229,9 +225,9 @@ app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const id = req.cleanData.id;
-    const remaining = Math.max(0, 4000 - req.currentUser.maxPostsLength);
+    const remaining = Math.max(0, 5000 - req.currentUser.coins);
     const inc = Math.min(100, remaining);
-    if (inc <= 0) return res.status(400).json({ error: "Gift redeem failed!" });
+    if (inc <= 0) return res.status(400).json({ error: "You already reached the max amount of coins!" });
 
     // Redeem the gift
     const session = await mongoose.startSession();
@@ -272,10 +268,10 @@ app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
         // User
         const userResult = await schemas.Users.updateOne({
             _id: req.session.userId,
-            maxPostsLength: { $lt: 4000 }
+            coins: { $lt: 5000 }
         }, {
             $inc: {
-                maxPostsLength: inc
+                coins: inc
             }
         }, { session });
         if (userResult.matchedCount === 0) throw new Error("USER_UPDATE_FAILED");
