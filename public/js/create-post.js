@@ -52,10 +52,9 @@ createPostBtn.on("click", lockEvent(async function () {
     const title = createPostTitle.value().trim();
     const content = createPostContent.value().trim();
     const keywords = createPostKeywords.value().trim().split(",").filter(Boolean).map(kw => kw.toLowerCase().trim());
-    const maxPostsLength = window?.quickInfo?.maxPostsLength || 2000;
 
     if (!title || !content) return Swal.fire("Title and content are required!");
-    if (title.length > 20 || content.length > maxPostsLength) return Swal.fire(`Title must be less than 20 chars and content should not exceed ${maxPostsLength} chars`);
+    if (title.length > 20 || content.length > 1000) return Swal.fire(`Title must be less than 20 chars and content should not exceed 1000 chars!`);
     if (keywords.length > 5) return Swal.fire("Keywords count should be less than 5!");
 
     // Create post

@@ -99,16 +99,16 @@ router.post("/api/v1/redeem/post/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const session = await mongoose.startSession();
-    const remaining = Math.max(0, 4000 - req.currentUser.maxPostsLength);
+    const remaining = Math.max(0, 5000 - req.currentUser.coins);
     const inc = Math.min(100, remaining);
-    if (inc <= 0) return res.status(400).json({ error: "Post redeem failed!" });
-    const id = req.cleanData.id;
+    if (inc <= 0) return res.status(400).json({ error: "You already reached the max amount of coins!" });
+    const postId = req.cleanData.id;
 
     await session.withTransaction(async () => {
         const postResult = await schemas.Posts.updateOne({
-            ...hotQueries.modify_post(id, req.session.userId),
+            ...hotQueries.modify_post(postId, req.session.userId),
             likes: { $gte: 100 },
-            redeemed: false,
+            redeemed: false
         }, {
             $set: {
                 redeemed: true
@@ -119,10 +119,10 @@ router.post("/api/v1/redeem/post/:id", checkAuth, [
 
         const userResult = await schemas.Users.updateOne({
             _id: req.session.userId,
-            maxPostsLength: { $lt: 4000 }
+            coins: { $lt: 5000 }
         }, {
             $inc: {
-                maxPostsLength: inc
+                coins: inc
             }
         }, { session });
 
@@ -194,12 +194,9 @@ router.put("/api/v1/edit/post/:postId/comment/:commentId", checkAuth, [
 });
 
 router.put("/api/v1/edit/post/:id", checkAuth, [
-    body("newTitle").exists().notEmpty().isString().isLength({ max: 20 }).trim(),
-    body("newContent").exists().notEmpty().isString().trim().custom((value, { req }) => {
-        if (value?.length > req.currentUser.maxPostsLength) return false;
-        return true;
-    }),
-    body("newKeywords").exists().isArray({ max: 5 }).customSanitizer(value => value?.filter(Boolean)?.map(kw => kw.toLowerCase().trim())),
+    body("newTitle").exists().notEmpty().isString().trim().isLength({ max: 20 }),
+    body("newContent").exists().notEmpty().isString().trim().isLength({ max: 1000 }),
+    body("newKeywords").exists().isArray({ max: 5 }).customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim())),
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const { newContent, newTitle, id, newKeywords } = req.cleanData;

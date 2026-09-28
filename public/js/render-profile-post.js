@@ -3,8 +3,13 @@ import { sendRequest, cleanHTML, generatePostLink, initLiveCounter, lockEvent, c
 
 async function viewAnalytics(post = {}) {
     const safePost = post || {};
-    const likes = Number(safePost.likes ?? 0);
-    const comments = Number(safePost.comments ?? 0);
+
+    // Clean field
+    const likes = Number(safePost.likes) || 0;
+    const comments = Number(safePost.comments) || 0;
+    const level = Number(safePost.level) || 1;
+
+    // Likes percent
     const likesPercent = likes === 0 ? 0 : Math.min(100, Math.max(20, Math.floor(likes / 20) * 20));
     const barFilled = likesPercent === 100;
 
@@ -15,12 +20,13 @@ async function viewAnalytics(post = {}) {
         didOpen: () => {
             const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "card" });
             NS.createEl("h2", postCard, { className: "overflow" }).text(safePost.title || "No title found");
-            NS.createEl("div", postCard, {}).html(cleanHTML(safePost.content || "") || "Not content found");
-            const panelAnalyticsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
+            NS.createEl("div", postCard, {}).html(cleanHTML(safePost.content) || "Not content found");
+            const analyticsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
 
             // Quick analytics
-            NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" }).text(`Likes: ${likes.toLocaleString()}`);
-            NS.createEl("button", panelAnalyticsGroup, { className: "analytics-item w-full" }).text(`Comments: ${comments.toLocaleString()}`);
+            NS.createEl("button", analyticsGroup, { className: "analytics-item w-full" }).text(`Likes: ${likes.toLocaleString()}`);
+            NS.createEl("button", analyticsGroup, { className: "analytics-item w-full" }).text(`Comments: ${comments.toLocaleString()}`);
+            NS.createEl("button", analyticsGroup, { className: "analytics-item w-full" }).text(`Level: ${level}`);
             NS.createEl("p", postCard, { style: "text-align: center" })
                 .html(
                     barFilled ?
@@ -33,8 +39,19 @@ async function viewAnalytics(post = {}) {
                 .html("<div class='analytics-likes-bar-fill'></div>");
             NS(".analytics-likes-bar-fill").css("width", `${likesPercent}%`);
 
-            if (!safePost.redeemed && barFilled) NS.createEl("button", postCard, { style: "width: 100%" })
-                .text("Click here for one time redeem")
+            /* Buttons */
+            const buttonsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
+
+            // Increase level
+            NS.createEl("button", buttonsGroup, { style: "width: 100%" })
+                .text("Increase level")
+                .on("click", async function () {
+                    Swal.fire("Info", "Still working on this feature!", "info");
+                });
+
+            // Redeem
+            if (!safePost.redeemed && barFilled) NS.createEl("button", buttonsGroup, { style: "width: 100%" })
+                .text("Redeem")
                 .on("click", lockEvent(async function () {
                     const redeemResponse = await sendRequest({
                         url: `/api/v1/redeem/post/${safePost._id}`,
@@ -42,14 +59,14 @@ async function viewAnalytics(post = {}) {
                     });
 
                     if (!redeemResponse.success) return Swal.fire(redeemResponse.error);
-                    Swal.fire("Success", `Redeemed successfully for ${redeemResponse.inc} extra post content chars. You must refresh the page for your new changes to apply.`, "success");
+                    Swal.fire("Success", `Redeemed successfully for ${redeemResponse.inc} coins! You'll be able to use this coins later.`, "success");
                 }));
         }
     });
 }
 
 export async function renderProfilePost({
-    post = {}, isUserProfile = false, container = ""
+    post = {}, isUserProfile = false, container
 } = {}) {
     const safePost = post || {};
     const safeKeywords = Array.isArray(safePost.keywords) ? safePost.keywords : [];
@@ -120,20 +137,18 @@ export async function renderProfilePost({
                     NS("#edit-post-title").value(safePost.title || "");
                     NS("#edit-post-content").value(safePost.content || "");
                     NS("#edit-post-keywords").value(safeKeywords.join(", "));
-                    const maxPostsLength = window?.quickInfo?.maxPostsLength || 2000;
                     NS("#edit-post-content-count").text(`${(NS("#edit-post-content").value()).length}`);
 
                     // Live counter
-                    initLiveCounter("#edit-post-content", "#edit-post-content-count", maxPostsLength);
+                    initLiveCounter("#edit-post-content", "#edit-post-content-count", 1000);
                 },
                 preConfirm: () => {
                     const title = Swal.getPopup().querySelector("#edit-post-title").value;
                     const content = Swal.getPopup().querySelector("#edit-post-content").value;
                     const keywords = Swal.getPopup().querySelector("#edit-post-keywords").value.split(",").filter(Boolean).map(kw => kw.toLowerCase().trim());
-                    const maxPostsLength = window?.quickInfo?.maxPostsLength || 2000;
                     if (!title || !content) return Swal.showValidationMessage("Don't forget the title and content!");
                     if (title.length > 20) return Swal.showValidationMessage("Title must be less than 20 chars!");
-                    if (content.length > maxPostsLength) return Swal.showValidationMessage(`Content must be less than ${maxPostsLength} chars!`);
+                    if (content.length > 1000) return Swal.showValidationMessage(`Content must be less than 1000 chars!`);
                     if (keywords.length > 5) return Swal.showValidationMessage("Keywords count should be less than 5!");
 
                     return { title, content, keywords };
@@ -160,7 +175,7 @@ export async function renderProfilePost({
         NS.createEl("button", secondaryButtonsGroup, {
             id: "view-mini-analytics-post-btn",
             className: "w-full"
-        }).text("View mini analytics").on("click", async function () {
+        }).text("View analytics").on("click", async function () {
             viewAnalytics(safePost);
         });
 
