@@ -5,7 +5,7 @@ export async function sendRequest({ body, ...config }) {
     const response = await axios({
         ...config,
         validateStatus: function (status) {
-            return (status >= 200 && status < 300) || status === 400;
+            return (status >= 200 && status < 300) || [400, 401].some(s => status === s);
         },
         data: body
     });
@@ -33,7 +33,7 @@ export async function getQuickInfo() {
         // Attach data
         window.quickInfo = quickInfo || {};
     } catch (e) {
-        if (e.status !== 401) Swal.fire("Error", "Something went wrong!", "error");
+        Swal.fire("Error", "Something went wrong!", "error");
     }
 }
 
