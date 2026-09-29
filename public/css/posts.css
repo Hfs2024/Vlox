@@ -1,7 +1,8 @@
 /* Basic */
 .card,
 .state-nothing-found {
-    background-color: #f0f0f0;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
     border-radius: 10px;
     padding: 15px;
     text-align: left;

@@ -6,11 +6,13 @@ const { validationResult, matchedData } = require("express-validator");
 
 // Check auth
 async function checkAuth(req, res, next) {
-    if (!req.session.isLoggedIn || !req.session.userId) return res.status(400).json({ error: "You are not logged in!" });
-    const foundUser = await schemas.Users.findById(req.session.userId);
-    if (!foundUser) return res.status(400).json({ error: "Can't find your account right now!" });
+    if (!req.session.isLoggedIn || !req.session.userId) return res.status(401).json({ error: "You are not logged in!" });
+    
+    // Find user
+    const user = await schemas.Users.findById(req.session.userId);
+    if (!user) return res.status(401).json({ error: "Can't find your account right now!" });
 
-    req.currentUser = foundUser;
+    req.currentUser = user;
     next();
 }
 
