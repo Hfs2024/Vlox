@@ -24,18 +24,20 @@ export function initAccessibility() {
 
 // Quick info
 export async function getQuickInfo() {
-    // Get data
-    const quickInfo = await sendRequest({
-        url: "/api/v1/get/user-quick-info"
-    });
+    try {
+        // Get data
+        const quickInfo = await sendRequest({
+            url: "/api/v1/get/user-quick-info"
+        });
 
-    // Attach data
-    window.quickInfo = quickInfo || {};
-    initLiveCounter("#create-post-content", "#create-post-content-count", 1000);
-    return quickInfo || {};
+        // Attach data
+        window.quickInfo = quickInfo || {};
+    } catch (e) {
+        if (e.status !== 401) Swal.fire("Error", "Something went wrong!", "error");
+    }
 }
 
-// Capitalize strings
+// Capitalize first letter of a string
 export function capitalizeFirstLetter(string) {
     if (typeof string !== "string" || !string) return "";
     const newString = string.at(0).toUpperCase() + string.slice(1);
@@ -43,9 +45,9 @@ export function capitalizeFirstLetter(string) {
 }
 
 // Clean HTML
-export function cleanHTML(html, parseMarkdown = true) {
+export function cleanHTML(html, parse = true) {
     const safeHTML = typeof html === "string" ? html : "";
-    const code = parseMarkdown ? marked.parse(safeHTML) : safeHTML; 
+    const code = parse ? marked.parse(safeHTML) : safeHTML;
     return DOMPurify.sanitize(code, {
         ALLOWED_TAGS: [
             "pre", "code", "b", "i", "br", "span", "em", "strong", "u", "s", "sub", "sup", "small",
@@ -93,3 +95,4 @@ export function lockEvent(fn) {
 // Init
 getQuickInfo();
 initAccessibility();
+initLiveCounter("#create-post-content", "#create-post-content-count", 1000);
