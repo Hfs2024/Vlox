@@ -1,4 +1,5 @@
 import NS from "../nanoscript.min.js";
+import config from "/config/shared.js";
 import { sendRequest, capitalizeFirstLetter, initAccessibility, lockEvent } from "./helpers.js";
 import { renderPosts } from "./render-posts.js";
 
@@ -81,7 +82,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                             showCancelButton: true,
                             preConfirm: result => {
                                 if (!result) return Swal.showValidationMessage("Please enter title before proceeding!");
-                                if (result.length > 20) return Swal.showValidationMessage("Title must be less than or equal to 20 chars!");
+                                if (result.length > config.POST_TITLE_MAX_LENGTH) return Swal.showValidationMessage(`Title must be less than or equal to ${config.POST_TITLE_MAX_LENGTH} chars!`);
                             }
                         });
 
@@ -101,13 +102,13 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
             // Navigation
             NS("#user-bookmarks-prev-btn").on("click", lockEvent(async function () {
                 if (skip <= 0) return;
-                skip -= 10;
+                skip -= config.BOOKMARKS_LIMIT;
                 renderBookmarks();
             }));
 
             NS("#user-bookmarks-next-btn").on("click", lockEvent(async function () {
                 if (container.get(".state-nothing-found")?.elements) return;
-                skip += 10;
+                skip += config.BOOKMARKS_LIMIT;
                 renderBookmarks();
             }));
 

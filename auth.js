@@ -1,11 +1,11 @@
-const schemas = require("./schemas.js");
-const bcrypt = require("bcrypt");
-const { body, param, query } = require("express-validator");
-const { checkAuth, generateRecoveryCodes, validateResult, createLimiter } = require("./helpers.js");
-const express = require("express");
+import express from "express";
+import bcrypt from "bcrypt";
+import { body, param, query } from "express-validator";
+import { checkAuth, generateRecoveryCodes, validateResult, createLimiter } from "./helpers.js";
+import schemas from "./schemas.js";
+import config from "./config/backend.js";
 const router = express.Router();
 
-// Change profile visibility
 router.put("/api/v1/change-visibility/user-profile", checkAuth, [
     body("value").exists().isIn([true, false])
 ], validateResult, async (req, res) => {
@@ -23,23 +23,19 @@ router.put("/api/v1/change-visibility/user-profile", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-// Login and signup
-const authRateLimiter = createLimiter(900000, 10);
+const authRateLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 
 router.post("/api/v1/login", authRateLimiter, [
-    body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
-    body("password").exists().notEmpty().isString().isLength({ max: 64 }).trim()
+    body("username").exists().notEmpty().isString().isLength({ min: config.USERNAME_MIN_LENGTH, max: config.USERNAME_MAX_LENGTH }).toLowerCase().trim(),
+    body("password").exists().notEmpty().isString().isLength({ max: config.PASSWORD_MAX_LENGTH }).trim()
 ], validateResult, async (req, res) => {
     const { username, password } = req.cleanData;
 
-    // Username match
     const user = await schemas.Users.findOne({ username: username }).select("password");
     if (!user) return res.status(400).json({ error: "Invalid username or password" });
 
-    // Password match
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: "Invalid username or password" });
-
     req.session.isLoggedIn = true;
     req.session.userId = user._id;
     req.session.save((err) => {
@@ -52,28 +48,26 @@ router.post("/api/v1/login", authRateLimiter, [
 });
 
 router.post("/api/v1/signup", authRateLimiter, [
-    body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
-    body("password").exists().notEmpty().isString().isLength({ min: 12, max: 64 }).trim(),
-    body("bio").exists().notEmpty().isString().isLength({ min: 5, max: 20 }).trim(),
-    body("email").exists().notEmpty().isEmail().isLength({ max: 100 }).normalizeEmail().trim()
+    body("username").exists().notEmpty().isString().isLength({ min: config.USERNAME_MIN_LENGTH, max: config.USERNAME_MAX_LENGTH }).toLowerCase().trim(),
+    body("password").exists().notEmpty().isString().isLength({ min: config.PASSWORD_MIN_LENGTH, max: config.PASSWORD_MAX_LENGTH }).trim(),
+    body("bio").exists().notEmpty().isString().isLength({ min: config.BIO_MIN_LENGTH, max: config.BIO_MAX_LENGTH }).trim(),
+    body("email").exists().notEmpty().isEmail().isLength({ max: config.EMAIL_MAX_LENGTH }).normalizeEmail().trim()
 ], validateResult, async (req, res) => {
     const { username, password, email, bio } = req.cleanData;
 
-    // Save user
     const recoveryCodes = await generateRecoveryCodes();
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, config.BCRYPT_SALT_ROUNDS);
 
     const newUser = new schemas.Users({
         username: username,
         email: email,
         password: hashedPassword,
-        bio: bio || "",
+        bio: bio,
         recoveryCodes: recoveryCodes.hashed
     });
 
     await newUser.save();
 
-    // Success
     req.session.isLoggedIn = true;
     req.session.userId = newUser._id;
     req.session.save((err) => {
@@ -85,17 +79,15 @@ router.post("/api/v1/signup", authRateLimiter, [
     });
 });
 
-// Update user
 router.put("/api/v1/update/user", checkAuth, [
     body("newEmoji").optional({ values: "falsy" }).isString().isIn(["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"]).trim(),
-    body("newBio").optional({ values: "falsy" }).isString().isLength({ max: 20 }).trim()
+    body("newBio").optional({ values: "falsy" }).isString().isLength({ max: config.BIO_MAX_LENGTH }).trim()
 ], validateResult, async (req, res) => {
     const { newBio, newEmoji } = req.cleanData;
     const updateQuery = {};
     if (newEmoji) updateQuery.emoji = newEmoji.normalize("NFC");
     if (newBio) updateQuery.bio = newBio;
 
-    // Update
     const result = await schemas.Users.updateOne({
         _id: req.session.userId
     }, {
@@ -108,7 +100,6 @@ router.put("/api/v1/update/user", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-// Signout
 router.delete("/api/v1/signout", checkAuth, async (req, res) => {
     req.session.destroy(err => {
         if (err) {
@@ -116,27 +107,25 @@ router.delete("/api/v1/signout", checkAuth, async (req, res) => {
             return res.status(500).json({ error: "Server Error" });
         }
 
-        res.clearCookie('connect.sid');
+        res.clearCookie("connect.sid");
         return res.status(200).json({ success: true });
     });
 });
 
-// User quick info
 router.get("/api/v1/get/user-quick-info", checkAuth, async (req, res) => {
     return res.status(200).json({
         success: true,
         username: req.currentUser.username,
-        _id: req.currentUser._id
+        _id: req.currentUser._id,
+        coins: req.currentUser.coins,
     });
 });
 
-// Profiles
 router.get("/api/v1/get/user-profile/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async function (req, res) {
     const id = req.cleanData.id;
 
-    // User
     const user = await schemas.Users.findOne({
         _id: id,
         $or: [
@@ -144,15 +133,12 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
             { private: false }
         ]
     })
-        .select("username emoji bio private")
+        .select("username emoji bio private coins")
         .lean();
 
     if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
 
-    return res.status(200).json({
-        success: true,
-        user: user
-    });
+    return res.status(200).json({ success: true, user: user });
 });
 
 router.get("/api/v1/get/user-posts/:id", checkAuth, [
@@ -168,18 +154,15 @@ router.get("/api/v1/get/user-posts/:id", checkAuth, [
         ]
     }).sort({ createdAt: -1, _id: -1 })
         .skip(skip)
-        .limit(10)
+        .limit(config.USER_POSTS_LIMIT)
         .populate("by", "-password -recoveryCodes -email")
         .lean();
 
-    return res.json({ success: true, posts: posts })
+    return res.json({ success: true, posts: posts });
 });
 
-// User status
 router.get("/api/v1/get/user-status", async function (req, res) {
     return res.status(200).json({ success: true, loggedIn: req.session.isLoggedIn });
 });
 
-module.exports = {
-    router
-}
+export default router;

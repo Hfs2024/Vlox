@@ -1,4 +1,5 @@
 import { sendRequest } from "./helpers.js";
+import config from "/config/shared.js";
 
 // Input comment
 export async function inputComment(title = "Add comment", initialValue = "", onSubmit) {
@@ -10,7 +11,7 @@ export async function inputComment(title = "Add comment", initialValue = "", onS
         showCancelButton: true,
         preConfirm: result => {
             if (!result) return Swal.showValidationMessage("This field cannot be empty!");
-            if (result.length > 200) return Swal.showValidationMessage("Comment cannot exceed 200 characters!");
+            if (result.length > config.COMMENT_CONTENT_MAX_LENGTH) return Swal.showValidationMessage(`Comment cannot exceed ${config.COMMENT_CONTENT_MAX_LENGTH} characters!`);
 
             return result;
         }

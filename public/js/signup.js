@@ -1,4 +1,5 @@
 import NS from "../nanoscript.min.js";
+import config from "/config/shared.js";
 import { sendRequest, getQuickInfo, initAccessibility, initLiveCounter, lockEvent } from "./helpers.js";
 import { showProfile } from "./profile.js";
 
@@ -23,9 +24,9 @@ async function showResetPasswordModal() {
             const recoveryCode = NS("#recovery-code").value();
 
             if (!username || !newPassword || !recoveryCode) return Swal.showValidationMessage("You must enter a username, password and one of your recovery code!");
-            if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
-            if (newPassword.length < 12 || newPassword.length > 64) return Swal.showValidationMessage("Password must be between 12 and 64 chars!");
-            if (recoveryCode.length !== 20) return Swal.showValidationMessage("Recovery code must be exactly 20 chars long!");
+            if (username.length < config.USERNAME_MIN_LENGTH || username.length > config.USERNAME_MAX_LENGTH) return Swal.showValidationMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
+            if (newPassword.length < config.PASSWORD_MIN_LENGTH || newPassword.length > config.PASSWORD_MAX_LENGTH) return Swal.showValidationMessage(`Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
+            if (recoveryCode.length !== config.RECOVERY_CODE_LENGTH) return Swal.showValidationMessage(`Recovery code must be exactly ${config.RECOVERY_CODE_LENGTH} chars long!`);
 
             return { username, newPassword, recoveryCode };
         }
@@ -72,8 +73,8 @@ async function showLoginModal() {
             const password = NS("#password").value();
 
             if (!username || !password) return Swal.showValidationMessage("You must enter a username and a password!");
-            if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
-            if (password.length > 64) return Swal.showValidationMessage("Password must be between 12 and 64 chars!");
+            if (username.length < config.USERNAME_MIN_LENGTH || username.length > config.USERNAME_MAX_LENGTH) return Swal.showValidationMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
+            if (password.length > config.PASSWORD_MAX_LENGTH) return Swal.showValidationMessage(`Password must be no longer than ${config.PASSWORD_MAX_LENGTH} chars!`);
 
             return { username, password };
         }
@@ -102,7 +103,7 @@ async function showSignUpModal() {
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
 <input type="email" id="email" placeholder="Email">
-<input type="text" id="bio" placeholder="Bio (Max 20 chars)" maxlength="20" autocomplete="off">
+<input type="text" id="bio" placeholder="Bio (Max ${config.BIO_MAX_LENGTH} chars)" maxlength="${config.BIO_MAX_LENGTH}" autocomplete="off">
 <p class="text-count">
   Count: <span class="count" id="user-bio-content-count">0</span>
 </p>           
@@ -114,7 +115,7 @@ async function showSignUpModal() {
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
         didOpen: () => {
-            initLiveCounter("#bio", "#user-bio-content-count", 20);
+            initLiveCounter("#bio", "#user-bio-content-count", config.BIO_MAX_LENGTH);
             NS(".link-swal-toggle").on("click", showLoginModal);
             initAccessibility();
         },
@@ -126,10 +127,10 @@ async function showSignUpModal() {
             const bio = NS("#bio").value();
 
             if (!username || !password || !email || !bio) return Swal.showValidationMessage("You must enter a username, password, email and bio!");
-            if (username.length < 3 || username.length > 10) return Swal.showValidationMessage("Username must be between 3 and 10 chars!");
-            if (password.length < 12 || password.length > 64) return Swal.showValidationMessage("Password must be between 12 and 64 chars!");
-            if (email.length > 100 || !/.+\@.+\..+/.test(email)) return Swal.showValidationMessage("Email must valid and less than or equal to 100 chars!");
-            if (bio.length < 5) return Swal.showValidationMessage("Bio must be higher or equal to 5 chars!");
+            if (username.length < config.USERNAME_MIN_LENGTH || username.length > config.USERNAME_MAX_LENGTH) return Swal.showValidationMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
+            if (password.length < config.PASSWORD_MIN_LENGTH || password.length > config.PASSWORD_MAX_LENGTH) return Swal.showValidationMessage(`Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
+            if (email.length > config.EMAIL_MAX_LENGTH || !/.+\@.+\..+/.test(email)) return Swal.showValidationMessage(`Email must be valid and no longer than ${config.EMAIL_MAX_LENGTH} chars!`);
+            if (bio.length < config.BIO_MIN_LENGTH) return Swal.showValidationMessage(`Bio must be at least ${config.BIO_MIN_LENGTH} chars!`);
 
             return { username, password, email, bio };
         }

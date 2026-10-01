@@ -1,9 +1,10 @@
 import NS from "../nanoscript.min.js";
+import config from "/config/shared.js";
 
 // Send requests
-export async function sendRequest({ body, ...config }) {
+export async function sendRequest({ body, ...requestConfig }) {
     const response = await axios({
-        ...config,
+        ...requestConfig,
         validateStatus: function (status) {
             return (status >= 200 && status < 300) || [400, 401].some(s => status === s);
         },
@@ -67,7 +68,7 @@ export function generatePostLink(postId) {
 // Live coutner
 export function initLiveCounter(inputElement, countElement, max) {
     const inputEl = NS(inputElement);
-    const safeMax = Number.isInteger(max) ? max : 1000;
+    const safeMax = Number.isInteger(max) ? max : config.POST_CONTENT_MAX_LENGTH;
     inputEl.on("input", function () {
         const length = (inputEl.value() || "").length;
         NS(countElement).text(length);
@@ -95,4 +96,4 @@ export function lockEvent(fn) {
 // Init
 getQuickInfo();
 initAccessibility();
-initLiveCounter("#create-post-content", "#create-post-content-count", 1000);
+initLiveCounter("#create-post-content", "#create-post-content-count", config.POST_CONTENT_MAX_LENGTH);
