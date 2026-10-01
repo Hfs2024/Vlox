@@ -1,5 +1,6 @@
 import NS from "../nanoscript.min.js";
-import { sendRequest, generatePostLink, lockEvent } from "./helpers.js";
+import config from "/config/shared.js";
+import { sendRequest, lockEvent } from "./helpers.js";
 import { getPosts, postsState, renderPosts } from "./render-posts.js";
 
 const createPostBtn = NS("#create-post-btn");
@@ -30,7 +31,7 @@ async function search() {
 
 searchPostsBtn.on("click", lockEvent(async function () {
     const value = searchPostsInput.value();
-    if (value.length > 100) return Swal.fire("Query should be less than or equal to 100 chars!");
+    if (value.length > config.SEARCH_QUERY_LENGTH_MAX) return Swal.fire(`Query should be less than or equal to ${config.SEARCH_QUERY_LENGTH_MAX} chars!`);
     if (!value) return getPosts();
 
     await search();
@@ -54,8 +55,8 @@ createPostBtn.on("click", lockEvent(async function () {
     const keywords = createPostKeywords.value().trim().split(",").filter(Boolean).map(kw => kw.toLowerCase().trim());
 
     if (!title || !content) return Swal.fire("Title and content are required!");
-    if (title.length > 20 || content.length > 1000) return Swal.fire(`Title must be less than 20 chars and content should not exceed 1000 chars!`);
-    if (keywords.length > 5) return Swal.fire("Keywords count should be less than 5!");
+    if (title.length > config.POST_TITLE_MAX_LENGTH) return Swal.fire(`Title must be less than ${config.POST_TITLE_MAX_LENGTH} chars!`);
+    if (keywords.length > config.POST_KEYWORDS_MAX_LENGTH) return Swal.fire(`Keywords count should not exceed ${config.POST_KEYWORDS_MAX_LENGTH}!`);
 
     // Create post
     const data = await sendRequest({
@@ -87,12 +88,12 @@ createPostBtn.on("click", lockEvent(async function () {
 // Navigation
 prevBtn.on("click", lockEvent(async () => {
     if (postsState.skip <= 0) return;
-    postsState.skip -= 50;
+    postsState.skip -= config.POSTS_LIMIT;
     await getPosts();
 }));
 
 nextBtn.on("click", lockEvent(async () => {
     if (NS("#posts-container").get(".state-nothing-found")?.elements) return;
-    postsState.skip += 50;
+    postsState.skip += config.POSTS_LIMIT;
     await getPosts();
 }));

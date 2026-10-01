@@ -1,47 +1,52 @@
-require("dotenv").config({ quiet: true });
-require("express-async-errors");
-const express = require("express");
-const path = require("path");
-const session = require("express-session");
-const { body, param, query } = require("express-validator");
-const bcrypt = require("bcrypt");
-const { checkAuth, validateResult, generateRecoveryCodes, createLimiter, hotQueries } = require("./helpers.js");
-const mongoose = require("mongoose");
-const schemas = require("./schemas.js");
-const MongoStore = require("connect-mongo");
-const bookmarksRouter = require("./bookmarks.js").router;
-const actionsRouter = require("./actions.js").router;
-const authRouter = require("./auth.js").router;
+import "express-async-errors";
+import express from "express";
+import path from "path";
+import session from "express-session";
+import { body, param, query } from "express-validator";
+import bcrypt from "bcrypt";
+import mongoose from "mongoose";
+import MongoStore from "connect-mongo";
+import { checkAuth, validateResult, generateRecoveryCodes, createLimiter, hotQueries } from "./helpers.js";
+import schemas from "./schemas.js";
+import ClientError from "./client-error.js";
+import bookmarksRouter from "./bookmarks.js";
+import actionsRouter from "./actions.js";
+import authRouter from "./auth.js";
+import config from "./config/backend.js";
+const __dirname = import.meta.dirname;
+const isProduction = config.NODE_ENV === "production";
 const app = express();
 
 // Connect MonogDB
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(config.MONGO_URI)
     .then(() => console.log("MongoDB connected!"))
     .catch(err => console.log(`Failed to connect MongoDB: ${err.message}`));
 
 // Basic config
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
-app.use(express.json({ limit: "10mb" }));
-const isProduction = process.env.NODE_ENV === "production";
+app.get("/config/shared.js", (req, res) => {
+    res.sendFile(path.join(__dirname, "config", "shared.js"));
+});
+app.use(express.json({ limit: config.JSON_BODY_LIMIT }));
 app.use(
     session({
-        secret: process.env.SESSION_SECRET,
+        secret: config.SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
         store: MongoStore.create({
-            mongoUrl: process.env.MONGO_URI,
-            collectionName: 'sessions',
+            mongoUrl: config.MONGO_URI,
+            collectionName: "sessions"
         }),
         cookie: {
             httpOnly: true,
             secure: isProduction,
-            maxAge: 3600000,
+            maxAge: config.MAX_SESSION_AGE,
             sameSite: isProduction ? "none" : "lax"
         }
     })
 );
-const mainLimiter = createLimiter(900000, 1000, {
-    skip: (req) => ['/api/v1/reset/password', '/api/v1/posts/bulk'].some(path => req.originalUrl.includes(path))
+const mainLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.MAIN_RATE_LIMIT_MAX_REQ, {
+    skip: (req) => ["/api/v1/reset/password", "/api/v1/posts/bulk"].some((path) => req.originalUrl.includes(path))
 });
 
 app.use(mainLimiter);
@@ -58,9 +63,9 @@ app.get("/", (req, res) => {
 
 // Posts
 app.post("/api/v1/posts", checkAuth, [
-    body("title").notEmpty().isString().trim().isLength({ max: 20 }),
-    body("content").notEmpty().isString().trim().isLength({ max: 1000 }),
-    body("keywords").exists().isArray({ max: 5 }).customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim()))
+    body("title").notEmpty().isString().trim().isLength({ max: config.POST_TITLE_MAX_LENGTH }),
+    body("content").notEmpty().isString().trim().isLength({ max: config.POST_CONTENT_MAX_LENGTH }),
+    body("keywords").exists().isArray({ max: config.POST_KEYWORDS_MAX_LENGTH }).customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim()))
 ], validateResult, async (req, res) => {
     const { title, content, keywords } = req.cleanData;
     const newPost = new schemas.Posts({
@@ -84,8 +89,8 @@ app.get("/api/v1/get/post/:id", [
         .select("-reports")
         .populate("by", "-password -recoveryCodes -email")
         .lean();
-    if (!post) return res.status(400).json({ error: "Post not found!" });
 
+    if (!post) return res.status(400).json({ error: "Post not found!" });
     return res.status(200).json({ success: true, posts: [post] });
 });
 
@@ -95,9 +100,14 @@ app.get("/api/v1/get/posts", [
     const skip = req.cleanData.skip;
     const posts = await schemas.Posts.find({
         private: false
-    }).sort({ createdAt: -1, _id: -1 })
+    }).sort({
+        level: -1,
+        likes: -1,
+        createdAt: -1,
+        _id: -1
+    })
         .skip(skip)
-        .limit(50)
+        .limit(config.POSTS_LIMIT)
         .select("-reports")
         .populate("by", "-password -recoveryCodes -email")
         .lean();
@@ -106,17 +116,22 @@ app.get("/api/v1/get/posts", [
 });
 
 app.get("/api/v1/search/posts", [
-    query("query").exists().notEmpty().isString().isLength({ max: 100 }).customSanitizer(value => value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')).toLowerCase().trim()
+    query("query").exists().notEmpty().isString().isLength({ max: config.SEARCH_QUERY_LENGTH_MAX }).customSanitizer(value => value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&")).toLowerCase().trim()
 ], validateResult, async (req, res) => {
     const query = req.cleanData.query;
     const posts = await schemas.Posts.find({
         keywords: query,
         private: false
-    }).sort({
-        likes: -1,
-        createdAt: -1,
-        _id: -1
-    }).limit(100).populate("by", "-password -recoveryCodes -email").lean();
+    })
+        .limit(config.POSTS_LIMIT)
+        .sort({
+            level: -1,
+            likes: -1,
+            createdAt: -1,
+            _id: -1
+        })
+        .populate("by", "-password -recoveryCodes -email")
+        .lean();
 
     return res.status(200).json({ success: true, posts: posts });
 });
@@ -127,15 +142,13 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
 ], validateResult, async (req, res) => {
     const { skip, id } = req.cleanData;
 
-    // Check permissions to see post 
     const post = await schemas.Posts.exists(hotQueries.view_post(id, req.session.userId));
     if (!post) return res.status(400).json({ error: "Post not found!" });
 
-    // Find comments
     const comments = await schemas.Comments.find({ for: id, parentCommentId: null })
         .sort({ createdAt: -1, _id: -1 })
         .skip(skip)
-        .limit(10)
+        .limit(config.COMMENTS_LIMIT)
         .select("for content by")
         .populate("by", "-password -recoveryCodes -email")
         .lean();
@@ -149,11 +162,9 @@ app.get("/api/v1/get/post/:postId/replies/:parentCommentId", checkAuth, [
 ], validateResult, async (req, res) => {
     const { postId, parentCommentId } = req.cleanData;
 
-    // Check permissions to see post
     const post = await schemas.Posts.find(hotQueries.view_post(postId, req.session.userId));
     if (!post) return res.status(400).json({ error: "Post not found or you don't have permissions to see it!" });
 
-    // Find replies
     const replies = await schemas.Comments.find({
         for: postId,
         parentCommentId: parentCommentId
@@ -165,12 +176,12 @@ app.get("/api/v1/get/post/:postId/replies/:parentCommentId", checkAuth, [
 });
 
 // Password recovery
-const passwordRecoveryLimiter = createLimiter(3600000, 5);
+const passwordRecoveryLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 
 app.post("/api/v1/reset/password", [
-    body("username").exists().notEmpty().isString().isLength({ min: 3, max: 10 }).toLowerCase().trim(),
-    body("newPassword").exists().notEmpty().isString().isLength({ min: 12, max: 64 }).trim(),
-    body("recoveryCode").exists().notEmpty().isString().isLength({ min: 20, max: 20 }).trim()
+    body("username").exists().notEmpty().isString().isLength({ min: config.USERNAME_MIN_LENGTH, max: config.USERNAME_MAX_LENGTH }).toLowerCase().trim(),
+    body("newPassword").exists().notEmpty().isString().isLength({ min: config.PASSWORD_MIN_LENGTH, max: config.PASSWORD_MAX_LENGTH }).trim(),
+    body("recoveryCode").exists().notEmpty().isString().isLength({ min: config.RECOVERY_CODE_LENGTH, max: config.RECOVERY_CODE_LENGTH }).trim()
 ], passwordRecoveryLimiter, validateResult, async (req, res) => {
     const { username, recoveryCode, newPassword } = req.cleanData;
     const user = await schemas.Users.findOne({ username: username })
@@ -178,20 +189,17 @@ app.post("/api/v1/reset/password", [
         .lean();
     if (!user) return res.status(400).json({ error: "Failed to find user!" });
 
-    // Find the recovery code
     for (const code of user.recoveryCodes) {
         const isValid = await bcrypt.compare(recoveryCode, code);
         if (!isValid) continue;
 
-        // Update user
         const result = await schemas.Users.updateOne({
             username: username,
             recoveryCodes: code
         }, {
             $set: {
-                password: await bcrypt.hash(newPassword, 10)
+                password: await bcrypt.hash(newPassword, config.BCRYPT_SALT_ROUNDS)
             },
-
             $pull: {
                 recoveryCodes: code
             }
@@ -199,7 +207,6 @@ app.post("/api/v1/reset/password", [
 
         if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update password!" });
 
-        // Success
         return res.status(200).json({ success: true });
     }
 
@@ -207,7 +214,7 @@ app.post("/api/v1/reset/password", [
 });
 
 app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryLimiter, checkAuth, async (req, res) => {
-    const newCodes = await generateRecoveryCodes(3);
+    const newCodes = await generateRecoveryCodes();
     const result = await schemas.Users.updateOne({
         _id: req.session.userId,
     }, {
@@ -220,19 +227,17 @@ app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryLimiter, check
     return res.status(200).json({ success: true, codes: newCodes.raw });
 });
 
-// Gifts
 app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
     param("id").exists().isMongoId()
 ], validateResult, async (req, res) => {
     const id = req.cleanData.id;
-    const remaining = Math.max(0, 5000 - req.currentUser.coins);
-    const inc = Math.min(100, remaining);
+    const remaining = Math.max(0, config.COINS_MAX - req.currentUser.coins);
+    const inc = Math.min(config.COINS_MIN, remaining);
     if (inc <= 0) return res.status(400).json({ error: "You already reached the max amount of coins!" });
 
-    // Redeem the gift
     const session = await mongoose.startSession();
     await session.withTransaction(async () => {
-        // Gift
+        // Gift link redemption
         const giftResult = await schemas.Gifts.updateOne(
             { _id: id, status: "active", usedBy: { $ne: req.session.userId } },
             [
@@ -263,18 +268,20 @@ app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
             ],
             { session }
         );
-        if (giftResult.matchedCount === 0) throw new Error("GIFT_REDEEM_FAILED");
 
-        // User
+        if (giftResult.matchedCount === 0) throw new ClientError("You may not have access to this gift!");
+
+        // Update user's coins
         const userResult = await schemas.Users.updateOne({
             _id: req.session.userId,
-            coins: { $lt: 5000 }
+            coins: { $lt: config.COINS_MAX }
         }, {
             $inc: {
                 coins: inc
             }
         }, { session });
-        if (userResult.matchedCount === 0) throw new Error("USER_UPDATE_FAILED");
+
+        if (userResult.matchedCount === 0) throw new ClientError(`You must've less than ${config.COINS_MAX} coins for this operation to succeed!`);
     });
 
     await session.endSession();
@@ -286,31 +293,18 @@ app.get("/api/v1/get/gifts", checkAuth, async (req, res) => {
     return res.status(200).json({ success: true, gifts });
 });
 
-// Fallback
 app.use((req, res) => {
     res.status(404).send("<h1>404 - Route not found.</h1>");
 });
 
-// Error handler
 app.use((err, req, res, next) => {
-    const errors = {
-        POST_UPDATE_FAILED: "Post update failed!",
-        USER_UPDATE_FAILED: "User update failed!",
-        COMMENT_UPDATE_FAILED: "Comment update failed!",
-        POST_NOT_FOUND: "Post not found!",
-        POST_DELETE_FAILED: "Post delete failed!",
-        GIFT_REDEEM_FAILED: "Gift redeem failed!"
-    }
-
     if (err.code === 11000) return res.status(400).json({ error: "You've already done this action!" });
-    if (errors[err.message]) return res.status(400).json({ error: errors[err.message] });
+    if (err.isCustom) return res.status(err.statusCode).json({ error: err.message });
 
-    console.error("Error:", err.stack);
-    return res.status(400).json({ error: "An unexpected error occurred" });
+    console.log(err);
+    return res.status(500).json({ error: "An unexpected error occurred!" });
 });
 
-// Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Clean Engine live on port ${PORT}`);
+app.listen(config.PORT, config.HOST, () => {
+    console.log(`Clean Engine live on port ${config.PORT}`);
 });

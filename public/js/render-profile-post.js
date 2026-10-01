@@ -1,5 +1,6 @@
 import NS from "../nanoscript.min.js";
-import { sendRequest, cleanHTML, generatePostLink, initLiveCounter, lockEvent, capitalizeFirstLetter } from "./helpers.js";
+import config from "/config/shared.js";
+import { sendRequest, cleanHTML, generatePostLink, initLiveCounter, lockEvent, capitalizeFirstLetter, getQuickInfo } from "./helpers.js";
 
 async function viewAnalytics(post = {}) {
     const safePost = post || {};
@@ -10,7 +11,8 @@ async function viewAnalytics(post = {}) {
     const level = Number(safePost.level) || 1;
 
     // Likes percent
-    const likesPercent = likes === 0 ? 0 : Math.min(100, Math.max(20, Math.floor(likes / 20) * 20));
+    const { POST_REDEEM_LIKES_REQUIRED, POST_REDEEM_PROGRESS_STEP_PERCENT } = config;
+    const likesPercent = likes === 0 ? 0 : Math.min(100, Math.max(POST_REDEEM_PROGRESS_STEP_PERCENT, Math.floor(likes / POST_REDEEM_LIKES_REQUIRED * (100 / POST_REDEEM_PROGRESS_STEP_PERCENT)) * POST_REDEEM_PROGRESS_STEP_PERCENT));
     const barFilled = likesPercent === 100;
 
     Swal.fire({
@@ -30,8 +32,8 @@ async function viewAnalytics(post = {}) {
             NS.createEl("p", postCard, { style: "text-align: center" })
                 .html(
                     barFilled ?
-                        `You filled the bar! You're a <b>LEGEND!!</b>`
-                        : `Fill the bar with 100 likes!`
+                        "You're a <b>LEGEND!!</b>"
+                        : `Fill the bar with ${POST_REDEEM_LIKES_REQUIRED} likes!`
                 );
 
             // Likes bar
@@ -43,24 +45,35 @@ async function viewAnalytics(post = {}) {
             const buttonsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
 
             // Increase level
-            NS.createEl("button", buttonsGroup, { style: "width: 100%" })
-                .text("Increase level")
-                .on("click", async function () {
-                    Swal.fire("Info", "Still working on this feature!", "info");
-                });
+            if (level < config.POST_LEVEL_MAX && window?.quickInfo?.coins >= config.COINS_MIN) {
+                NS.createEl("button", buttonsGroup, { style: "width: 100%" })
+                    .text("Increase level")
+                    .on("click", lockEvent(async function () {
+                        const increaseLevelResponse = await sendRequest({
+                            url: `/api/v1/inc-lvl/post/${post._id}`,
+                            method: "POST"
+                        });
+
+                        if (!increaseLevelResponse.success) return Swal.fire(increaseLevelResponse.error);
+                        Swal.fire("Success", "Post level increased!", "success");
+                        getQuickInfo(); 
+                    }));
+            }
 
             // Redeem
-            if (!safePost.redeemed && barFilled) NS.createEl("button", buttonsGroup, { style: "width: 100%" })
-                .text("Redeem")
-                .on("click", lockEvent(async function () {
-                    const redeemResponse = await sendRequest({
-                        url: `/api/v1/redeem/post/${safePost._id}`,
-                        method: "POST"
-                    });
+            if (!safePost.redeemed && barFilled) {
+                NS.createEl("button", buttonsGroup, { style: "width: 100%" })
+                    .text("Redeem")
+                    .on("click", lockEvent(async function () {
+                        const redeemResponse = await sendRequest({
+                            url: `/api/v1/redeem/post/${safePost._id}`,
+                            method: "POST"
+                        });
 
-                    if (!redeemResponse.success) return Swal.fire(redeemResponse.error);
-                    Swal.fire("Success", `Redeemed successfully for ${redeemResponse.inc} coins! You'll be able to use this coins later.`, "success");
-                }));
+                        if (!redeemResponse.success) return Swal.fire(redeemResponse.error);
+                        Swal.fire("Success", `Redeemed successfully for ${redeemResponse.inc} coins! You'll be able to use this coins later.`, "success");
+                    }));
+            }
         }
     });
 }
@@ -78,7 +91,7 @@ export async function renderProfilePost({
     NS.createEl("i", postHeader, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })
         .on("click", async function () {
             NS.copy({
-                text: generatePostLink(safePost._id || ""),
+                text: generatePostLink(safePost._id),
                 onSuccess: () => {
                     Swal.fire("Success", "Copied!", "success")
                 },
@@ -140,16 +153,15 @@ export async function renderProfilePost({
                     NS("#edit-post-content-count").text(`${(NS("#edit-post-content").value()).length}`);
 
                     // Live counter
-                    initLiveCounter("#edit-post-content", "#edit-post-content-count", 1000);
+                    initLiveCounter("#edit-post-content", "#edit-post-content-count", config.POST_CONTENT_MAX_LENGTH);
                 },
                 preConfirm: () => {
                     const title = Swal.getPopup().querySelector("#edit-post-title").value;
                     const content = Swal.getPopup().querySelector("#edit-post-content").value;
                     const keywords = Swal.getPopup().querySelector("#edit-post-keywords").value.split(",").filter(Boolean).map(kw => kw.toLowerCase().trim());
                     if (!title || !content) return Swal.showValidationMessage("Don't forget the title and content!");
-                    if (title.length > 20) return Swal.showValidationMessage("Title must be less than 20 chars!");
-                    if (content.length > 1000) return Swal.showValidationMessage(`Content must be less than 1000 chars!`);
-                    if (keywords.length > 5) return Swal.showValidationMessage("Keywords count should be less than 5!");
+                    if (title.length > config.POST_TITLE_MAX_LENGTH) return Swal.showValidationMessage(`Title must be less than ${config.POST_TITLE_MAX_LENGTH} chars!`);
+                    if (keywords.length > config.POST_KEYWORDS_MAX_LENGTH) return Swal.showValidationMessage(`Keywords count should not exceed ${config.POST_KEYWORDS_MAX_LENGTH}!`);
 
                     return { title, content, keywords };
                 }

@@ -1,4 +1,5 @@
 import NS from "../nanoscript.min.js";
+import config from "/config/shared.js";
 import { sendRequest, capitalizeFirstLetter, cleanHTML, generatePostLink, initAccessibility, lockEvent } from "./helpers.js";
 import { inputComment, replyComment } from "./comment-helpers.js";
 import { showProfile } from "./profile.js";
@@ -31,7 +32,7 @@ export async function renderPosts(posts = []) {
         // Icons
         // Bookmark
         NS.createEl("i", postIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })
-            .on("click", (async function () {
+            .on("click", lockEvent(async function () {
                 const bookmarkResponse = await sendRequest({
                     url: `/api/v1/bookmark/post/${safePost._id}`,
                     method: "POST"
@@ -211,7 +212,7 @@ export async function renderPosts(posts = []) {
             .html("<i class='fa-solid fa-chevron-left'></i>")
             .on("click", async function () {
                 if (commentsSkip <= 0) return;
-                commentsSkip -= 10;
+                commentsSkip -= config.COMMENTS_LIMIT;
                 renderComments();
             });
 
@@ -219,7 +220,7 @@ export async function renderPosts(posts = []) {
         NS.createEl("button", commentsNavGroup, { className: "comments-next" })
             .html("<i class='fa-solid fa-chevron-right'></i>")
             .on("click", async function () {
-                commentsSkip += 10;
+                commentsSkip += config.COMMENTS_LIMIT;
                 renderComments();
             });
 

@@ -1,18 +1,22 @@
 import NS from "../nanoscript.min.js";
+import config from "/config/shared.js";
 import { sendRequest, capitalizeFirstLetter, getQuickInfo, initAccessibility, lockEvent, cleanHTML } from "./helpers.js";
 import { renderProfilePost } from "./render-profile-post.js";
 
 export async function showProfile(data) {
-    // Profile code
     let skip = 0;
     const safeData = data || {};
     const user = safeData.user || {};
+
+    // Clean fields
     const id = user._id;
     const username = capitalizeFirstLetter(user.username) || "User";
     const emoji = user.emoji || "🚀";
+    const coins = user.coins || 0;
     const isUserProfile = window?.quickInfo?.username === user.username;
     const emojis = ["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"];
 
+    // Profile code
     Swal.fire({
         titleText: `Hello, ${emoji} ${username}!`,
         html: `
@@ -25,6 +29,7 @@ export async function showProfile(data) {
     <p class="center-overflow"><b>Visibility:</b> ${user.private ? "Private" : "Public"}</p>
     ${isUserProfile ? `<i class="fas fa-${user.private ? "eye" : "eye-slash"} icon-helper" id="user-profile-visibility-toggle-btn" role="button" tabindex="0"></i>` : ""}
   </div>
+    <p class="center-overflow"><b>Coins:</b> ${coins}/${config.COINS_MAX}</p>
   ${isUserProfile ? `
   <div class="center-overflow emoji-container"></div>
   <button id="reset-password-recovery-codes-btn" class="w-full">Reset Recovery Codes</button>
@@ -108,7 +113,7 @@ export async function showProfile(data) {
                     showCancelButton: true,
                     preConfirm: result => {
                         if (!result) return Swal.showValidationMessage("You must enter a new bio!");
-                        if (result.length < 5 || result.length > 20) return Swal.showValidationMessage("Bio must be between 5 and 20 chars!");
+                        if (result.length < config.BIO_MIN_LENGTH || result.length > config.BIO_MAX_LENGTH) return Swal.showValidationMessage(`Bio must be between ${config.BIO_MIN_LENGTH} and ${config.BIO_MAX_LENGTH} chars!`);
                     }
                 });
 
@@ -144,13 +149,13 @@ export async function showProfile(data) {
             // Navigation
             NS("#user-posts-prev-btn").on("click", lockEvent(async function () {
                 if (skip <= 0) return;
-                skip -= 10;
+                skip -= config.USER_POSTS_LIMIT;
                 renderPosts();
             }));
 
             NS("#user-posts-next-btn").on("click", lockEvent(async function () {
                 if (container.get(".state-nothing-found")?.elements) return;
-                skip += 10;
+                skip += config.USER_POSTS_LIMIT;
                 renderPosts();
             }));
 

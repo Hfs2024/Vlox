@@ -1,38 +1,30 @@
-require("dotenv").config({ quiet: true });
-const schemas = require("./schemas.js");
-const mongoose = require("mongoose");
-const readline = require("readline/promises");
-const bcrypt = require("bcrypt");
+import schemas from "./schemas.js";
+import mongoose from "mongoose";
+import readline from "readline/promises";
+import bcrypt from "bcrypt";
+import config from "./config/backend.js";
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
-// Connect MonogDB
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(config.MONGO_URI)
   .then(() => handleCreateGift())
   .catch(err => console.log(`Failed to connect MongoDB: ${err.message}`));
 
-// Handle create gifts
 async function handleCreateGift() {
   try {
-    console.log('--- Create a New Lovely Gift 💜 ---');
+    console.log("--- Create a New Lovely Gift 💜 ---");
 
-    // Auth
     const password = await rl.question("Enter Password: ");
-    const isMatch = await bcrypt.compare(password, ADMIN_PASSWORD);
+    const isMatch = await bcrypt.compare(password, config.ADMIN_PASSWORD);
     if (!isMatch) return console.log("Invalid password!");
 
-    // Count
     const count = parseInt(await rl.question("Enter Gift Uses Count: "));
-    if (Number.isNaN(count) || count <= 0 || count > 100) return console.error("Invalid input. Please enter a positive integer between 1 and 100.");
+    if (Number.isNaN(count) || count <= 0 || count > config.GIFT_USES_MAX) return console.error("Invalid input. Please enter a positive integer between 1 and 100.");
 
-    // Name
     const name = await rl.question("Enter Gift Name: ");
-    if (name.length <= 0 || name.length > 100) return console.error("Invalid input. Gift name must be a type of string between 1 and 100.");
+    if (!name.length || name.length > config.GIFT_NAME_MAX_LENGTH) return console.error("Invalid input. Gift name must be a type of string between 1 and 100.");
 
-    // Insert
     const result = new schemas.Gifts({
       usesCount: count,
       name: name
@@ -40,12 +32,11 @@ async function handleCreateGift() {
 
     await result.save();
 
-    // Success
     console.log(`Success! Gift created with ID: ${result._id}`);
   } catch (e) {
     console.error(`Error: ${e.message}`);
   } finally {
     rl.close();
-    await mongoose.disconnect(); 
+    await mongoose.disconnect();
   }
 }
