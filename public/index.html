@@ -11,10 +11,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap"
-        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
+    <link rel="icon" href="/resources/favicon.ico" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.8/purify.min.js"></script>
@@ -46,14 +46,10 @@
             <input id="create-post-keywords" type="text" placeholder="Enter post keywords (Comma-separated)..." />
             <textarea id="create-post-content" placeholder="Enter post content..."></textarea>
 
-            <!-- Helper icons -->
+            <!-- Helpers -->
             <div class="space-between">
-                <div class="center" style="gap: 5px;">
-                    <i id="copy-post-content-btn" class="fas fa-copy icon-helper" role="button" tabindex="0"
-                        title="Copy"></i>
-                    <i id="view-active-gifts" class="fas fa-gift icon-helper" role="button" tabindex="0"
-                        title="View active gifts"></i>
-                </div>
+                <i id="view-active-gifts" class="fas fa-gift icon-helper" role="button" tabindex="0"
+                    title="View active gifts"></i>
                 <p class="text-count">
                     Count:
                     <span class="count" id="create-post-content-count">0</span>
