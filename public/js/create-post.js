@@ -16,16 +16,23 @@ const postsNavigationContainer = NS("#posts-navigation-container");
 // Search
 searchPostsInput.attr("maxLength", config.SEARCH_QUERY_LENGTH_MAX);
 searchPostsBtn.on("click", lockEvent(async function () {
+    const setPostsNavDisplay = (value) => {
+        if (!postsState.isCustomPost) {
+            postsNavigationContainer.css("display", value);
+        }
+    }
+
+    // Query vlidation
     const value = searchPostsInput.value();
     if (!value) {
-        postsNavigationContainer.css("display", "");
+        setPostsNavDisplay("");
         getPosts(postsState.customPostId);
         return;
     }
 
     // Find posts
     const searchData = await sendRequest({
-        url: `/api/v1/search/posts/?query=${encodeURI(value)}`,
+        url: `/api/v1/search/posts/?query=${encodeURIComponent(value)}`,
         method: "GET"
     });
 
@@ -33,19 +40,8 @@ searchPostsBtn.on("click", lockEvent(async function () {
 
     // Render found posts
     renderPosts(searchData.posts);
-    postsNavigationContainer.css("display", "none");
+    setPostsNavDisplay("none");
 }));
-
-// Copy post content
-copyPostContentBtn.on("click", function () {
-    if (!createPostContent.value()) return Swal.fire("No content!");
-
-    NS.copy({
-        text: createPostContent.value(),
-        onSuccess: () => { Swal.fire("Success", "Copied!", "success") },
-        onFailure: () => { Swal.fire("Failed", "Failed to copy. Try again", "error") }
-    });
-});
 
 // Create post
 createPostBtn.on("click", lockEvent(async function () {

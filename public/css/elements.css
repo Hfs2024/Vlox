@@ -41,7 +41,7 @@ textarea {
     font-weight: bold;
     padding: 10px;
     box-sizing: border-box;
-    border: 2px solid var(--accent-charcoal);
+    border: 1px solid var(--accent-secondary-gray);
     border-radius: 10px;
     display: block;
     margin-top: 20px;
@@ -54,7 +54,7 @@ textarea {
 .text-count,
 .text-forget-password {
     text-align: right;
-    color: var(--accent-secondary-gray);
+    color: var(--accent-main-gray);
     font-size: 14px;
     font-weight: bold;
 }
@@ -65,7 +65,7 @@ textarea {
 }
 
 .text-forget-password:hover {
-    color: var(--accent-main-gray);
+    color: var(--accent-secondary-gray);
 }
 
 /* Buttons */

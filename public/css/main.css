@@ -3,18 +3,17 @@
     --accent-charcoal: #1f2933;
     --accent-main-blue: #214198;
     --accent-secondary-blue: #10204c;
-    --accent-main-gray: #aaa;
-    --accent-secondary-gray: #555;
+    --accent-main-gray: #4b4b4b;
+    --accent-secondary-gray: #b5adad;
     --accent-white: #f0f8ff;
     --card-bg: #f2f2f2;
-    --card-border: #b5adad;
 }
 
 body {
     background-color: white;
     margin: 0;
     padding: 0;
-    font-family: "Roboto Slab", serif;
+    font-family: "Raleway", sans-serif;
     transition: background-color 0.3s ease;
 }
 
