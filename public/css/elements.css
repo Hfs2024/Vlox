@@ -119,29 +119,3 @@ button:hover {
     width: 0%;
     height: 20px;
 }
-
-/* Task filter */
-.task-filter-bar {
-    background-color: var(--accent-main-gray);
-    white-space: nowrap;
-    padding: 10px;
-    border-radius: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.btn-task-filter-bar {
-    width: 100%;
-    margin-top: 0;
-}
-
-.panel-task-filter-bar {
-    display: none;
-}
-
-.panel-task-filter-bar-active {
-    display: block;
-}

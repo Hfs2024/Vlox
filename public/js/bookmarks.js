@@ -58,7 +58,7 @@ NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
                         });
 
                         if (!postData.success) return Swal.fire(postData.error);
-                        renderPosts(Array.isArray(postData.posts) ? postData.posts : (postData.posts ? [postData.posts] : []));
+                        renderPosts(postData.posts);
                         Swal.fire("Success", "Post loaded!", "success");
                     }));
 

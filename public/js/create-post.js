@@ -1,6 +1,6 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { sendRequest, lockEvent } from "./helpers.js";
+import { sendRequest, lockEvent, initLiveCounter } from "./helpers.js";
 import { getPosts, postsState, renderPosts } from "./render-posts.js";
 
 const createPostBtn = NS("#create-post-btn");
@@ -10,31 +10,30 @@ const createPostKeywords = NS("#create-post-keywords");
 const createPostTitle = NS("#create-post-title");
 const copyPostContentBtn = NS("#copy-post-content-btn");
 const searchPostsInput = NS("#search-posts-input");
-const searchPostsBtn = NS("#btn-search-posts");
-const prevBtn = NS("#prev-btn");
-const nextBtn = NS("#next-btn");
+const searchPostsBtn = NS("#search-posts-btn");
+const postsNavigationContainer = NS("#posts-navigation-container");
 
 // Search
-async function search() {
+searchPostsInput.attr("maxLength", config.SEARCH_QUERY_LENGTH_MAX);
+searchPostsBtn.on("click", lockEvent(async function () {
     const value = searchPostsInput.value();
-    if (!value) return getPosts();
+    if (!value) {
+        postsNavigationContainer.css("display", "");
+        getPosts(postsState.customPostId);
+        return;
+    }
 
+    // Find posts
     const searchData = await sendRequest({
         url: `/api/v1/search/posts/?query=${encodeURI(value)}`,
         method: "GET"
     });
 
     if (!searchData.success) return Swal.fire(searchData.error);
-    const posts = Array.isArray(searchData.posts) ? searchData.posts : (searchData.posts ? [searchData.posts] : []);
-    renderPosts(posts);
-}
 
-searchPostsBtn.on("click", lockEvent(async function () {
-    const value = searchPostsInput.value();
-    if (value.length > config.SEARCH_QUERY_LENGTH_MAX) return Swal.fire(`Query should be less than or equal to ${config.SEARCH_QUERY_LENGTH_MAX} chars!`);
-    if (!value) return getPosts();
-
-    await search();
+    // Render found posts
+    renderPosts(searchData.posts);
+    postsNavigationContainer.css("display", "none");
 }));
 
 // Copy post content
@@ -86,14 +85,20 @@ createPostBtn.on("click", lockEvent(async function () {
 }));
 
 // Navigation
-prevBtn.on("click", lockEvent(async () => {
-    if (postsState.skip <= 0) return;
-    postsState.skip -= config.POSTS_LIMIT;
-    await getPosts();
-}));
+if (!postsState.isCustomPost) {
+    NS.createEl("button", postsNavigationContainer, {})
+        .html("<i class='fas fa-chevron-left'></i> Prev")
+        .on("click", lockEvent(async () => {
+            if (postsState.skip <= 0) return;
+            postsState.skip -= config.POSTS_LIMIT;
+            await getPosts();
+        }));
 
-nextBtn.on("click", lockEvent(async () => {
-    if (NS("#posts-container").get(".state-nothing-found")?.elements) return;
-    postsState.skip += config.POSTS_LIMIT;
-    await getPosts();
-}));
+    NS.createEl("button", postsNavigationContainer, {})
+        .html("<i class='fas fa-chevron-right'></i> Next")
+        .on("click", lockEvent(async () => {
+            if (NS("#posts-container").get(".state-nothing-found")?.elements) return;
+            postsState.skip += config.POSTS_LIMIT;
+            await getPosts();
+        }));
+}

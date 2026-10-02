@@ -152,9 +152,10 @@ footer {
     color: var(--accent-main-gray);
 }
 
-[inert] {
+[inert], .disabled {
     opacity: 0.5;
     transition: 0.3s opacity ease;
+    cursor: not-allowed;
 }
 
 /* Responsiveness */
