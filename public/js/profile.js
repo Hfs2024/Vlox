@@ -26,12 +26,12 @@ export async function showProfile(data) {
     ${isUserProfile ? '<i class="fas fa-pen-to-square icon-helper" id="user-profile-bio-edit-btn" role="button" tabindex="0"></i>' : ""}
   </div>
   <div class="space-between">  
-    <p class="center-overflow"><b>Visibility:</b> ${user.private ? "Private" : "Public"}</p>
+    <p><b>Visibility:</b> ${user.private ? "Private" : "Public"}</p>
     ${isUserProfile ? `<i class="fas fa-${user.private ? "eye" : "eye-slash"} icon-helper" id="user-profile-visibility-toggle-btn" role="button" tabindex="0"></i>` : ""}
   </div>
-    <p class="center-overflow"><b>Coins:</b> ${coins}/${config.COINS_MAX}</p>
+    <p><b>Coins:</b> ${coins}/${config.COINS_MAX}</p>
   ${isUserProfile ? `
-  <div class="center-overflow emoji-container"></div>
+  <div class="center emoji-container"></div>
   <button id="reset-password-recovery-codes-btn" class="w-full">Reset Recovery Codes</button>
 ` : ""}
 </div>

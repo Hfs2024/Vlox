@@ -69,10 +69,12 @@ export function generatePostLink(postId) {
 export function initLiveCounter(inputElement, countElement, max) {
     const inputEl = NS(inputElement);
     const safeMax = Number.isInteger(max) ? max : config.POST_CONTENT_MAX_LENGTH;
-    inputEl.on("input", function () {
-        const length = (inputEl.value() || "").length;
-        NS(countElement).text(length);
-    }).attr("maxLength", safeMax);
+    inputEl
+        .attr("maxLength", safeMax)
+        .on("input", function () {
+            const length = (inputEl.value() || "").length;
+            NS(countElement).text(length);
+        });
 }
 
 // Lock on click

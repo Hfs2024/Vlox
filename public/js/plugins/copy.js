@@ -11,9 +11,9 @@ NS.copy = async ({
     try {
         await navigator.clipboard.writeText(text);
         if (typeof onSuccess === "function") onSuccess(text);
-        return true;
+        return true; // Success
     } catch (e) {
         if (typeof onFailure === "function") onFailure(e);
-        return false;
+        return false; // Fail
     }
 }

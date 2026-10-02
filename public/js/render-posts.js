@@ -4,14 +4,18 @@ import { sendRequest, capitalizeFirstLetter, cleanHTML, generatePostLink, initAc
 import { inputComment, replyComment } from "./comment-helpers.js";
 import { showProfile } from "./profile.js";
 
-export const postsState = { skip: 0 };
+const query = new URLSearchParams(window.location.search);
+export const postsState = {
+    skip: 0,
+    customPostId: query.get("id"),
+    isCustomPost: query.get("id") ? true : false
+}
 
 export async function renderPosts(posts = []) {
-    const postsContainer = NS("#posts-container");
-    postsContainer.html("");
+    const postsContainer = NS("#posts-container").html("");
 
     // Nothing found
-    if (!posts || posts.length === 0) {
+    if (!Array.isArray(posts) || posts.length === 0) {
         NS.createEl("div", postsContainer, {
             className: "state-nothing-found"
         }).html("<b>No posts yet. Be the first one to post!</b>");
@@ -286,16 +290,13 @@ export async function renderPosts(posts = []) {
     initAccessibility();
 }
 
-export async function getPosts() {
-    const query = new URLSearchParams(window.location.search);
-    const id = query.get("id");
-
+export async function getPosts(postId = null) {
     const data = await sendRequest({
-        url: id ? `/api/v1/get/post/${id}` : `/api/v1/get/posts/?skip=${postsState.skip}`,
+        url: postId ? `/api/v1/get/post/${postId}` : `/api/v1/get/posts/?skip=${postsState.skip}`,
     });
 
     if (!data.success) return Swal.fire(data.error);
-    renderPosts(Array.isArray(data.posts) ? data.posts : (data.posts ? [data.posts] : []));
+    renderPosts(data.posts);
 }
 
-getPosts();
+getPosts(postsState.customPostId);
