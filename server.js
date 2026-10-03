@@ -95,17 +95,21 @@ app.get("/api/v1/get/post/:id", [
 });
 
 app.get("/api/v1/get/posts", [
-    query("skip").exists().isInt({ min: 0 })
+    query("skip").exists().isInt({ min: 0 }),
+    query("chronological").exists().customSanitizer(value => value === "true")
 ], validateResult, async (req, res) => {
-    const skip = req.cleanData.skip;
+    const { skip, chronological } = req.cleanData;
+
+    // Sort query
+    const sortQuery = chronological
+        ? { createdAt: -1, _id: -1 }
+        : { level: -1, likes: -1, createdAt: -1, _id: -1 };
+
+    // Find posts
     const posts = await schemas.Posts.find({
         private: false
-    }).sort({
-        level: -1,
-        likes: -1,
-        createdAt: -1,
-        _id: -1
     })
+        .sort(sortQuery)
         .skip(skip)
         .limit(config.POSTS_LIMIT)
         .select("-reports")
