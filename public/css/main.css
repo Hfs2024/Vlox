@@ -95,6 +95,10 @@ footer {
     width: auto !important;
 }
 
+.swal2-popup {
+    border-radius: 12px !important; 
+}
+
 /* Helpers */
 .center,
 .space-between,

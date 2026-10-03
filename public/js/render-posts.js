@@ -18,7 +18,7 @@ export async function renderPosts(posts = []) {
     if (!Array.isArray(posts) || posts.length === 0) {
         NS.createEl("div", postsContainer, {
             className: "state-nothing-found"
-        }).html("<b>No posts yet. Be the first one to post!</b>");
+        }).html("<b>No posts yet.</b>");
         return;
     }
 
@@ -65,7 +65,7 @@ export async function renderPosts(posts = []) {
             style: "color: red; cursor: pointer",
             role: "button", tabIndex: "0"
         })
-            .html(`Created by: ${safeBy.emoji || "🚀"} <span class='author-name'>${capitalizeFirstLetter(safeBy.username || "User")}</span>`)
+            .html(`Created by: ${safeBy.emoji || "🚀"} <span class="author-name">${capitalizeFirstLetter(safeBy.username || "User")}</span>`)
             .on("click", async function () {
                 const authorProfileData = await sendRequest({
                     url: `/api/v1/get/user-profile/${safeBy._id}`
@@ -96,38 +96,41 @@ export async function renderPosts(posts = []) {
             replies.forEach(reply => {
                 const safeReply = reply || {};
                 const safeReplyBy = safeReply.by || {};
-                const replyItem = NS.createEl("div", NS("#replies-container"), { className: "comment-item space-between" });
-                replyItem.html(`
-<div class="center" style="gap: 5px">
-  <div class="comment-item-author">
-    <i class="fas fa-medal" title="Author"></i>
-    ${capitalizeFirstLetter(safeReplyBy.username || "User")}:
+                const replyItem = NS.createEl("div", NS("#replies-container"), { className: "comment-item" });
+                replyItem
+                    .html(`
+<div class="space-between">
+  <div class="center comment-item-author">
+    ${safeReplyBy.emoji || "🚀"}
+    ${capitalizeFirstLetter(safeReplyBy.username || "User")}
   </div>
-  <div class="reply-item-content"></div>
+
+  <div class="center">
+    <i class="fas fa-reply icon-post reply-btn" role="button" tabindex="0" title="Reply"></i>
+    <i class="fas fa-eye icon-post view-reply-btn" role="button" tabindex="0" title="View reply"></i>
+  </div>
 </div>
 
-<div class="center comment-item-icons">
-  <i class="fas fa-reply icon-post reply-btn" role="button" tabindex="0" aria-label="Reply"></i>
-  <i class="fas fa-eye icon-post view-reply-btn" role="button" tabindex="0" aria-label="View reply"></i>
-</div>
-                    `).on("click", function (e) {
-                    e.preventDefault();
-                    if (safeReplyBy.username !== window?.quickInfo?.username) return;
+<div class="reply-item-content" style="margin-top: 10px"></div>
+                    `)
+                    .on("click", function (e) {
+                        e.preventDefault();
+                        if (safeReplyBy.username !== window?.quickInfo?.username) return;
 
-                    inputComment("Update reply:",
-                        replyItem.get(".reply-item-content").text(),
-                        async (content) => {
-                            const updateReplyResponse = await sendRequest({
-                                url: `/api/v1/edit/post/${safePost._id}/comment/${safeReply._id}`,
-                                method: "PUT",
-                                body: { newComment: content }
+                        inputComment("Update reply:",
+                            replyItem.get(".reply-item-content").text(),
+                            async (content) => {
+                                const updateReplyResponse = await sendRequest({
+                                    url: `/api/v1/edit/post/${safePost._id}/comment/${safeReply._id}`,
+                                    method: "PUT",
+                                    body: { newComment: content }
+                                });
+
+                                if (!updateReplyResponse.success) return Swal.fire(updateReplyResponse.error);
+                                Swal.fire("Success", "Reply updated!", "success");
+                                replyItem.get(".reply-item-content").text(content || "No content found");
                             });
-
-                            if (!updateReplyResponse.success) return Swal.fire(updateReplyResponse.error);
-                            Swal.fire("Success", "Reply updated!", "success");
-                            replyItem.get(".reply-item-content").text(content || "No content found");
-                        });
-                })
+                    })
 
                 replyItem.get(".reply-item-content").text(safeReply.content || "No content found");
                 replyItem.get(".reply-btn")
@@ -160,41 +163,43 @@ export async function renderPosts(posts = []) {
 
             // Show comments
             commentsList.html("");
-
             comments.forEach(comment => {
                 const safeComment = comment || {};
                 const safeCommentBy = safeComment.by || {};
-                const commentItem = NS.createEl("div", commentsList, { className: "comment-item space-between" });
-                commentItem.html(`
-<div class="center" style="gap: 5px">
-  <div class="comment-item-author">
+                const commentItem = NS.createEl("div", commentsList, { className: "comment-item" });
+                commentItem
+                    .html(`
+<div class="space-between">
+  <div class="center comment-item-author">
     ${safeCommentBy.emoji || "🚀"}
-    ${capitalizeFirstLetter(safeCommentBy.username || "User")}:
+    ${capitalizeFirstLetter(safeCommentBy.username || "User")}
   </div>
-  <div class="comment-item-content"></div>
+
+  <div class="center">
+    <i class="fas fa-reply icon-post reply-btn" role="button" tabindex="0" title="Reply"></i>
+    <i class="fas fa-eye icon-post view-reply-btn" role="button" tabindex="0" title="View reply"></i>
+  </div>
 </div>
 
-<div class="center comment-item-icons">
-  <i class="fas fa-reply icon-post reply-btn" role="button" tabindex="0" aria-label="Reply"></i>
-  <i class="fas fa-eye icon-post view-reply-btn" role="button" tabindex="0" aria-label="View reply"></i>
-</div>
-                    `).on("click", function () {
-                    if (safeCommentBy.username !== window?.quickInfo?.username) return;
+<div class="comment-item-content" style="margin-top: 10px"></div>
+                    `)
+                    .on("click", function () {
+                        if (safeCommentBy.username !== window?.quickInfo?.username) return;
 
-                    inputComment("Update comment:",
-                        commentItem.get(".comment-item-content").text(),
-                        async (content) => {
-                            const updateCommentResponse = await sendRequest({
-                                url: `/api/v1/edit/post/${safePost._id}/comment/${safeComment._id}`,
-                                method: "PUT",
-                                body: { newComment: content }
+                        inputComment("Update comment:",
+                            commentItem.get(".comment-item-content").text(),
+                            async (content) => {
+                                const updateCommentResponse = await sendRequest({
+                                    url: `/api/v1/edit/post/${safePost._id}/comment/${safeComment._id}`,
+                                    method: "PUT",
+                                    body: { newComment: content }
+                                });
+
+                                if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
+                                Swal.fire("Success", "Comment updated!", "success");
+                                commentItem.get(".comment-item-content").text(content || "No content found");
                             });
-
-                            if (!updateCommentResponse.success) return Swal.fire(updateCommentResponse.error);
-                            Swal.fire("Success", "Comment updated!", "success");
-                            commentItem.get(".comment-item-content").text(content || "No content found");
-                        });
-                });
+                    });
 
                 commentItem.get(".comment-item-content").text(safeComment.content || "No content found");
                 commentItem.get(".reply-btn").on("click", function (e) {
