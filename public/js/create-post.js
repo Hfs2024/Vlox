@@ -1,6 +1,6 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { sendRequest, lockEvent, initLiveCounter } from "./helpers.js";
+import { sendRequest, lockEvent } from "./helpers.js";
 import { getPosts, postsState, renderPosts } from "./render-posts.js";
 
 const createPostBtn = NS("#create-post-btn");
@@ -8,13 +8,11 @@ const createPostContent = NS("#create-post-content");
 const createPostContentCount = NS("#create-post-content-count");
 const createPostKeywords = NS("#create-post-keywords");
 const createPostTitle = NS("#create-post-title");
-const copyPostContentBtn = NS("#copy-post-content-btn");
-const searchPostsInput = NS("#search-posts-input");
+const searchPostsInput = NS("#search-posts-input").attr("maxLength", config.SEARCH_QUERY_LENGTH_MAX);
 const searchPostsBtn = NS("#search-posts-btn");
 const postsNavigationContainer = NS("#posts-navigation-container");
 
 // Search
-searchPostsInput.attr("maxLength", config.SEARCH_QUERY_LENGTH_MAX);
 searchPostsBtn.on("click", lockEvent(async function () {
     const setPostsNavDisplay = (value) => {
         if (!postsState.isCustomPost) {
