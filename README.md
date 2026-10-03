@@ -1,6 +1,6 @@
 ## Demo
 
-![Image of Vlox](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/xtiaxou9dgc4zwfl73mu.png)
+![Image of Vlox](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/27pztn2njbf0zfilxraw.png)
 
 ## Link to Code
 - **Vlox:** [Source Code on Github](https://github.com/Hfs2024/Vlox)
