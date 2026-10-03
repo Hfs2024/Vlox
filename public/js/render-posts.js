@@ -8,7 +8,8 @@ const query = new URLSearchParams(window.location.search);
 export const postsState = {
     skip: 0,
     customPostId: query.get("id"),
-    isCustomPost: query.get("id") ? true : false
+    isCustomPost: query.get("id") ? true : false,
+    chronological: query.get("chronological")
 }
 
 export async function renderPosts(posts = []) {
@@ -295,13 +296,18 @@ export async function renderPosts(posts = []) {
     initAccessibility();
 }
 
-export async function getPosts(postId = null) {
+export async function getPosts(
+    chronological = false,
+    postId = null
+) {
     const data = await sendRequest({
-        url: postId ? `/api/v1/get/post/${postId}` : `/api/v1/get/posts/?skip=${postsState.skip}`,
+        url: postId ?
+            `/api/v1/get/post/${postId}` :
+            `/api/v1/get/posts/?chronological=${chronological}&skip=${postsState.skip}`,
     });
 
     if (!data.success) return Swal.fire(data.error);
     renderPosts(data.posts);
 }
 
-getPosts(postsState.customPostId);
+getPosts(postsState.chronological, postsState.customPostId);

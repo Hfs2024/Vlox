@@ -85,7 +85,7 @@ if (!postsState.isCustomPost) {
         .on("click", lockEvent(async () => {
             if (postsState.skip <= 0) return;
             postsState.skip -= config.POSTS_LIMIT;
-            await getPosts();
+            await getPosts(postsState.chronological);
         }));
 
     NS.createEl("button", postsNavigationContainer, {})
@@ -93,6 +93,6 @@ if (!postsState.isCustomPost) {
         .on("click", lockEvent(async () => {
             if (NS("#posts-container").get(".state-nothing-found")?.elements) return;
             postsState.skip += config.POSTS_LIMIT;
-            await getPosts();
+            await getPosts(postsState.chronological);
         }));
 }
