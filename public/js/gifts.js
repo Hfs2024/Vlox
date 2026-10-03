@@ -8,7 +8,7 @@ NS("#view-active-gifts").on("click", lockEvent(async function () {
 
     if (!data.success) return Swal.fire(data.error);
     const gifts = Array.isArray(data.gifts) ? data.gifts : [];
-    if (gifts.length <= 0) return Swal.fire("No gifts found.");
+    if (gifts.length <= 0) return Swal.fire("No gifts found!");
 
     // Show gifts
     Swal.fire({
