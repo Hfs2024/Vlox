@@ -18,6 +18,8 @@ import {
     searchPostsValidator,
     getPostCommentsValidator,
     getPostRepliesValidator,
+    resetPasswordValidator,
+    redeemGiftLinkValidator
 } from "./validators.js";
 const __dirname = import.meta.dirname;
 const isProduction = config.NODE_ENV === "production";

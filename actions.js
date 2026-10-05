@@ -8,7 +8,9 @@ import {
     changePostVisibilityValidator,
     replyToCommentValidator,
     defaultPostFindValidator,
-    editCommentValidator
+    editCommentValidator,
+    reactOnPostValidator,
+    commentOnPostValidator
 } from "./validators.js";
 const router = express.Router();
 
@@ -24,7 +26,7 @@ router.put("/api/v1/change-visibility/post/:id", checkAuth, changePostVisibility
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/comment/post/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
+router.post("/api/v1/comment/post/:id", checkAuth, commentOnPostValidator, async (req, res) => {
     const { id, comment } = req.cleanData;
 
     const session = await mongoose.startSession();
@@ -148,7 +150,7 @@ router.post("/api/v1/redeem/post/:id", checkAuth, defaultPostFindValidator, asyn
     return res.status(200).json({ success: true, inc: inc });
 });
 
-router.post("/api/v1/react/:action/post/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
+router.post("/api/v1/react/:action/post/:id", checkAuth, reactOnPostValidator, async (req, res) => {
     const session = await mongoose.startSession();
     const { action, id } = req.cleanData;
 
