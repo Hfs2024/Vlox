@@ -172,9 +172,9 @@ export async function renderProfilePost({
                 url: `/api/v1/edit/post/${safePost._id}`,
                 method: "PUT",
                 body: {
-                    newContent: result.value.content,
-                    newTitle: result.value.title,
-                    newKeywords: result.value.keywords
+                    content: result.value.content,
+                    title: result.value.title,
+                    keywords: result.value.keywords
                 }
             });
 

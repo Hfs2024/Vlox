@@ -1,14 +1,19 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import { body, param, query } from "express-validator";
-import { checkAuth, generateRecoveryCodes, validateResult, createLimiter } from "./helpers.js";
+import { checkAuth, generateRecoveryCodes, createLimiter } from "./helpers.js";
 import schemas from "./schemas.js";
 import config from "./config/backend.js";
+import {
+    changeUserVisibilityValidator,
+    loginValidator,
+    signupValidator,
+    updateUserValidator,
+    getUserProfileValidator,
+    getUserPostsValidator
+} from "./validators.js";
 const router = express.Router();
 
-router.put("/api/v1/change-visibility/user-profile", checkAuth, [
-    body("value").exists().isIn([true, false])
-], validateResult, async (req, res) => {
+router.put("/api/v1/change-visibility/user-profile", checkAuth, changeUserVisibilityValidator, async (req, res) => {
     const value = req.cleanData.value;
     const result = await schemas.Users.updateOne({
         _id: req.session.userId,
@@ -25,10 +30,7 @@ router.put("/api/v1/change-visibility/user-profile", checkAuth, [
 
 const authRateLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 
-router.post("/api/v1/login", authRateLimiter, [
-    body("username").exists().notEmpty().isString().isLength({ min: config.USERNAME_MIN_LENGTH, max: config.USERNAME_MAX_LENGTH }).toLowerCase().trim(),
-    body("password").exists().notEmpty().isString().isLength({ max: config.PASSWORD_MAX_LENGTH }).trim()
-], validateResult, async (req, res) => {
+router.post("/api/v1/login", authRateLimiter, loginValidator, async (req, res) => {
     const { username, password } = req.cleanData;
 
     const user = await schemas.Users.findOne({ username: username }).select("password");
@@ -47,14 +49,8 @@ router.post("/api/v1/login", authRateLimiter, [
     });
 });
 
-router.post("/api/v1/signup", authRateLimiter, [
-    body("username").exists().notEmpty().isString().isLength({ min: config.USERNAME_MIN_LENGTH, max: config.USERNAME_MAX_LENGTH }).toLowerCase().trim(),
-    body("password").exists().notEmpty().isString().isLength({ min: config.PASSWORD_MIN_LENGTH, max: config.PASSWORD_MAX_LENGTH }).trim(),
-    body("bio").exists().notEmpty().isString().isLength({ min: config.BIO_MIN_LENGTH, max: config.BIO_MAX_LENGTH }).trim(),
-    body("email").exists().notEmpty().isEmail().isLength({ max: config.EMAIL_MAX_LENGTH }).normalizeEmail().trim()
-], validateResult, async (req, res) => {
+router.post("/api/v1/signup", authRateLimiter, signupValidator, async (req, res) => {
     const { username, password, email, bio } = req.cleanData;
-
     const recoveryCodes = await generateRecoveryCodes();
     const hashedPassword = await bcrypt.hash(password, config.BCRYPT_SALT_ROUNDS);
 
@@ -79,10 +75,7 @@ router.post("/api/v1/signup", authRateLimiter, [
     });
 });
 
-router.put("/api/v1/update/user", checkAuth, [
-    body("newEmoji").optional({ values: "falsy" }).isString().isIn(["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"]).trim(),
-    body("newBio").optional({ values: "falsy" }).isString().isLength({ max: config.BIO_MAX_LENGTH }).trim()
-], validateResult, async (req, res) => {
+router.put("/api/v1/update/user", checkAuth, updateUserValidator, async (req, res) => {
     const { newBio, newEmoji } = req.cleanData;
     const updateQuery = {};
     if (newEmoji) updateQuery.emoji = newEmoji.normalize("NFC");
@@ -121,9 +114,7 @@ router.get("/api/v1/get/user-quick-info", checkAuth, async (req, res) => {
     });
 });
 
-router.get("/api/v1/get/user-profile/:id", checkAuth, [
-    param("id").exists().isMongoId()
-], validateResult, async function (req, res) {
+router.get("/api/v1/get/user-profile/:id", checkAuth, getUserProfileValidator, async function (req, res) {
     const id = req.cleanData.id;
 
     const user = await schemas.Users.findOne({
@@ -141,10 +132,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, [
     return res.status(200).json({ success: true, user: user });
 });
 
-router.get("/api/v1/get/user-posts/:id", checkAuth, [
-    query("skip").exists().isInt({ min: 0 }),
-    param("id").exists().isMongoId()
-], validateResult, async function (req, res) {
+router.get("/api/v1/get/user-posts/:id", checkAuth, getUserPostsValidator, async function (req, res) {
     const { id, skip } = req.cleanData;
     const posts = await schemas.Posts.find({
         by: id,

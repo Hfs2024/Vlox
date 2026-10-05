@@ -1,16 +1,18 @@
 import schemas from "./schemas.js";
-import { checkAuth, validateResult, hotQueries } from "./helpers.js";
-import { body, param } from "express-validator";
+import { checkAuth, hotQueries } from "./helpers.js";
 import express from "express";
 import mongoose from "mongoose";
 import ClientError from "./client-error.js";
 import config from "./config/backend.js";
+import {
+    changePostVisibilityValidator,
+    replyToCommentValidator,
+    defaultPostFindValidator,
+    editCommentValidator
+} from "./validators.js";
 const router = express.Router();
 
-router.put("/api/v1/change-visibility/post/:id", checkAuth, [
-    param("id").exists().isMongoId(),
-    body("value").exists().isIn([true, false])
-], validateResult, async (req, res) => {
+router.put("/api/v1/change-visibility/post/:id", checkAuth, changePostVisibilityValidator, async (req, res) => {
     const { id, value } = req.cleanData;
     const result = await schemas.Posts.updateOne(hotQueries.modify_post(id, req.session.userId), {
         $set: {
@@ -22,10 +24,7 @@ router.put("/api/v1/change-visibility/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/comment/post/:id", checkAuth, [
-    param("id").exists().isMongoId(),
-    body("comment").exists().notEmpty().isString().isLength({ max: config.COMMENT_CONTENT_MAX_LENGTH }).trim()
-], validateResult, async (req, res) => {
+router.post("/api/v1/comment/post/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
     const { id, comment } = req.cleanData;
 
     const session = await mongoose.startSession();
@@ -52,47 +51,33 @@ router.post("/api/v1/comment/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/reply/comment/:parentCommentId/post/:postId", checkAuth, [
-    param("postId").exists().isMongoId(),
-    param("parentCommentId").exists().isMongoId(),
-    body("reply").exists().notEmpty().isString().isLength({ max: config.COMMENT_CONTENT_MAX_LENGTH }).trim()
-], validateResult, async (req, res) => {
+router.post("/api/v1/reply/comment/:parentCommentId/post/:postId", checkAuth, replyToCommentValidator, async (req, res) => {
     const { postId, reply, parentCommentId } = req.cleanData;
 
-    const session = await mongoose.startSession();
-    await session.withTransaction(async () => {
-        // Update parent replies count
-        const result = await schemas.Comments.updateOne({
-            _id: parentCommentId,
-            for: postId,
-            repliesCount: { $lt: config.COMMENT_REPLIES_MAX }
-        }, {
-            $inc: {
-                repliesCount: 1
-            }
-        }, { session });
+    // Find parent
+    const comment = await schemas.Comments.findOne({
+        _id: parentCommentId,
+        for: postId,
+        repliesDepthLevel: { $lt: config.COMMENT_REPLIES_DEPTH_MAX }
+    })
+        .select("repliesDepthLevel");
+    
+    if (!comment) return res.status(400).json({ error: "You may not have access to this comment!" });
 
-        if (result.matchedCount === 0) throw new ClientError("You may not have access to this comment or its replies count is already 10!");
-
-        
-        // Insert the new reply
-        const newReply = new schemas.Comments({
-            content: reply,
-            parentCommentId: parentCommentId,
-            for: postId,
-            by: req.session.userId
-        });
-
-        await newReply.save({ session });
+    // Insert the new reply
+    const newReply = new schemas.Comments({
+        content: reply,
+        parentCommentId: parentCommentId,
+        repliesDepthLevel: comment.repliesDepthLevel + 1,
+        for: postId,
+        by: req.session.userId
     });
 
-    await session.endSession();
+    await newReply.save();
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/inc-lvl/post/:id", checkAuth, [
-    param("id").exists().isMongoId()
-], validateResult, async (req, res) => {
+router.post("/api/v1/inc-lvl/post/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
     const id = req.cleanData.id;
     if (req.currentUser.coins < config.COINS_MIN) return res.status(400).json({ error: "You don't have enough coins!" });
 
@@ -125,9 +110,7 @@ router.post("/api/v1/inc-lvl/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/redeem/post/:id", checkAuth, [
-    param("id").exists().isMongoId()
-], validateResult, async (req, res) => {
+router.post("/api/v1/redeem/post/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
     const session = await mongoose.startSession();
     const remaining = Math.max(0, config.COINS_MAX - req.currentUser.coins);
     const inc = Math.min(config.COINS_MIN, remaining);
@@ -165,10 +148,7 @@ router.post("/api/v1/redeem/post/:id", checkAuth, [
     return res.status(200).json({ success: true, inc: inc });
 });
 
-router.post("/api/v1/react/:action/post/:id", checkAuth, [
-    param("action").exists().notEmpty().isString().isIn(["like", "report"]),
-    param("id").exists().isMongoId()
-], validateResult, async (req, res) => {
+router.post("/api/v1/react/:action/post/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
     const session = await mongoose.startSession();
     const { action, id } = req.cleanData;
 
@@ -198,11 +178,7 @@ router.post("/api/v1/react/:action/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-router.put("/api/v1/edit/post/:postId/comment/:commentId", checkAuth, [
-    param("postId").exists().isMongoId(),
-    param("commentId").exists().isMongoId(),
-    body("newComment").exists().notEmpty().isString().isLength({ max: config.COMMENT_CONTENT_MAX_LENGTH }).trim(),
-], validateResult, async (req, res) => {
+router.put("/api/v1/edit/post/:postId/comment/:commentId", checkAuth, editCommentValidator, async (req, res) => {
     const { newComment, postId, commentId } = req.cleanData;
     const post = await schemas.Posts.find(hotQueries.view_post(postId, req.session.userId));
     if (!post) return res.status(400).json({ error: "Post not found or you don't have permissions to see it" });
@@ -220,18 +196,13 @@ router.put("/api/v1/edit/post/:postId/comment/:commentId", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-router.put("/api/v1/edit/post/:id", checkAuth, [
-    body("newTitle").exists().notEmpty().isString().trim().isLength({ max: config.POST_TITLE_MAX_LENGTH }),
-    body("newContent").exists().notEmpty().isString().trim().isLength({ max: config.POST_CONTENT_MAX_LENGTH }),
-    body("newKeywords").exists().isArray({ max: config.POST_KEYWORDS_MAX_LENGTH }).customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim())),
-    param("id").exists().isMongoId()
-], validateResult, async (req, res) => {
-    const { newContent, newTitle, id, newKeywords } = req.cleanData;
+router.put("/api/v1/edit/post/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
+    const { content, title, id, keywords } = req.cleanData;
     const result = await schemas.Posts.updateOne(hotQueries.modify_post(id, req.session.userId), {
         $set: {
-            content: newContent,
-            title: newTitle,
-            keywords: newKeywords
+            content: content,
+            title: title,
+            keywords: keywords
         }
     });
 
@@ -239,9 +210,7 @@ router.put("/api/v1/edit/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-router.delete("/api/v1/delete/post/:id", checkAuth, [
-    param("id").exists().isMongoId()
-], validateResult, async function (req, res) {
+router.delete("/api/v1/delete/post/:id", checkAuth, defaultPostFindValidator, async function (req, res) {
     const session = await mongoose.startSession();
     const id = req.cleanData.id;
     await session.withTransaction(async () => {

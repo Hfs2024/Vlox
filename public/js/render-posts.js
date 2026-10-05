@@ -84,8 +84,7 @@ export async function renderPosts(posts = []) {
             });
 
             if (!data.success) return Swal.fire(data.error);
-            const replies = Array.isArray(data.replies) ? data.replies : [];
-            if (replies.length <= 0) return Swal.fire("No replies yet!");
+            if (!Array.isArray(data.replies) || data.replies.length <= 0) return Swal.fire("No replies yet!");
 
             // Show replies
             Swal.fire({
@@ -94,7 +93,8 @@ export async function renderPosts(posts = []) {
                 confirmButtonText: "Close"
             });
 
-            replies.forEach(reply => {
+            // Render replies
+            data.replies.forEach(reply => {
                 const safeReply = reply || {};
                 const safeReplyBy = safeReply.by || {};
                 const replyItem = NS.createEl("div", NS("#replies-container"), { className: "comment-item" });

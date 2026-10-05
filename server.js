@@ -2,17 +2,23 @@ import "express-async-errors";
 import express from "express";
 import path from "path";
 import session from "express-session";
-import { body, param, query } from "express-validator";
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
-import { checkAuth, validateResult, generateRecoveryCodes, createLimiter, hotQueries } from "./helpers.js";
+import { checkAuth, generateRecoveryCodes, createLimiter, hotQueries } from "./helpers.js";
 import schemas from "./schemas.js";
 import ClientError from "./client-error.js";
 import bookmarksRouter from "./bookmarks.js";
 import actionsRouter from "./actions.js";
 import authRouter from "./auth.js";
 import config from "./config/backend.js";
+import {
+    defaultPostFindValidator,
+    getPostsValidator,
+    searchPostsValidator,
+    getPostCommentsValidator,
+    getPostRepliesValidator,
+} from "./validators.js";
 const __dirname = import.meta.dirname;
 const isProduction = config.NODE_ENV === "production";
 const app = express();
@@ -62,11 +68,7 @@ app.get("/", (req, res) => {
 });
 
 // Posts
-app.post("/api/v1/posts", checkAuth, [
-    body("title").notEmpty().isString().trim().isLength({ max: config.POST_TITLE_MAX_LENGTH }),
-    body("content").notEmpty().isString().trim().isLength({ max: config.POST_CONTENT_MAX_LENGTH }),
-    body("keywords").exists().isArray({ max: config.POST_KEYWORDS_MAX_LENGTH }).customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim()))
-], validateResult, async (req, res) => {
+app.post("/api/v1/posts", checkAuth, defaultPostFindValidator, async (req, res) => {
     const { title, content, keywords } = req.cleanData;
     const newPost = new schemas.Posts({
         title: title,
@@ -79,9 +81,7 @@ app.post("/api/v1/posts", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-app.get("/api/v1/get/post/:id", [
-    param("id").exists().isMongoId()
-], validateResult, async (req, res) => {
+app.get("/api/v1/get/post/:id", defaultPostFindValidator, async (req, res) => {
     const id = req.cleanData.id;
     const post = await schemas.Posts.findOne({
         ...hotQueries.view_post(id, req.session.userId)
@@ -94,10 +94,7 @@ app.get("/api/v1/get/post/:id", [
     return res.status(200).json({ success: true, posts: [post] });
 });
 
-app.get("/api/v1/get/posts", [
-    query("skip").exists().isInt({ min: 0 }),
-    query("chronological").exists().customSanitizer(value => value === "true")
-], validateResult, async (req, res) => {
+app.get("/api/v1/get/posts", getPostsValidator, async (req, res) => {
     const { skip, chronological } = req.cleanData;
 
     // Sort query
@@ -119,9 +116,7 @@ app.get("/api/v1/get/posts", [
     return res.status(200).json({ success: true, posts });
 });
 
-app.get("/api/v1/search/posts", [
-    query("query").exists().notEmpty().isString().isLength({ max: config.SEARCH_QUERY_LENGTH_MAX }).customSanitizer(value => value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&")).toLowerCase().trim()
-], validateResult, async (req, res) => {
+app.get("/api/v1/search/posts", searchPostsValidator, async (req, res) => {
     const query = req.cleanData.query;
     const posts = await schemas.Posts.find({
         keywords: query,
@@ -140,10 +135,7 @@ app.get("/api/v1/search/posts", [
     return res.status(200).json({ success: true, posts: posts });
 });
 
-app.get("/api/v1/get/post/comments/:id", checkAuth, [
-    param("id").exists().isMongoId(),
-    query("skip").exists().isInt({ min: 0 })
-], validateResult, async (req, res) => {
+app.get("/api/v1/get/post/comments/:id", checkAuth, getPostCommentsValidator, async (req, res) => {
     const { skip, id } = req.cleanData;
 
     const post = await schemas.Posts.exists(hotQueries.view_post(id, req.session.userId));
@@ -160,10 +152,7 @@ app.get("/api/v1/get/post/comments/:id", checkAuth, [
     return res.status(200).json({ success: true, comments });
 });
 
-app.get("/api/v1/get/post/:postId/replies/:parentCommentId", checkAuth, [
-    param("postId").exists().isMongoId(),
-    param("parentCommentId").exists().isMongoId()
-], validateResult, async (req, res) => {
+app.get("/api/v1/get/post/:postId/replies/:parentCommentId", checkAuth, getPostRepliesValidator, async (req, res) => {
     const { postId, parentCommentId } = req.cleanData;
 
     const post = await schemas.Posts.find(hotQueries.view_post(postId, req.session.userId));
@@ -182,11 +171,7 @@ app.get("/api/v1/get/post/:postId/replies/:parentCommentId", checkAuth, [
 // Password recovery
 const passwordRecoveryLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 
-app.post("/api/v1/reset/password", [
-    body("username").exists().notEmpty().isString().isLength({ min: config.USERNAME_MIN_LENGTH, max: config.USERNAME_MAX_LENGTH }).toLowerCase().trim(),
-    body("newPassword").exists().notEmpty().isString().isLength({ min: config.PASSWORD_MIN_LENGTH, max: config.PASSWORD_MAX_LENGTH }).trim(),
-    body("recoveryCode").exists().notEmpty().isString().isLength({ min: config.RECOVERY_CODE_LENGTH, max: config.RECOVERY_CODE_LENGTH }).trim()
-], passwordRecoveryLimiter, validateResult, async (req, res) => {
+app.post("/api/v1/reset/password", passwordRecoveryLimiter, resetPasswordValidator, async (req, res) => {
     const { username, recoveryCode, newPassword } = req.cleanData;
     const user = await schemas.Users.findOne({ username: username })
         .select("recoveryCodes")
@@ -231,9 +216,7 @@ app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryLimiter, check
     return res.status(200).json({ success: true, codes: newCodes.raw });
 });
 
-app.post("/api/v1/redeem/gift-link/:id", checkAuth, [
-    param("id").exists().isMongoId()
-], validateResult, async (req, res) => {
+app.post("/api/v1/redeem/gift-link/:id", checkAuth, redeemGiftLinkValidator, async (req, res) => {
     const id = req.cleanData.id;
     const remaining = Math.max(0, config.COINS_MAX - req.currentUser.coins);
     const inc = Math.min(config.COINS_MIN, remaining);

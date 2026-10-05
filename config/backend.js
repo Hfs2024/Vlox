@@ -31,7 +31,7 @@ const config = {
     GIFT_USES_MAX: 100,
 
     // Replies
-    COMMENT_REPLIES_MAX: 10,
+    COMMENT_REPLIES_DEPTH_MAX: 5,
 };
 
 export default config;
