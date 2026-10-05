@@ -32,6 +32,6 @@ const config = {
 
     // Replies
     COMMENT_REPLIES_DEPTH_MAX: 5,
-};
+}
 
 export default config;

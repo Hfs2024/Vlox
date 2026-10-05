@@ -75,6 +75,14 @@ export const changePostVisibilityValidator = [
     validateResult
 ]
 
+export const reactOnPostValidator = [
+    mongoIdParam("id", "Post ID"),
+    param("action")
+        .exists().withMessage("Action is required")
+        .isIn(["like", "report"]).withMessage("Action must be 'like' or 'report'"),
+    validateResult
+]
+
 export const defaultPostFindValidator = [
     mongoIdParam("id", "Post ID"),
     validateResult
@@ -93,7 +101,7 @@ export const getPostRepliesValidator = [
     validateResult
 ]
 
-export const commentOnmainFindPostValidator = [
+export const commentOnPostValidator = [
     mongoIdParam("id", "Post ID"),
     commentBody("comment", "Comment"),
     validateResult
