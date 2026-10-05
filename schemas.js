@@ -55,7 +55,13 @@ const commentsSchema = new mongoose.Schema({
     for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts", required: true },
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true },
     parentCommentId: { type: mongoose.Schema.Types.ObjectId, default: null, ref: "Comments" },
-    repliesCount: { type: Number, default: 0, min: 0, max: config.COMMENT_REPLIES_MAX }
+    repliesDepthLevel: {
+        type: Number,
+        default: 1,
+        min: 1,
+        max: config.COMMENT_REPLIES_DEPTH_MAX,
+        immutable: true
+    }
 }, { timestamps: true });
 
 commentsSchema.index({ for: 1, parentCommentId: 1 });

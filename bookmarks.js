@@ -1,13 +1,16 @@
 import express from "express";
-import { body, param, query } from "express-validator";
-import { checkAuth, validateResult } from "./helpers.js";
+import { checkAuth } from "./helpers.js";
 import schemas from "./schemas.js";
 import config from "./config/backend.js";
+import {
+    getBookmarksValidator,
+    defaultPostFindValidator,
+    renameBookmarkValidator,
+    deleteBookmarkValidator
+} from "./validators.js";
 const router = express.Router();
 
-router.post("/api/v1/get/bookmarks", checkAuth, [
-    query("skip").exists().isInt({ min: 0 })
-], validateResult, async (req, res) => {
+router.post("/api/v1/get/bookmarks", checkAuth, getBookmarksValidator, async (req, res) => {
     const skip = req.cleanData.skip;
     const bookmarks = await schemas.Bookmarks.find({
         by: req.session.userId
@@ -20,9 +23,7 @@ router.post("/api/v1/get/bookmarks", checkAuth, [
     return res.status(200).json({ success: true, bookmarks: bookmarks });
 });
 
-router.post("/api/v1/bookmark/post/:id", checkAuth, [
-    param("id").exists().isMongoId()
-], validateResult, async (req, res) => {
+router.post("/api/v1/bookmark/post/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
     const id = req.cleanData.id;
     const post = await schemas.Posts.findOne({ _id: id, private: false })
         .select("title")
@@ -39,10 +40,7 @@ router.post("/api/v1/bookmark/post/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-router.put("/api/v1/rename/bookmark/:id", checkAuth, [
-    param("id").exists().isMongoId(),
-    body("title").exists().notEmpty().isString().isLength({ max: config.POST_TITLE_MAX_LENGTH }).trim()
-], validateResult, async (req, res) => {
+router.put("/api/v1/rename/bookmark/:id", checkAuth, renameBookmarkValidator, async (req, res) => {
     const { id, title } = req.cleanData;
 
     const result = await schemas.Bookmarks.updateOne({
@@ -58,9 +56,7 @@ router.put("/api/v1/rename/bookmark/:id", checkAuth, [
     return res.status(200).json({ success: true });
 });
 
-router.delete("/api/v1/delete/bookmark/:id", checkAuth, [
-    param("id").exists().isMongoId()
-], validateResult, async (req, res) => {
+router.delete("/api/v1/delete/bookmark/:id", checkAuth, deleteBookmarkValidator, async (req, res) => {
     const id = req.cleanData.id;
     const result = await schemas.Bookmarks.deleteOne({
         _id: id,
