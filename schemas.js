@@ -8,7 +8,7 @@ const usersSchema = new mongoose.Schema({
     emoji: {
         type: String,
         default: "🚀",
-        enum: ["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"]
+        enum: config.EMOJIS
     },
     email: {
         type: String,
@@ -38,7 +38,6 @@ const postsSchema = new mongoose.Schema({
     content: { type: String, trim: true, required: true, maxLength: config.POST_CONTENT_MAX_LENGTH },
     likes: { type: Number, default: 0, min: 0 },
     reports: { type: Number, default: 0, min: 0 },
-    comments: { type: Number, default: 0, min: 0 },
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true },
     private: { type: Boolean, default: false },
     redeemed: { type: Boolean, default: false },
@@ -49,22 +48,6 @@ const postsSchema = new mongoose.Schema({
 postsSchema.index({ by: 1 });
 postsSchema.index({ keywords: 1 });
 postsSchema.index({ level: -1, likes: -1, createdAt: -1, _id: -1 });
-
-const commentsSchema = new mongoose.Schema({
-    content: { type: String, trim: true, required: true, maxLength: config.COMMENT_CONTENT_MAX_LENGTH },
-    for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts", required: true },
-    by: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true },
-    parentCommentId: { type: mongoose.Schema.Types.ObjectId, default: null, ref: "Comments" },
-    repliesDepthLevel: {
-        type: Number,
-        default: 1,
-        min: 1,
-        max: config.COMMENT_REPLIES_DEPTH_MAX,
-        immutable: true
-    }
-}, { timestamps: true });
-
-commentsSchema.index({ for: 1, parentCommentId: 1 });
 
 const bookmarksSchema = new mongoose.Schema({
     for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts", required: true },
@@ -93,7 +76,6 @@ export default {
     Users: mongoose.model("Users", usersSchema, "users"),
     Reactions: mongoose.model("Reactions", reactionsSchema, "reactions"),
     Posts: mongoose.model("Posts", postsSchema, "posts"),
-    Comments: mongoose.model("Comments", commentsSchema, "comments"),
     Bookmarks: mongoose.model("Bookmarks", bookmarksSchema, "bookmarks"),
     Gifts: mongoose.model("Gifts", giftsSchema, "gifts")
 };

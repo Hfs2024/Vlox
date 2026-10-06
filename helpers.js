@@ -31,7 +31,7 @@ export async function generateRecoveryCodes(count = config.RECOVERY_CODE_COUNT) 
     };
 }
 
-export const hotQueries = {
+export const postQueries = {
     modify_post: (postId, userId) => {
         return {
             by: userId,
@@ -76,10 +76,19 @@ export function createLimiter(
 
 export function validateResult(req, res, next) {
     const result = validationResult(req);
-    if (!result.isEmpty()) return res.status(400).json({ error: result.array()[0].msg });
+    if (!result.isEmpty())
+        return res.status(400).json({ error: result.array()[0].msg || "Invalid request" });
 
     // Result
     const cleanData = matchedData(req);
     req.cleanData = cleanData;
     next();
+}
+
+export class ClientError extends Error {
+    constructor(message, statusCode = 400) {
+        super(message);
+        this.statusCode = statusCode;
+        this.isCustom = true;
+    }
 }

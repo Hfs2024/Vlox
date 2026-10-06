@@ -33,7 +33,9 @@ async function showResetPasswordModal() {
     });
 
     if (!result.isConfirmed) return;
-    const resetData = await sendRequest({
+
+    // Send request to reset passwords
+    const response = await sendRequest({
         url: "/api/v1/reset/password",
         method: "POST",
         body: {
@@ -43,7 +45,7 @@ async function showResetPasswordModal() {
         }
     });
 
-    if (!resetData.success) return Swal.fire(resetData.error);
+    if (!response.success) return Swal.fire(response.error);
     Swal.fire("Success", "Password reseted! You can now login", "success");
 }
 
@@ -81,7 +83,9 @@ async function showLoginModal() {
     });
 
     if (!result.isConfirmed) return;
-    const data = await sendRequest({
+
+    // Send request to login
+    const response = await sendRequest({
         url: `/api/v1/login`,
         method: "POST",
         body: {
@@ -90,8 +94,8 @@ async function showLoginModal() {
         }
     });
 
-    if (!data.success) return Swal.fire(data.error);
-    checkUserStatus();
+    if (!response.success) return Swal.fire(response.error);
+    determineAuthButtonsDisplay();
     getQuickInfo();
     Swal.fire("Success", "Successfully logged in!", "success");
 }
@@ -137,7 +141,9 @@ async function showSignUpModal() {
     });
 
     if (!result.isConfirmed) return;
-    const data = await sendRequest({
+
+    // Send request to create account
+    const response = await sendRequest({
         url: `/api/v1/signup`,
         method: "POST",
         body: {
@@ -148,8 +154,8 @@ async function showSignUpModal() {
         }
     });
 
-    if (!data.success) return Swal.fire(data.error);
-    const recoveryCodes = Array.isArray(data.recoveryCodes) ? data.recoveryCodes : [];
+    if (!response.success) return Swal.fire(response.error);
+    const recoveryCodes = Array.isArray(response.recoveryCodes) ? response.recoveryCodes : [];
     const blob = new Blob([recoveryCodes.join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     NS.createEl("a", document.body, {})
@@ -159,23 +165,20 @@ async function showSignUpModal() {
         .remove();
     URL.revokeObjectURL(url);
     Swal.fire("Success", "Account created successfully!", "success");
-    checkUserStatus();
+    determineAuthButtonsDisplay();
     getQuickInfo();
 }
 
 // User status
-async function getUserStatus() {
+async function determineAuthButtonsDisplay() {
     const status = await sendRequest({
         url: "/api/v1/get/user-status"
     });
 
     if (!status.success) return Swal.fire(status.error);
-    return status;
-}
 
-async function checkUserStatus() {
-    const status = await getUserStatus();
-    if (status && status.loggedIn) {
+    // Show/hide auth buttons
+    if (status.loggedIn) {
         signUpBtn.css("display", "none");
         loggedInGroup.css("display", "");
     } else {
@@ -185,9 +188,9 @@ async function checkUserStatus() {
 }
 
 // Attach the events
-signUpBtn.on("click", function () {
-    showLoginModal();
-});
+signUpBtn.on("click", lockEvent(async function () {
+    await showLoginModal();
+}));
 
 signOutBtn.on("click", lockEvent(async function () {
     const response = await sendRequest({
@@ -196,19 +199,14 @@ signOutBtn.on("click", lockEvent(async function () {
     });
 
     if (!response.success) return Swal.fire(response.error);
-    checkUserStatus();
+    determineAuthButtonsDisplay();
     getQuickInfo();
     Swal.fire("Success", "You have been logged out!", "success");
 }));
 
 profileBtn.on("click", lockEvent(async function () {
-    const response = await sendRequest({
-        url: `/api/v1/get/user-profile/${window?.quickInfo?._id}`
-    });
-
-    if (!response.success) return Swal.fire(response.error);
-    showProfile(response);
+    await showProfile(window?.quickInfo?._id);
 }));
 
-// Is the user logged in? Then hide the login button
-checkUserStatus();
+// Init
+determineAuthButtonsDisplay();

@@ -5,22 +5,27 @@ import session from "express-session";
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
-import { checkAuth, generateRecoveryCodes, createLimiter, hotQueries } from "./helpers.js";
 import schemas from "./schemas.js";
-import ClientError from "./client-error.js";
 import bookmarksRouter from "./bookmarks.js";
 import actionsRouter from "./actions.js";
 import authRouter from "./auth.js";
 import config from "./config/backend.js";
 import {
+    checkAuth,
+    generateRecoveryCodes,
+    createLimiter,
+    postQueries,
+    ClientError
+} from "./helpers.js";
+import {
     defaultPostFindValidator,
     getPostsValidator,
+    createPostsValidator,
     searchPostsValidator,
-    getPostCommentsValidator,
-    getPostRepliesValidator,
     resetPasswordValidator,
     redeemGiftLinkValidator
 } from "./validators.js";
+
 const __dirname = import.meta.dirname;
 const isProduction = config.NODE_ENV === "production";
 const app = express();
@@ -70,7 +75,7 @@ app.get("/", (req, res) => {
 });
 
 // Posts
-app.post("/api/v1/posts", checkAuth, defaultPostFindValidator, async (req, res) => {
+app.post("/api/v1/posts", checkAuth, createPostsValidator, async (req, res) => {
     const { title, content, keywords } = req.cleanData;
     const newPost = new schemas.Posts({
         title: title,
@@ -86,7 +91,7 @@ app.post("/api/v1/posts", checkAuth, defaultPostFindValidator, async (req, res) 
 app.get("/api/v1/get/post/:id", defaultPostFindValidator, async (req, res) => {
     const id = req.cleanData.id;
     const post = await schemas.Posts.findOne({
-        ...hotQueries.view_post(id, req.session.userId)
+        ...postQueries.view_post(id, req.session.userId)
     })
         .select("-reports")
         .populate("by", "-password -recoveryCodes -email")
@@ -135,39 +140,6 @@ app.get("/api/v1/search/posts", searchPostsValidator, async (req, res) => {
         .lean();
 
     return res.status(200).json({ success: true, posts: posts });
-});
-
-app.get("/api/v1/get/post/comments/:id", checkAuth, getPostCommentsValidator, async (req, res) => {
-    const { skip, id } = req.cleanData;
-
-    const post = await schemas.Posts.exists(hotQueries.view_post(id, req.session.userId));
-    if (!post) return res.status(400).json({ error: "Post not found!" });
-
-    const comments = await schemas.Comments.find({ for: id, parentCommentId: null })
-        .sort({ createdAt: -1, _id: -1 })
-        .skip(skip)
-        .limit(config.COMMENTS_LIMIT)
-        .select("for content by")
-        .populate("by", "-password -recoveryCodes -email")
-        .lean();
-
-    return res.status(200).json({ success: true, comments });
-});
-
-app.get("/api/v1/get/post/:postId/replies/:parentCommentId", checkAuth, getPostRepliesValidator, async (req, res) => {
-    const { postId, parentCommentId } = req.cleanData;
-
-    const post = await schemas.Posts.find(hotQueries.view_post(postId, req.session.userId));
-    if (!post) return res.status(400).json({ error: "Post not found or you don't have permissions to see it!" });
-
-    const replies = await schemas.Comments.find({
-        for: postId,
-        parentCommentId: parentCommentId
-    })
-        .populate("by", "-password -recoveryCodes -email")
-        .lean();
-
-    return res.status(200).json({ success: true, replies: replies });
 });
 
 // Password recovery

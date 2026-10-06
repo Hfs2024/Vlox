@@ -3,11 +3,9 @@ const config = {
     SEARCH_QUERY_LENGTH_MAX: 100,
 
     // Others
-    COMMENT_CONTENT_MAX_LENGTH: 200,
     POSTS_LIMIT: 100,
     BOOKMARKS_LIMIT: 10,
     USER_POSTS_LIMIT: 10,
-    COMMENTS_LIMIT: 5,
 
     // Posts and bookmarks
     POST_TITLE_MAX_LENGTH: 20,
@@ -25,6 +23,7 @@ const config = {
     BIO_MAX_LENGTH: 20,
     EMAIL_MAX_LENGTH: 100,
     RECOVERY_CODE_LENGTH: 20,
+    EMOJIS: ["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"],
 
     // Coins and gifts
     COINS_MIN: 100,

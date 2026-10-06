@@ -69,13 +69,7 @@ createPostBtn.on("click", lockEvent(async function () {
     createPostContent.value("");
     createPostKeywords.value("");
     createPostContentCount.text("0");
-
-    // Success
-    Swal.fire({
-        title: "Success",
-        text: "Post created!",
-        icon: "success"
-    });
+    Swal.fire( "Success", "Post created!", "success");
 }));
 
 // Navigation

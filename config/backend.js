@@ -29,9 +29,6 @@ const config = {
     // Gifts
     GIFT_NAME_MAX_LENGTH: 100,
     GIFT_USES_MAX: 100,
-
-    // Replies
-    COMMENT_REPLIES_DEPTH_MAX: 5,
 }
 
 export default config;

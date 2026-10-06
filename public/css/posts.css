@@ -33,7 +33,7 @@
 }
 
 /* Post actions */
-.options {
+.reactions {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -45,7 +45,7 @@
     overflow: auto;
 }
 
-.options button {
+.reactions button {
     background-color: var(--accent-white);
     text-align: center;
     display: flex;
@@ -59,36 +59,11 @@
     color: black;
 }
 
-.options button:hover {
+.reactions button:hover {
     background-color: wheat;
 }
 
-.options i {
+.reactions i {
     font-size: 20px;
     color: var(--accent-charcoal);
-}
-
-/* Post comments */
-.comments-list {
-    max-height: 200px;
-    overflow: auto;
-}
-
-.comment-item {
-    padding: 10px;
-    background-color: var(--accent-white);
-    color: black;
-    text-align: left;
-    border-radius: 10px;
-    margin-top: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.comment-item:hover {
-    background-color: #afc7d6;
-}
-
-.comment-item-author {
-    color: green;
 }
