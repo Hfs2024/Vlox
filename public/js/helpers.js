@@ -18,7 +18,7 @@ export async function sendRequest({ body, ...requestConfig }) {
 export function initAccessibility() {
     NS("[role='button']").each(btn => {
         NS(btn).on("keydown", function (e) {
-            if (e.key === "Enter" || e.key === ' ') btn.click();
+            if (e.key === "Enter" || e.key === " ") btn.click();
         });
     });
 }
@@ -86,7 +86,7 @@ export function lockEvent(fn) {
         el.attr("inert", true);
 
         try {
-            await fn(e);
+            await fn.call(this, e);
         } catch {
             Swal.fire("Something went wrong!");
         } finally {

@@ -128,7 +128,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, getUserProfileValidator, a
         .lean();
 
     if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
-
+    
     return res.status(200).json({ success: true, user: user });
 });
 

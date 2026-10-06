@@ -19,19 +19,12 @@ const usernameBody = () => body("username")
     .toLowerCase()
     .trim();
 
-const commentBody = (field, label) => body(field)
-    .exists().withMessage(`${label} is required`)
-    .notEmpty().withMessage(`${label} cannot be empty`)
-    .isString().withMessage(`${label} must be a string`)
-    .isLength({ max: config.COMMENT_CONTENT_MAX_LENGTH }).withMessage(`${label} must not exceed ${config.COMMENT_CONTENT_MAX_LENGTH} characters`)
-    .trim();
-
 const visibilityValue = () => body("value")
     .exists().withMessage("Visibility value is required")
     .isIn([true, false]).withMessage("Visibility value must be true or false");
 
 // Posts
-export const mainFindPostValidator = [
+export const createPostsValidator = [
     body("title")
         .notEmpty().withMessage("Post title is required")
         .isString().withMessage("Post title must be a string")
@@ -85,39 +78,6 @@ export const reactOnPostValidator = [
 
 export const defaultPostFindValidator = [
     mongoIdParam("id", "Post ID"),
-    validateResult
-]
-
-// Comments
-export const getPostCommentsValidator = [
-    mongoIdParam("id", "Post ID"),
-    skipQuery(),
-    validateResult
-]
-
-export const getPostRepliesValidator = [
-    mongoIdParam("postId", "Post ID"),
-    mongoIdParam("parentCommentId", "Parent comment ID"),
-    validateResult
-]
-
-export const commentOnPostValidator = [
-    mongoIdParam("id", "Post ID"),
-    commentBody("comment", "Comment"),
-    validateResult
-]
-
-export const replyToCommentValidator = [
-    mongoIdParam("postId", "Post ID"),
-    mongoIdParam("parentCommentId", "Parent comment ID"),
-    commentBody("reply", "Reply"),
-    validateResult
-]
-
-export const editCommentValidator = [
-    mongoIdParam("postId", "Post ID"),
-    mongoIdParam("commentId", "Comment ID"),
-    commentBody("newComment", "Comment"),
     validateResult
 ]
 
@@ -207,7 +167,7 @@ export const updateUserValidator = [
     body("newEmoji")
         .optional({ values: "falsy" })
         .isString().withMessage("Emoji must be a string")
-        .isIn(["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"]).withMessage("Emoji is not supported")
+        .isIn(config.EMOJIS).withMessage("Emoji is not supported")
         .trim(),
     body("newBio")
         .optional({ values: "falsy" })

@@ -28,4 +28,4 @@ With NanoScript handling the frontend, I built **Vlox** as a clean Minimum Viabl
 
 Thanks to NanoScript, the frontend architecture is finally in a state that I can easily scale without hitting a wall of messy code.
 
-If you liked the project, please drop a ⭐ on GitHub! 
+If you liked the project, please consider ⭐ it! 
