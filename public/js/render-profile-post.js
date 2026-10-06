@@ -141,7 +141,7 @@ export async function renderProfilePost({
             className: "w-full"
         })
             .html("<i class='fas fa-edit'></i>")
-            .on("click", async function () {
+            .on("click", lockEvent(async function () {
                 const result = await Swal.fire({
                     title: "Update post: ",
                     html: `
@@ -191,7 +191,7 @@ export async function renderProfilePost({
 
                 if (!response.success) return Swal.fire(response.error);
                 Swal.fire("Success", `Post updated!`, "success");
-            });
+            }));
 
         /* Secondary buttons */
         // Analytics

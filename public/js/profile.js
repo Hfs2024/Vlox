@@ -125,7 +125,7 @@ export async function showProfile(id) {
                     title: "Enter new bio: ",
                     input: "text",
                     inputPlaceholder: "Enter new bio...",
-                    inputValue: data.bio,
+                    inputValue: data.user.bio,
                     showCancelButton: true,
                     preConfirm: result => {
                         if (!result) return Swal.showValidationMessage("You must enter a new bio!");
@@ -151,11 +151,11 @@ export async function showProfile(id) {
                 const response = await sendRequest({
                     url: "/api/v1/change-visibility/user-profile",
                     method: "PUT",
-                    body: { value: !data.private }
+                    body: { value: !data.user.private }
                 });
 
                 if (!response.success) return Swal.fire(response.error);
-                Swal.fire("Success", `Account is ${data.private ? "public" : "private"}`, "success");
+                Swal.fire("Success", `Account is ${data.user.private ? "public" : "private"}`, "success");
             }));
 
             // Load user posts

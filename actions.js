@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import config from "./config/backend.js";
 import {
     changePostVisibilityValidator,
+    editPostsValidator,
     defaultPostFindValidator,
     reactOnPostValidator
 } from "./validators.js";
@@ -123,7 +124,7 @@ router.post("/api/v1/react/:action/post/:id", checkAuth, reactOnPostValidator, a
     return res.status(200).json({ success: true });
 });
 
-router.put("/api/v1/edit/post/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
+router.put("/api/v1/edit/post/:id", checkAuth, editPostsValidator, async (req, res) => {
     const { content, title, id, keywords } = req.cleanData;
     const result = await schemas.Posts.updateOne(postQueries.modify_post(id, req.session.userId), {
         $set: {

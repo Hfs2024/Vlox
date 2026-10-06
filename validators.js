@@ -3,10 +3,6 @@ import { validateResult } from "./helpers.js";
 import config from "./config/backend.js";
 
 // Helpers
-const mongoIdParam = (field, label) => param(field)
-    .exists().withMessage(`${label} is required`)
-    .isMongoId().withMessage(`Invalid ${label} format`);
-
 const skipQuery = () => query("skip")
     .exists().withMessage("Skip value is required")
     .isInt({ min: 0 }).withMessage("Skip value must be a non-negative integer");
@@ -23,8 +19,11 @@ const visibilityValue = () => body("value")
     .exists().withMessage("Visibility value is required")
     .isIn([true, false]).withMessage("Visibility value must be true or false");
 
-// Posts
-export const createPostsValidator = [
+const mongoIdParam = (field, label) => param(field)
+    .exists().withMessage(`${label} is required`)
+    .isMongoId().withMessage(`Invalid ${label} format`);
+
+const postFieldsValidators = () => [
     body("title")
         .notEmpty().withMessage("Post title is required")
         .isString().withMessage("Post title must be a string")
@@ -38,7 +37,18 @@ export const createPostsValidator = [
     body("keywords")
         .exists().withMessage("Post keywords are required")
         .isArray({ max: config.POST_KEYWORDS_MAX_LENGTH }).withMessage(`Post keywords must be an array with no more than ${config.POST_KEYWORDS_MAX_LENGTH} items`)
-        .customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim())),
+        .customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim()))
+]
+
+// Posts
+export const createPostsValidator = [
+    ...postFieldsValidators(),
+    validateResult
+]
+
+export const editPostsValidator = [
+    mongoIdParam("id", "Post ID"),
+    ...postFieldsValidators(),
     validateResult
 ]
 
