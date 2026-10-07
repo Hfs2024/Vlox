@@ -1,6 +1,6 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { sendRequest, capitalizeFirstLetter, initQuickInfo, initAccessibility, lockEvent, cleanHTML } from "./utiles.js";
+import { sendRequest, capitalizeFirstLetter, initQuickInfo, initAccessibility, lockEvent, cleanHTML } from "./utils.js";
 import { renderProfilePost } from "./render-profile-post.js";
 import { getGifts } from "./gifts.js";
 

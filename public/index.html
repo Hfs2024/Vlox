@@ -29,41 +29,23 @@
         <a href="/" class="logo">Vlox</a>
         <div class="center">
             <i class="fas fa-user-plus icon-helper" id="signup-btn" role="button" tabindex="0" title="Signup"></i>
-            <div id="loggedIn-group">
+            <div id="auth-buttons">
                 <i class="fas fa-user-circle icon-helper" id="profile-btn" role="button" tabindex="0"
                     title="Profile"></i>
                 <i class="fas fa-bookmark icon-helper" id="post-bookmarks-btn" role="button" tabindex="0"
                     title="Bookmark Posts"></i>
+                <i class="fas fa-plus icon-helper" id="create-post-btn" role="button" tabindex="0" title="Create"></i>
                 <i class="fas fa-sign-out  icon-helper" id="signout-btn" role="button" tabindex="0" title="Signout"></i>
             </div>
         </div>
     </header>
 
-    <main class="container">
-        <section class="left">
-            <h1>What's on your mind today?</h1>
-            
-            <input id="create-post-title" type="text" placeholder="Enter post title..." />
-            <input id="create-post-keywords" type="text" placeholder="Enter post keywords (Comma-separated)..." />
-            <textarea id="create-post-content" placeholder="Enter post content..."></textarea>
+    <main>
+        <div id="posts-container" class="scroll-container">
+            <!--Posts will be loaded here -->
+        </div>
 
-            <button id="create-post-btn" class="w-full">Create post</button>
-        </section>
-
-        <section class="right">
-            <div class="center" style="margin-bottom: 20px;">
-                <input class="w-full" placeholder="Search by keywords..." id="search-posts-input" />
-                <button id="search-posts-btn">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
-
-            <div id="posts-container">
-                <!--Posts will be loaded here -->
-            </div>
-
-            <div class="center" id="posts-navigation-container"></div>
-        </section>
+        <div class="center" id="posts-navigation-container"></div>
     </main>
 
     <footer>

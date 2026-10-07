@@ -1,6 +1,5 @@
 import NS from "../nanoscript.min.js";
-import config from "/config/shared.js";
-import { sendRequest, capitalizeFirstLetter, cleanHTML, generatePostLink, initAccessibility, lockEvent } from "./utiles.js";
+import { sendRequest, capitalizeFirstLetter, cleanHTML, generatePostLink, initAccessibility, lockEvent } from "./utils.js";
 import { showProfile } from "./profile.js";
 
 const query = new URLSearchParams(window.location.search);
@@ -16,9 +15,8 @@ export async function renderPosts(posts = []) {
 
     // Nothing found
     if (!Array.isArray(posts) || posts.length <= 0) {
-        NS.createEl("div", postsContainer, {
-            className: "state-nothing-found"
-        }).html("<b>No posts yet.</b>");
+        NS.createEl("div", postsContainer, { className: "state-nothing-found" })
+            .html("<b>No posts yet.</b>");
         return;
     }
 

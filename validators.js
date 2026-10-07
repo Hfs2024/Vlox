@@ -1,5 +1,5 @@
 import { body, param, query } from "express-validator";
-import { validateResult } from "./utiles.js";
+import { validateResult } from "./utils.js";
 import config from "./config/backend.js";
 
 // Helpers
@@ -57,18 +57,6 @@ export const getPostsValidator = [
     query("chronological")
         .exists().withMessage("Chronological flag is required")
         .customSanitizer(value => value === "true"),
-    validateResult
-]
-
-export const searchPostsValidator = [
-    query("query")
-        .exists().withMessage("Search query is required")
-        .notEmpty().withMessage("Search query cannot be empty")
-        .isString().withMessage("Search query must be a string")
-        .isLength({ max: config.SEARCH_QUERY_LENGTH_MAX }).withMessage(`Search query must not exceed ${config.SEARCH_QUERY_LENGTH_MAX} characters`)
-        .customSanitizer(value => value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"))
-        .toLowerCase()
-        .trim(),
     validateResult
 ]
 
