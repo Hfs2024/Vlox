@@ -1,0 +1,201 @@
+/* Basic stylesheet */
+:root {
+    --accent-charcoal: #1f2933;
+    --accent-main-blue: #214198;
+    --accent-secondary-blue: #10204c;
+    --accent-main-gray: #4b4b4b;
+    --accent-secondary-gray: #b5adad;
+    --accent-white: #f0f8ff;
+    --card-bg: #f2f2f2;
+}
+
+body {
+    background-color: white;
+    margin: 0;
+    padding: 0;
+    font-family: "Raleway", sans-serif;
+    transition: background-color 0.3s ease;
+}
+
+/* Header/footer */
+header,
+footer {
+    background-color: var(--accent-charcoal);
+    padding: 10px;
+    color: var(--accent-white);
+    margin: 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 10px;
+    color: var(--accent-white);
+    text-decoration: none;
+}
+
+/* Containers */
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.left,
+.right {
+    margin: 20px;
+    background-color: whitesmoke;
+    border-radius: 20px;
+    padding: 20px;
+    height: 100vh;
+    text-align: center;
+    box-sizing: border-box;
+    overflow: auto;
+}
+
+.right {
+    flex-grow: 1;
+    width: 100%;
+}
+
+#posts-container {
+    max-height: 100%;
+    overflow: auto;
+}
+
+.scroll-container {
+    max-height: 400px;
+    overflow: auto;
+}
+
+/* Swal styles */
+.text-swal-toggle {
+    margin: 0;
+}
+
+.link-swal-toggle {
+    color: var(--accent-main-blue);
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.link-swal-toggle:hover {
+    color: var(--accent-secondary-blue);
+}
+
+.swal2-input {
+    width: auto !important;
+}
+
+.swal2-popup {
+    border-radius: 12px !important; 
+}
+
+/* Helpers */
+.center,
+.space-between,
+.center-overflow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.overflow {
+    overflow: auto;
+    white-space: nowrap;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.space-between {
+    justify-content: space-between;
+}
+
+.center-overflow {
+    overflow: auto;
+    white-space: nowrap;
+    justify-content: flex-start;
+    max-width: 100%;
+}
+
+.active-color {
+    color: var(--accent-main-blue);
+}
+
+.active-color:hover {
+    color: var(--accent-secondary-blue);
+}
+
+.active-bg {
+    background-color: var(--accent-main-blue);
+}
+
+.active-bg:hover {
+    background-color: var(--accent-secondary-blue);
+}
+
+.icon-helper {
+    cursor: pointer;
+    transition: color 0.3s ease;
+    font-size: 18px;
+}
+
+.icon-helper:hover {
+    color: var(--accent-main-gray);
+}
+
+[inert], .disabled {
+    opacity: 0.5;
+    transition: 0.3s opacity ease;
+    cursor: not-allowed;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .container {
+        display: block;
+        min-height: 0;
+    }
+
+    .left,
+    .right {
+        height: auto;
+        width: auto;
+    }
+
+    #posts-container {
+        max-height: 400px;
+        overflow: auto;
+    }
+}
+
+/* Cool scrollbar design */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: var(--accent-white);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--accent-main-gray);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--accent-secondary-gray);
+}
