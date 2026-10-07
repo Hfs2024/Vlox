@@ -6,12 +6,12 @@ import {
     initQuickInfo,
     initAccessibility,
     lockEvent
-} from "./utiles.js";
+} from "./utils.js";
 
 const signUpBtn = NS("#signup-btn");
 const signOutBtn = NS("#signout-btn");
 const profileBtn = NS("#profile-btn");
-const loggedInGroup = NS("#loggedIn-group");
+const loggedInGroup = NS("#auth-buttons");
 
 async function showResetPasswordModal() {
     const result = await Swal.fire({

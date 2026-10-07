@@ -1,5 +1,6 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
+import Editor from "./editor.js";
 import {
     sendRequest,
     cleanHTML,
@@ -7,7 +8,7 @@ import {
     lockEvent,
     capitalizeFirstLetter,
     initQuickInfo
-} from "./utiles.js";
+} from "./utils.js";
 
 async function viewAnalytics(post = {}) {
     post = post || {};
@@ -89,10 +90,9 @@ export async function renderProfilePost({
     container
 } = {}) {
     post = post || {};
-    const safeKeywords = Array.isArray(post.keywords) ? post.keywords : [];
     const postCard = NS.createEl("div", container, { className: "card" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-    NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(post.title) || "Untitled post");
+    NS.createEl("h2", postHeader, { className: "overflow" }).text(post.title || "Untitled post");
 
     // Copy
     NS.createEl("i", postHeader, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })
@@ -138,53 +138,15 @@ export async function renderProfilePost({
         })
             .html("<i class='fas fa-edit'></i>")
             .on("click", lockEvent(async function () {
-                const result = await Swal.fire({
+                await new Editor({
+                    initial: post,
+                    successMessage: "Post updated!",
                     title: "Update post: ",
-                    html: `
-<input id="edit-post-title" type="text" placeholder="Enter new title...">
-<input id="edit-post-keywords" type="text" placeholder="Enter new keyword (Comma-separated)...">
-<textarea id="edit-post-content" placeholder="Enter new content"></textarea>
-                `,
-                    showCancelButton: true,
-
-                    didOpen: () => {
-                        // Default values                      
-                        NS("#edit-post-keywords").value(safeKeywords.join(", "));
-                        NS("#edit-post-title")
-                            .value(post.title || "")
-                            .attr("maxLength", config.POST_TITLE_MAX_LENGTHs);
-                        NS("#edit-post-content")
-                            .value(post.content || "")
-                            .attr("maxLength", config.POST_CONTENT_MAX_LENGTH);
+                    api: {
+                        endpoint: `/api/v1/edit/post/${post._id}`,
+                        method: "PUT"
                     },
-
-                    preConfirm: () => {
-                        const title = NS("#edit-post-title").value();
-                        const content = NS("#edit-post-content").value();
-                        const keywords = NS("#edit-post-keywords").value().split(",");
-
-                        if (!title || !content) return Swal.showValidationMessage("Don't forget the title and content!");
-                        if (keywords.length > config.POST_KEYWORDS_MAX_LENGTH) return Swal.showValidationMessage(`Keywords count should not exceed ${config.POST_KEYWORDS_MAX_LENGTH}!`);
-
-                        return { title, content, keywords };
-                    }
-                });
-
-                if (!result.isConfirmed) return;
-
-                // Send request
-                const response = await sendRequest({
-                    url: `/api/v1/edit/post/${post._id}`,
-                    method: "PUT",
-                    body: {
-                        content: result.value.content,
-                        title: result.value.title,
-                        keywords: result.value.keywords
-                    }
-                });
-
-                if (!response.success) return Swal.fire(response.error);
-                Swal.fire("Success", `Post updated!`, "success");
+                }, true).start();
             }));
 
         NS.createEl("button", buttons, {

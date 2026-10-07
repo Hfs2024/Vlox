@@ -1,7 +1,4 @@
 const config = {
-    // Search
-    SEARCH_QUERY_LENGTH_MAX: 100,
-
     // Others
     POSTS_LIMIT: 100,
     BOOKMARKS_LIMIT: 10,

@@ -16,12 +16,11 @@ import {
     createLimiter,
     postQueries,
     ClientError
-} from "./utiles.js";
+} from "./utils.js";
 import {
     defaultPostFindValidator,
     getPostsValidator,
     createPostsValidator,
-    searchPostsValidator,
     resetPasswordValidator,
     redeemGiftLinkValidator
 } from "./validators.js";
@@ -121,25 +120,6 @@ app.get("/api/v1/get/posts", getPostsValidator, async (req, res) => {
         .lean();
 
     return res.status(200).json({ success: true, posts });
-});
-
-app.get("/api/v1/search/posts", searchPostsValidator, async (req, res) => {
-    const query = req.cleanData.query;
-    const posts = await schemas.Posts.find({
-        keywords: query,
-        private: false
-    })
-        .limit(config.POSTS_LIMIT)
-        .sort({
-            level: -1,
-            likes: -1,
-            createdAt: -1,
-            _id: -1
-        })
-        .populate("by", "-password -recoveryCodes -email")
-        .lean();
-
-    return res.status(200).json({ success: true, posts: posts });
 });
 
 // Password recovery

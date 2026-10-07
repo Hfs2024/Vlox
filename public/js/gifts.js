@@ -1,5 +1,5 @@
 import NS from "../nanoscript.min.js";
-import { sendRequest } from "./utiles.js";
+import { sendRequest } from "./utils.js";
 
 export async function getGifts() {
     const response = await sendRequest({

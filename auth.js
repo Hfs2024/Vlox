@@ -1,6 +1,6 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import { checkAuth, generateRecoveryCodes, createLimiter } from "./utiles.js";
+import { checkAuth, generateRecoveryCodes, createLimiter } from "./utils.js";
 import schemas from "./schemas.js";
 import config from "./config/backend.js";
 import {

@@ -1,6 +1,6 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { sendRequest, capitalizeFirstLetter, initAccessibility, lockEvent } from "./utiles.js";
+import { sendRequest, capitalizeFirstLetter, initAccessibility, lockEvent } from "./utils.js";
 import { renderPosts } from "./render-posts.js";
 
 let state = {

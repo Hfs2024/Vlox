@@ -1,5 +1,5 @@
 import express from "express";
-import { checkAuth } from "./utiles.js";
+import { checkAuth } from "./utils.js";
 import schemas from "./schemas.js";
 import config from "./config/backend.js";
 import {
