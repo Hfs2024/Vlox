@@ -1,0 +1,121 @@
+/* Code elements */
+pre {
+    overflow: auto;
+    border-radius: 20px;
+    padding: 10px;
+    background-color: black;
+    color: var(--accent-white);
+    transition: background-color 0.3s ease;
+}
+
+blockquote {
+    margin: 20px 0;
+    padding: 10px;
+    background-color: white;
+    border-left: 5px solid var(--accent-main-blue);
+    border-radius: 0 8px 8px 0;
+    font-family: 'Georgia', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: #334155;
+    overflow: auto;
+}
+
+img, video {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+th,
+td {
+    border-bottom: 2px solid black;
+    padding: 10px;
+    white-space: nowrap;
+}
+
+/* Inputs */
+input,
+textarea {
+    width: 100%;
+    font-weight: bold;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid var(--accent-secondary-gray);
+    border-radius: 10px;
+    display: block;
+    margin-top: 20px;
+}
+
+textarea {
+    height: 130px;
+}
+
+.text-count,
+.text-forget-password {
+    text-align: right;
+    color: var(--accent-main-gray);
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.text-forget-password {
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.text-forget-password:hover {
+    color: var(--accent-secondary-gray);
+}
+
+/* Buttons */
+button {
+    border-radius: 100px;
+    background-color: var(--accent-charcoal);
+    color: white;
+    border: none;
+    font-weight: bold;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
+    margin-top: 15px;
+}
+
+button:hover {
+    background-color: #222;
+}
+
+.btn-danger {
+    background-color: red;
+}
+
+.emoji-container-btn {
+    background-color: var(--accent-main-blue);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 0;
+    font-size: 18px;
+}
+
+.emoji-container-btn:hover {
+    background-color: var(--accent-secondary-blue);
+}
+
+.btn-danger:hover {
+    background-color: darkred;
+}
+
+/* Analytics bar */
+.analytics-likes-bar {
+    width: 100%;
+    background-color: var(--accent-secondary-gray);
+    margin-top: 20px;
+    border-radius: 20px;
+}
+
+.analytics-likes-bar-fill {
+    background-color: gold;
+    border-radius: 20px;
+    width: 0%;
+    height: 20px;
+}
