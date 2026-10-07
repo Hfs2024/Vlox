@@ -1,5 +1,5 @@
 import { body, param, query } from "express-validator";
-import { validateResult } from "./helpers.js";
+import { validateResult } from "./utiles.js";
 import config from "./config/backend.js";
 
 // Helpers

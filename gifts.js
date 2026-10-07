@@ -7,6 +7,7 @@ const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
+
 mongoose.connect(config.MONGO_URI)
   .then(() => handleCreateGift())
   .catch(err => console.log(`Failed to connect MongoDB: ${err.message}`));

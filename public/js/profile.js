@@ -1,9 +1,10 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { sendRequest, capitalizeFirstLetter, getQuickInfo, initAccessibility, lockEvent, cleanHTML } from "./helpers.js";
+import { sendRequest, capitalizeFirstLetter, initQuickInfo, initAccessibility, lockEvent, cleanHTML } from "./utiles.js";
 import { renderProfilePost } from "./render-profile-post.js";
+import { getGifts } from "./gifts.js";
 
-const data = {
+let state = {
     skip: 0,
     isUser: false,
     container: null,
@@ -11,18 +12,17 @@ const data = {
 }
 
 const renderPosts = async () => {
-    // Data
     const response = await sendRequest({
-        url: `/api/v1/get/user-posts/${data.user.id}/?skip=${data.skip}`
+        url: `/api/v1/get/user-posts/${state.user.id}/?skip=${state.skip}`
     });
 
     if (!response.success) return Swal.fire(response.error);
 
     // Render
-    data.container.html(""); // Clear the container
+    state.container.html(""); // Clear the container
 
     if (!Array.isArray(response.posts) || response.posts.length <= 0) {
-        NS.createEl("div", data.container, { className: "state-nothing-found" })
+        NS.createEl("div", state.container, { className: "state-nothing-found" })
             .html("<b>No posts yet.</b>");
         return;
     }
@@ -30,7 +30,7 @@ const renderPosts = async () => {
     response.posts.forEach(post => {
         renderProfilePost({
             post: post || {},
-            isUser: data.isUser,
+            isUser: state.isUser,
             container: NS("#user-posts-container")
         });
     });
@@ -38,7 +38,13 @@ const renderPosts = async () => {
 
 // Show profile
 export async function showProfile(id) {
-    // Data
+    state = {
+        skip: 0,
+        isUser: false,
+        container: null,
+        user: {}
+    }
+
     const response = await sendRequest({
         url: `/api/v1/get/user-profile/${id}`
     });
@@ -47,7 +53,7 @@ export async function showProfile(id) {
 
     // Fields
     const user = response?.user || {};
-    data.user = {
+    state.user = {
         username: capitalizeFirstLetter(user.username) || "User",
         emoji: user.emoji || config.EMOJIS[0],
         coins: user.coins || 0,
@@ -55,40 +61,48 @@ export async function showProfile(id) {
         private: user.private || false,
         id: user._id
     }
-    data.isUser = window?.quickInfo?._id === data.user.id;
+    state.isUser = window?.quickInfo?._id === state.user.id;
 
     // Render
     Swal.fire({
-        titleText: `Hello, ${data.user.emoji} ${data.user.username}!`,
+        titleText: `Hello, ${state.user.emoji} ${state.user.username}!`,
         html: `
 <div class="card">
   <div class="space-between">
-    <p class="center-overflow"><b>Bio:</b> ${cleanHTML(data.user.bio, false) || "No bio found"}</p>
-    ${data.isUser ? '<i class="fas fa-pen-to-square icon-helper" id="user-profile-bio-edit-btn" role="button" tabindex="0"></i>' : ""}
+    <p class="center-overflow"><b>Bio:</b> ${cleanHTML(state.user.bio, false) || "No bio found"}</p>
+    ${state.isUser ? '<i class="fas fa-pen-to-square icon-helper" id="profile-bio-edit-btn" role="button" tabindex="0"></i>' : ""}
   </div>
   <div class="space-between">  
-    <p><b>Visibility:</b> ${data.user.private ? "Private" : "Public"}</p>
-    ${data.isUser ? `<i class="fas fa-${data.user.private ? "eye" : "eye-slash"} icon-helper" id="user-profile-visibility-toggle-btn" role="button" tabindex="0"></i>` : ""}
+    <p><b>Visibility:</b> ${state.user.private ? "Private" : "Public"}</p>
+    ${state.isUser ? `<i class="fas fa-${state.user.private ? "eye" : "eye-slash"} icon-helper" id="profile-visibility-toggle-btn" role="button" tabindex="0"></i>` : ""}
   </div>
-    <p><b>Coins:</b> ${data.user.coins}/${config.COINS_MAX}</p>
-  ${data.isUser ? `
+    <p><b>Coins:</b> ${state.user.coins}/${config.COINS_MAX}</p>
+  ${state.isUser ? `
   <div class="center emoji-container"></div>
-  <button id="reset-password-recovery-codes-btn" class="w-full">Reset Recovery Codes</button>
+
+  <div class="center">
+    <button id="view-gifts-btn" class="w-full">
+       <i class="fas fa-gift"></i>
+    </button>
+    <button id="reset-password-recovery-codes-btn" class="w-full">
+      <i class="fas fa-arrow-left-rotate"></i>
+    </button>
+  </div>
 ` : ""}
 </div>
 
 <div id="user-posts-container" class="scroll-container">
-  <button id="user-load-posts-btn" class="w-full">
+  <button id="profile-load-posts-btn" class="w-full">
     <i class="fas fa-download"></i>
     Load Posts
   </button>
 </div>
 
 <div class="center" style="margin-top: 10px">
-  <button id="user-posts-prev-btn">
+  <button id="profile-posts-prev-btn">
     <i class="fas fa-caret-left"></i>
   </button>
-  <button id="user-posts-next-btn">
+  <button id="profile-posts-next-btn">
     <i class="fas fa-caret-right"></i>
   </button>
 </div>
@@ -96,9 +110,12 @@ export async function showProfile(id) {
         confirmButtonText: "Close",
         didOpen: () => {
             const container = NS("#user-posts-container");
-            data.container = container;
+            state.container = container;
 
-            // Reset password recovery codes
+            NS("#view-gifts-btn").on("click", lockEvent(async function () {
+                await getGifts();
+            }));
+
             NS("#reset-password-recovery-codes-btn").on("click", lockEvent(async function () {
                 const response = await sendRequest({
                     url: "/api/v1/reset/password/recovery-codes",
@@ -119,13 +136,12 @@ export async function showProfile(id) {
                 Swal.fire("Success", "Password Recovery Codes Reseted!", "success");
             }));
 
-            // Update bio and profile visibility
-            NS("#user-profile-bio-edit-btn").on("click", lockEvent(async function () {
+            NS("#profile-bio-edit-btn").on("click", lockEvent(async function () {
                 const result = await Swal.fire({
                     title: "Enter new bio: ",
                     input: "text",
                     inputPlaceholder: "Enter new bio...",
-                    inputValue: data.user.bio,
+                    inputValue: state.user.bio,
                     showCancelButton: true,
                     preConfirm: result => {
                         if (!result) return Swal.showValidationMessage("You must enter a new bio!");
@@ -144,51 +160,49 @@ export async function showProfile(id) {
 
                 if (!response.success) return Swal.fire(response.error);
                 Swal.fire("Success", "Bio updated!", "success");
-                getQuickInfo();
+                initQuickInfo();
             }));
 
-            NS("#user-profile-visibility-toggle-btn").on("click", lockEvent(async function () {
+            NS("#profile-visibility-toggle-btn").on("click", lockEvent(async function () {
                 const response = await sendRequest({
                     url: "/api/v1/change-visibility/user-profile",
                     method: "PUT",
-                    body: { value: !data.user.private }
+                    body: { value: !state.user.private }
                 });
 
                 if (!response.success) return Swal.fire(response.error);
-                Swal.fire("Success", `Account is ${data.user.private ? "public" : "private"}`, "success");
+                Swal.fire("Success", `Account is ${state.user.private ? "public" : "private"}`, "success");
             }));
 
-            // Load user posts
-            NS("#user-load-posts-btn").on("click", lockEvent(async function () {
+            NS("#profile-load-posts-btn").on("click", lockEvent(async function () {
                 await renderPosts();
             }));
 
-            // Navigation
-            NS("#user-posts-prev-btn").on("click", lockEvent(async function () {
-                if (data.skip <= 0) return;
-                data.skip -= config.USER_POSTS_LIMIT;
+            NS("#profile-posts-prev-btn").on("click", lockEvent(async function () {
+                if (state.skip <= 0) return;
+                state.skip -= config.USER_POSTS_LIMIT;
                 await renderPosts();
             }));
 
-            NS("#user-posts-next-btn").on("click", lockEvent(async function () {
+            NS("#profile-posts-next-btn").on("click", lockEvent(async function () {
                 if (container.get(".state-nothing-found")?.elements) return;
-                data.skip += config.USER_POSTS_LIMIT;
+                state.skip += config.USER_POSTS_LIMIT;
                 await renderPosts();
             }));
 
             // Emojis
-            if (data.isUser) {
+            if (state.isUser) {
                 config.EMOJIS.forEach(emoji => {
-                    NS.createEl("button", NS(".emoji-container"), { className: "btn-emoji-container" })
+                    NS.createEl("button", NS(".emoji-container"), { className: "emoji-container-btn" })
                         .text(emoji)
                         .on("click", lockEvent(async function () {
-                            const updateEmojiResponse = await sendRequest({
+                            const response = await sendRequest({
                                 url: "/api/v1/update/user",
                                 method: "PUT",
                                 body: { newEmoji: emoji }
                             });
 
-                            if (!updateEmojiResponse.success) return Swal.fire(updateEmojidata.error);
+                            if (!response.success) return Swal.fire(response.error);
                             return Swal.fire("Success", "Emoji successfully changed!", "success");
                         }));
                 });

@@ -4,18 +4,17 @@ import {
     sendRequest,
     cleanHTML,
     generatePostLink,
-    initLiveCounter,
     lockEvent,
     capitalizeFirstLetter,
-    getQuickInfo
-} from "./helpers.js";
+    initQuickInfo
+} from "./utiles.js";
 
 async function viewAnalytics(post = {}) {
-    const safePost = post || {};
+    post = post || {};
 
     // Clean field
-    const likes = Number(safePost.likes) || 0;
-    const level = Number(safePost.level) || 1;
+    const likes = Number(post.likes) || 0;
+    const level = Number(post.level) || 1;
 
     // Likes percent
     const { POST_REDEEM_LIKES_REQUIRED, POST_REDEEM_PROGRESS_STEP_PERCENT } = config;
@@ -28,8 +27,8 @@ async function viewAnalytics(post = {}) {
         confirmButtonText: "Close",
         didOpen: () => {
             const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "card" });
-            NS.createEl("h2", postCard, { className: "overflow" }).text(safePost.title || "No title found");
-            NS.createEl("div", postCard, {}).html(cleanHTML(safePost.content) || "Not content found");
+            NS.createEl("h2", postCard, { className: "overflow" }).text(post.title || "No title found");
+            NS.createEl("div", postCard, {}).html(cleanHTML(post.content) || "Not content found");
             const analyticsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
 
             // Quick analytics
@@ -62,17 +61,17 @@ async function viewAnalytics(post = {}) {
 
                         if (!increaseLevelResponse.success) return Swal.fire(increaseLevelResponse.error);
                         Swal.fire("Success", "Post level increased!", "success");
-                        await getQuickInfo();
+                        await initQuickInfo();
                     }));
             }
 
             // Redeem
-            if (!safePost.redeemed && barFilled) {
+            if (!post.redeemed && barFilled) {
                 NS.createEl("button", buttonsGroup, { style: "width: 100%" })
                     .text("Redeem")
                     .on("click", lockEvent(async function () {
                         const redeemResponse = await sendRequest({
-                            url: `/api/v1/redeem/post/${safePost._id}`,
+                            url: `/api/v1/redeem/post/${post._id}`,
                             method: "POST"
                         });
 
@@ -89,17 +88,17 @@ export async function renderProfilePost({
     isUser = false,
     container
 } = {}) {
-    const safePost = post || {};
-    const safeKeywords = Array.isArray(safePost.keywords) ? safePost.keywords : [];
+    post = post || {};
+    const safeKeywords = Array.isArray(post.keywords) ? post.keywords : [];
     const postCard = NS.createEl("div", container, { className: "card" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-    NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(safePost.title) || "Untitled post");
+    NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(post.title) || "Untitled post");
 
     // Copy
     NS.createEl("i", postHeader, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })
         .on("click", async function () {
             NS.copy({
-                text: generatePostLink(safePost._id),
+                text: generatePostLink(post._id),
                 onSuccess: () => {
                     Swal.fire("Success", "Copied!", "success")
                 },
@@ -111,24 +110,22 @@ export async function renderProfilePost({
         });
 
     // Content
-    NS.createEl("div", postCard, {}).html(cleanHTML(safePost.content) || "Not content found");
+    NS.createEl("div", postCard, {}).html(cleanHTML(post.content) || "Not content found");
 
-    // Status and actions
+    // Actions
     if (isUser) {
         NS.createEl("p", postCard, { style: "font-size: 15px;" })
-            .html(`Is this post visible to public? <span style='color: green'>${safePost.private ? "No" : "Yes"}</span>`);
+            .html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
 
         const buttons = NS.createEl("div", postCard, { className: "center-overflow" });
 
-        /* Primary buttons */
-        // Delete
         NS.createEl("button", buttons, {
             className: "btn-danger w-full"
         })
             .html("<i class='fas fa-trash'></i>")
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: `/api/v1/delete/post/${safePost._id}`,
+                    url: `/api/v1/delete/post/${post._id}`,
                     method: "DELETE"
                 });
 
@@ -136,7 +133,6 @@ export async function renderProfilePost({
                 Swal.fire("Success", "Post deleted!", "success");
             }));
 
-        // Edit
         NS.createEl("button", buttons, {
             className: "w-full"
         })
@@ -148,28 +144,26 @@ export async function renderProfilePost({
 <input id="edit-post-title" type="text" placeholder="Enter new title...">
 <input id="edit-post-keywords" type="text" placeholder="Enter new keyword (Comma-separated)...">
 <textarea id="edit-post-content" placeholder="Enter new content"></textarea>
-<p class="text-count">
-  Count: <span class="count" id="edit-post-content-count">0</span>
-</p>
                 `,
                     showCancelButton: true,
-                    didOpen: () => {
-                        // Default values
-                        NS("#edit-post-title").value(safePost.title || "");
-                        NS("#edit-post-content").value(safePost.content || "");
-                        NS("#edit-post-keywords").value(safeKeywords.join(", "));
-                        NS("#edit-post-content-count").text(`${(NS("#edit-post-content").value()).length}`);
 
-                        // Live counter
-                        initLiveCounter("#edit-post-content", "#edit-post-content-count", config.POST_CONTENT_MAX_LENGTH);
+                    didOpen: () => {
+                        // Default values                      
+                        NS("#edit-post-keywords").value(safeKeywords.join(", "));
+                        NS("#edit-post-title")
+                            .value(post.title || "")
+                            .attr("maxLength", config.POST_TITLE_MAX_LENGTHs);
+                        NS("#edit-post-content")
+                            .value(post.content || "")
+                            .attr("maxLength", config.POST_CONTENT_MAX_LENGTH);
                     },
+
                     preConfirm: () => {
                         const title = NS("#edit-post-title").value();
                         const content = NS("#edit-post-content").value();
                         const keywords = NS("#edit-post-keywords").value().split(",");
 
                         if (!title || !content) return Swal.showValidationMessage("Don't forget the title and content!");
-                        if (title.length > config.POST_TITLE_MAX_LENGTH) return Swal.showValidationMessage(`Title must be less than ${config.POST_TITLE_MAX_LENGTH} chars!`);
                         if (keywords.length > config.POST_KEYWORDS_MAX_LENGTH) return Swal.showValidationMessage(`Keywords count should not exceed ${config.POST_KEYWORDS_MAX_LENGTH}!`);
 
                         return { title, content, keywords };
@@ -180,7 +174,7 @@ export async function renderProfilePost({
 
                 // Send request
                 const response = await sendRequest({
-                    url: `/api/v1/edit/post/${safePost._id}`,
+                    url: `/api/v1/edit/post/${post._id}`,
                     method: "PUT",
                     body: {
                         content: result.value.content,
@@ -193,30 +187,27 @@ export async function renderProfilePost({
                 Swal.fire("Success", `Post updated!`, "success");
             }));
 
-        /* Secondary buttons */
-        // Analytics
         NS.createEl("button", buttons, {
             className: "w-full"
         })
             .html("<i class='fas fa-chart-bar'></i>")
             .on("click", async function () {
-                viewAnalytics(safePost);
+                viewAnalytics(post);
             });
 
-        // Change visibility
         NS.createEl("button", buttons, {
             className: "w-full"
         })
-            .html(`<i class='fas fa-${safePost.private ? "eye" : "eye-slash"}'></i>`)
+            .html(`<i class='fas fa-${post.private ? "eye" : "eye-slash"}'></i>`)
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: `/api/v1/change-visibility/post/${safePost._id}`,
+                    url: `/api/v1/change-visibility/post/${post._id}`,
                     method: "PUT",
-                    body: { value: !safePost.private }
+                    body: { value: !post.private }
                 });
 
                 if (!response.success) return Swal.fire(response.error);
-                Swal.fire("Success", `Post visibility set as ${safePost.private ? "public" : "private"}!`, "success");
+                Swal.fire("Success", `Post visibility set as ${post.private ? "public" : "private"}!`, "success");
             }));
     }
 }

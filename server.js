@@ -16,7 +16,7 @@ import {
     createLimiter,
     postQueries,
     ClientError
-} from "./helpers.js";
+} from "./utiles.js";
 import {
     defaultPostFindValidator,
     getPostsValidator,
@@ -262,6 +262,7 @@ app.use((err, req, res, next) => {
     if (err.code === 11000) return res.status(400).json({ error: "You've already done this action!" });
     if (err.isCustom) return res.status(err.statusCode).json({ error: err.message });
 
+    // For debugging only
     console.log(err);
     return res.status(500).json({ error: "An unexpected error occurred!" });
 });

@@ -13,6 +13,11 @@ const config = {
     POST_KEYWORDS_MAX_LENGTH: 5,
     POST_LEVEL_MIN: 1,
     POST_LEVEL_MAX: 10,
+    ALLOWED_TAGS: [
+        "pre", "code", "b", "i", "br", "span", "em", "strong", "u", "s", "sub", "sup", "small",
+        "p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "ul", "ol", "li",
+        "blockquote", "cite", "q", "img", "video", "audio", "source", "a", "#text"
+    ],
 
     // Auth
     USERNAME_MIN_LENGTH: 3,

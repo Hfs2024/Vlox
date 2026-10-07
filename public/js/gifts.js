@@ -1,7 +1,7 @@
 import NS from "../nanoscript.min.js";
-import { sendRequest, lockEvent } from "./helpers.js";
+import { sendRequest } from "./utiles.js";
 
-NS("#view-active-gifts").on("click", lockEvent(async function () {
+export async function getGifts() {
     const response = await sendRequest({
         url: "/api/v1/get/gifts"
     });
@@ -35,4 +35,4 @@ NS("#view-active-gifts").on("click", lockEvent(async function () {
             });
         }
     });
-}));
+}

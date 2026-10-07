@@ -1,16 +1,18 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { sendRequest, lockEvent } from "./helpers.js";
+import { sendRequest, lockEvent } from "./utiles.js";
 import { getPosts, postsState, renderPosts } from "./render-posts.js";
 
 const createPostBtn = NS("#create-post-btn");
-const createPostContent = NS("#create-post-content");
 const createPostContentCount = NS("#create-post-content-count");
 const createPostKeywords = NS("#create-post-keywords");
-const createPostTitle = NS("#create-post-title");
 const searchPostsInput = NS("#search-posts-input").attr("maxLength", config.SEARCH_QUERY_LENGTH_MAX);
 const searchPostsBtn = NS("#search-posts-btn");
 const postsNavigationContainer = NS("#posts-navigation-container");
+const createPostContent = NS("#create-post-content")
+    .attr("maxLength", config.POST_CONTENT_MAX_LENGTH);
+const createPostTitle = NS("#create-post-title")
+    .attr("maxLength", config.POST_TITLE_MAX_LENGTH);
 
 // Search
 searchPostsBtn.on("click", lockEvent(async function () {
@@ -55,11 +57,7 @@ createPostBtn.on("click", lockEvent(async function () {
     const data = await sendRequest({
         url: "/api/v1/posts",
         method: "POST",
-        body: {
-            title,
-            content,
-            keywords
-        }
+        body: { title, content, keywords }
     });
 
     if (!data.success) return Swal.fire(data.error);
@@ -69,7 +67,7 @@ createPostBtn.on("click", lockEvent(async function () {
     createPostContent.value("");
     createPostKeywords.value("");
     createPostContentCount.text("0");
-    Swal.fire( "Success", "Post created!", "success");
+    Swal.fire("Success", "Post created!", "success");
 }));
 
 // Navigation

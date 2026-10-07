@@ -1,43 +1,44 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { sendRequest, capitalizeFirstLetter, initAccessibility, lockEvent } from "./helpers.js";
+import { sendRequest, capitalizeFirstLetter, initAccessibility, lockEvent } from "./utiles.js";
 import { renderPosts } from "./render-posts.js";
 
-const data = {
+let state = {
     skip: 0,
     container: null,
 }
 
 async function renderBookmarks() {
-    // Data
     const response = await sendRequest({
-        url: `/api/v1/get/bookmarks/?skip=${data.skip}`,
+        url: `/api/v1/get/bookmarks/?skip=${state.skip}`,
         method: "POST"
     });
 
     if (!response.success) return Swal.fire(response.error);
 
     // Render
-    data.container.html("");
+    state.container.html("");
+
     if (!Array.isArray(response.bookmarks) || response.bookmarks.length <= 0) {
-        NS.createEl("div", data.container, {
+        NS.createEl("div", state.container, {
             className: "state-nothing-found"
         }).html("<b>You don't have any bookmarks yet.</b>");
         return;
     }
 
     response.bookmarks.forEach(bookmark => {
-        const safeBookmark = bookmark || {};
-        const bookmarkCard = NS.createEl("div", data.container, { className: "card" });
+        bookmark = bookmark || {};
+        const bookmarkCard = NS.createEl("div", state.container, { className: "card" });
         const bookmarkHeader = NS.createEl("div", bookmarkCard, { className: "space-between" });
         const buttons = NS.createEl("div", bookmarkCard, { className: "center-overflow" });
+        const title = capitalizeFirstLetter(bookmark.title) || "No title";
 
-        const title = capitalizeFirstLetter(safeBookmark.title) || "No title";
         NS.createEl("h2", bookmarkHeader, { className: "overflow" }).text(title);
+
         NS.createEl("i", bookmarkHeader, { className: "fas fa-eye icon-helper", role: "button", tabIndex: "0" })
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: `/api/v1/get/post/${safeBookmark.for}`
+                    url: `/api/v1/get/post/${bookmark.for}`
                 });
 
                 if (!response.success) return Swal.fire(response.error);
@@ -49,7 +50,7 @@ async function renderBookmarks() {
             .text("Delete")
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: `/api/v1/delete/bookmark/${safeBookmark._id}`,
+                    url: `/api/v1/delete/bookmark/${bookmark._id}`,
                     method: "DELETE"
                 });
 
@@ -77,19 +78,22 @@ async function renderBookmarks() {
 
                 // Rename bookmark
                 const response = await sendRequest({
-                    url: `/api/v1/rename/bookmark/${safeBookmark._id}`,
+                    url: `/api/v1/rename/bookmark/${bookmark._id}`,
                     method: "PUT",
                     body: { title: result.value }
                 });
 
                 if (!response.success) return Swal.fire(response.error);
                 Swal.fire("Success", "Bookmark renamed successfully!", "success");
-                renderBookmarks();
+                await renderBookmarks();
             }));
     });
 }
 
 export async function showBookmarks() {
+    state = { skip: 0, container: null };
+
+    // Container
     Swal.fire({
         title: "Your bookmarks: ",
         html: `
@@ -104,17 +108,17 @@ export async function showBookmarks() {
 </div>
         `,
         didOpen: () => {
-            data.container = NS("#user-bookmarks-container");
+            state.container = NS("#user-bookmarks-container");
 
             NS("#user-bookmarks-prev-btn").on("click", lockEvent(async function () {
-                if (data.skip <= 0) return;
-                data.skip -= config.BOOKMARKS_LIMIT;
+                if (state.skip <= 0) return;
+                state.skip -= config.BOOKMARKS_LIMIT;
                 await renderBookmarks();
             }));
 
             NS("#user-bookmarks-next-btn").on("click", lockEvent(async function () {
-                if (data.container.get(".state-nothing-found")?.elements) return;
-                data.skip += config.BOOKMARKS_LIMIT;
+                if (state.container.get(".state-nothing-found")?.elements[0]) return;
+                state.skip += config.BOOKMARKS_LIMIT;
                 await renderBookmarks();
             }));
 
