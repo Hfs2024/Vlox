@@ -90,14 +90,14 @@ button:hover {
     background-color: red;
 }
 
-.btn-emoji-container {
+.emoji-container-btn {
     background-color: var(--accent-main-blue);
     transition: background-color 0.3s ease, transform 0.2s ease;
     margin-top: 0;
     font-size: 18px;
 }
 
-.btn-emoji-container:hover {
+.emoji-container-btn:hover {
     background-color: var(--accent-secondary-blue);
 }
 

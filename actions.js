@@ -1,5 +1,5 @@
 import schemas from "./schemas.js";
-import { checkAuth, postQueries, ClientError } from "./helpers.js";
+import { checkAuth, postQueries, ClientError } from "./utiles.js";
 import express from "express";
 import mongoose from "mongoose";
 import config from "./config/backend.js";

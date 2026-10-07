@@ -1,6 +1,6 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { sendRequest, capitalizeFirstLetter, cleanHTML, generatePostLink, initAccessibility, lockEvent } from "./helpers.js";
+import { sendRequest, capitalizeFirstLetter, cleanHTML, generatePostLink, initAccessibility, lockEvent } from "./utiles.js";
 import { showProfile } from "./profile.js";
 
 const query = new URLSearchParams(window.location.search);

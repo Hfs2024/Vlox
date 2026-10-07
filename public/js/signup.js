@@ -1,7 +1,12 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { sendRequest, getQuickInfo, initAccessibility, initLiveCounter, lockEvent } from "./helpers.js";
 import { showProfile } from "./profile.js";
+import {
+    sendRequest,
+    initQuickInfo,
+    initAccessibility,
+    lockEvent
+} from "./utiles.js";
 
 const signUpBtn = NS("#signup-btn");
 const signOutBtn = NS("#signout-btn");
@@ -96,7 +101,7 @@ async function showLoginModal() {
 
     if (!response.success) return Swal.fire(response.error);
     determineAuthButtonsDisplay();
-    getQuickInfo();
+    initQuickInfo();
     Swal.fire("Success", "Successfully logged in!", "success");
 }
 
@@ -107,10 +112,7 @@ async function showSignUpModal() {
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
 <input type="email" id="email" placeholder="Email">
-<input type="text" id="bio" placeholder="Bio (Max ${config.BIO_MAX_LENGTH} chars)" maxlength="${config.BIO_MAX_LENGTH}" autocomplete="off">
-<p class="text-count">
-  Count: <span class="count" id="user-bio-content-count">0</span>
-</p>           
+<input type="text" id="bio" placeholder="Bio" autocomplete="off">        
 <p class="text-swal-toggle">
     Already have an account? <span class="link-swal-toggle" role="button" tabindex="0">Log in</span>
 </p>
@@ -119,7 +121,7 @@ async function showSignUpModal() {
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
         didOpen: () => {
-            initLiveCounter("#bio", "#user-bio-content-count", config.BIO_MAX_LENGTH);
+            NS("#bio").attr("maxLength", config.BIO_MAX_LENGTH);
             NS(".link-swal-toggle").on("click", showLoginModal);
             initAccessibility();
         },
@@ -166,7 +168,7 @@ async function showSignUpModal() {
     URL.revokeObjectURL(url);
     Swal.fire("Success", "Account created successfully!", "success");
     determineAuthButtonsDisplay();
-    getQuickInfo();
+    initQuickInfo();
 }
 
 // User status
@@ -200,7 +202,7 @@ signOutBtn.on("click", lockEvent(async function () {
 
     if (!response.success) return Swal.fire(response.error);
     determineAuthButtonsDisplay();
-    getQuickInfo();
+    initQuickInfo();
     Swal.fire("Success", "You have been logged out!", "success");
 }));
 
