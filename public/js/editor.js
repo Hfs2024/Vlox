@@ -9,24 +9,16 @@ export default class Editor {
         title,
         successMessage
     }) {
-        this.initial = this.#isObject(initial) ? initial : {}
-        this.api = this.#isObject(api) ? api : {};
-        this.title = this.#isString(title) ? title : "Post Editor";
-        this.successMessage = this.#isString(successMessage) ? successMessage : "Action done successfully!";
-    }
-
-    #isObject(obj) {
-        return Object.prototype.toString.call(obj) === "[object Object]";
-    }
-
-    #isString(str) {
-        return typeof str === "string" && str;
+        this.initial = initial || {}
+        this.api = api || {};
+        this.title = title || "Post Editor";
+        this.successMessage = successMessage || "Action done successfully!";
     }
 
     async start() {
-        if (!this.#isString(this.api.endpoint) || !this.#isString(this.api.method)) {
-            console.error("Editor Error: Missing 'api.endpoint' or 'api.method' configurations.");
-            return Swal.fire("Configuration Error", "Unable to process the request due to missing API details.", "error");
+        if (!this.api.endpoint || !this.api.method) {
+            console.error("Editor Error: Missing 'api.endpoint' or 'api.method' in api configuration.");
+            return Swal.fire("Error", "Unable to process the request.", "error");
         }
 
         // Container
