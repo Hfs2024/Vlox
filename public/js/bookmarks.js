@@ -90,7 +90,7 @@ async function renderBookmarks() {
     });
 }
 
-export async function showBookmarks() {
+export default async function showBookmarks() {
     state = { skip: 0, container: null };
 
     // Container
@@ -128,7 +128,3 @@ export async function showBookmarks() {
         confirmButtonText: "Close"
     });
 }
-
-NS("#post-bookmarks-btn").on("click", lockEvent(async function () {
-    await showBookmarks();
-}));

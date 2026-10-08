@@ -1,6 +1,6 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { showProfile } from "./profile.js";
+import showProfile from "./profile.js";
 import {
     sendRequest,
     initQuickInfo,

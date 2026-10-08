@@ -1,8 +1,9 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
 import { sendRequest, capitalizeFirstLetter, initQuickInfo, initAccessibility, lockEvent, cleanHTML } from "./utils.js";
-import { renderProfilePost } from "./render-profile-post.js";
-import { getGifts } from "./gifts.js";
+import renderProfilePost from "./render-profile-post.js";
+import  showGifts from "./gifts.js";
+import showBookmarks from "./bookmarks.js";
 
 let state = {
     skip: 0,
@@ -37,7 +38,7 @@ const renderPosts = async () => {
 }
 
 // Show profile
-export async function showProfile(id) {
+export default async function showProfile(id) {
     state = {
         skip: 0,
         isUser: false,
@@ -84,6 +85,9 @@ export async function showProfile(id) {
     <button id="view-gifts-btn" class="w-full">
        <i class="fas fa-gift"></i>
     </button>
+    <button id="profile-bookmarks-btn" class="w-full">
+       <i class="fas fa-bookmark"></i>
+    </button>
     <button id="reset-password-recovery-codes-btn" class="w-full">
       <i class="fas fa-arrow-left-rotate"></i>
     </button>
@@ -113,7 +117,7 @@ export async function showProfile(id) {
             state.container = container;
 
             NS("#view-gifts-btn").on("click", lockEvent(async function () {
-                await getGifts();
+                await showGifts();
             }));
 
             NS("#reset-password-recovery-codes-btn").on("click", lockEvent(async function () {
@@ -176,6 +180,10 @@ export async function showProfile(id) {
 
             NS("#profile-load-posts-btn").on("click", lockEvent(async function () {
                 await renderPosts();
+            }));
+
+            NS("#profile-bookmarks-btn").on("click", lockEvent(async function () {
+                await showBookmarks();
             }));
 
             NS("#profile-posts-prev-btn").on("click", lockEvent(async function () {

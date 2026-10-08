@@ -18,9 +18,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.8/purify.min.js"></script>
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai-sublime.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.20.0/axios.min.js"></script>
 </head>
 
@@ -28,14 +25,11 @@
     <header>
         <a href="/" class="logo">Vlox</a>
         <div class="center">
-            <i class="fas fa-user-plus icon-helper" id="signup-btn" role="button" tabindex="0" title="Signup"></i>
+            <i class="fas fa-user-plus icon-helper" id="signup-btn" role="button" tabindex="0"></i>
             <div id="auth-buttons">
-                <i class="fas fa-user-circle icon-helper" id="profile-btn" role="button" tabindex="0"
-                    title="Profile"></i>
-                <i class="fas fa-bookmark icon-helper" id="post-bookmarks-btn" role="button" tabindex="0"
-                    title="Bookmark Posts"></i>
-                <i class="fas fa-plus icon-helper" id="create-post-btn" role="button" tabindex="0" title="Create"></i>
-                <i class="fas fa-sign-out  icon-helper" id="signout-btn" role="button" tabindex="0" title="Signout"></i>
+                <i class="fas fa-user icon-helper" id="profile-btn" role="button" tabindex="0"></i>
+                <i class="fas fa-plus icon-helper" id="create-post-btn" role="button" tabindex="0"></i>
+                <i class="fas fa-sign-out icon-helper" id="signout-btn" role="button" tabindex="0"></i>
             </div>
         </div>
     </header>
@@ -55,7 +49,6 @@
     <!-- JavaScript -->
     <script type="module" src="js/helpers.js"></script>
     <script type="module" src="js/render-posts.js"></script>
-    <script type="module" src="js/bookmarks.js"></script>
     <script type="module" src="js/create-post.js"></script>
     <script type="module" src="js/render-profile-post.js"></script>
     <script type="module" src="js/signup.js"></script>

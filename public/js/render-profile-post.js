@@ -6,7 +6,6 @@ import {
     cleanHTML,
     generatePostLink,
     lockEvent,
-    capitalizeFirstLetter,
     initQuickInfo
 } from "./utils.js";
 
@@ -84,7 +83,7 @@ async function viewAnalytics(post = {}) {
     });
 }
 
-export async function renderProfilePost({
+export default async function renderProfilePost({
     post = {},
     isUser = false,
     container
@@ -138,7 +137,7 @@ export async function renderProfilePost({
         })
             .html("<i class='fas fa-edit'></i>")
             .on("click", lockEvent(async function () {
-                await new Editor({
+                const editorInstance = new Editor({
                     initial: post,
                     successMessage: "Post updated!",
                     title: "Update post: ",
@@ -146,7 +145,9 @@ export async function renderProfilePost({
                         endpoint: `/api/v1/edit/post/${post._id}`,
                         method: "PUT"
                     },
-                }, true).start();
+                }, true);
+
+                await editorInstance.start();
             }));
 
         NS.createEl("button", buttons, {
