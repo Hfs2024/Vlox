@@ -1,6 +1,14 @@
 import NS from "../nanoscript.min.js";
-import { sendRequest, capitalizeFirstLetter, cleanHTML, generatePostLink, initAccessibility, lockEvent } from "./utils.js";
 import showProfile from "./profile.js";
+import {
+    sendRequest,
+    capitalizeFirstLetter,
+    cleanHTML,
+    generatePostLink,
+    initAccessibility,
+    lockEvent,
+    copy
+} from "./utils.js";
 
 const query = new URLSearchParams(window.location.search);
 export const postsState = {
@@ -28,7 +36,7 @@ export async function renderPosts(posts = []) {
         // Elements
         const postCard = NS.createEl("div", postsContainer, { className: "card" });
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-        NS.createEl("h2", postHeader, { className: "overflow" }).text(safePost.title || "No title found");
+        NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(safePost.title) || "No title found");
         const postIconsGroup = NS.createEl("div", postHeader, { className: "center" });
 
         // Icons
@@ -47,12 +55,7 @@ export async function renderPosts(posts = []) {
         // Copy link
         NS.createEl("i", postIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })
             .on("click", async function () {
-                NS.copy({
-                    text: generatePostLink(safePost._id || ""),
-                    onSuccess: () => { Swal.fire("Success", "Copied!", "success") },
-
-                    onFailure: () => { Swal.fire("Error", "Failed to copy. Try again later", "error") }
-                });
+                copy(generatePostLink(safePost._id));
             });
 
         // Content
@@ -75,21 +78,30 @@ export async function renderPosts(posts = []) {
         const likes = Number(safePost.likes ?? 0);
 
         NS.createEl("button", reactionsContainer, {})
-            .html(`<i class="fa-solid fa-thumbs-up"></i> <span class="likes-count">${likes.toLocaleString()}</span>`)
-            .on("click", lockEvent(async function (e) {
+            .html(`<i class="fas fa-thumbs-up"></i> <span class="likes-count">${likes.toLocaleString()}</span>`)
+            .on("click", lockEvent(async function () {
                 const likesResponse = await sendRequest({
                     url: `/api/v1/react/like/post/${safePost._id}`,
                     method: "POST"
                 });
 
                 if (likesResponse.error) return Swal.fire(likesResponse.error);
+
+                // Update UI
                 NS(this).get(".likes-count").text(likes + 1);
                 Swal.fire("Success", "Post liked!", "success");
             }));
 
+        // Comment
+        NS.createEl("button", reactionsContainer, {})
+            .html(`<i class="fas fa-comments"></i> <span class="likes-count">${likes.toLocaleString()}</span>`)
+            .on("click", lockEvent(async function () {
+                Swal.fire("Info", "Still working on this feature...", "info");
+            }));
+
         // Reports
         NS.createEl("button", reactionsContainer, {})
-            .html("<i class='fa-solid fa-warning'></i>")
+            .html("<i class='fas fa-warning'></i>")
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
                     url: `/api/v1/react/report/post/${safePost._id}`,

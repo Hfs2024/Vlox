@@ -6,7 +6,9 @@ import {
     cleanHTML,
     generatePostLink,
     lockEvent,
-    initQuickInfo
+    initQuickInfo,
+    copy,
+    capitalizeFirstLetter
 } from "./utils.js";
 
 async function viewAnalytics(post = {}) {
@@ -14,6 +16,7 @@ async function viewAnalytics(post = {}) {
 
     // Clean field
     const likes = Number(post.likes) || 0;
+    const comments = Number(post.comments) || 0;
     const level = Number(post.level) || 1;
 
     // Likes percent
@@ -22,17 +25,17 @@ async function viewAnalytics(post = {}) {
     const barFilled = likesPercent === 100;
 
     Swal.fire({
-        title: "Post analytics",
+        title: "Post Analytics",
         html: "<div id='user-post-analytics-container' class='scroll-container'></div>",
         confirmButtonText: "Close",
         didOpen: () => {
             const postCard = NS.createEl("div", NS("#user-post-analytics-container"), { className: "card" });
-            NS.createEl("h2", postCard, { className: "overflow" }).text(post.title || "No title found");
-            NS.createEl("div", postCard, {}).html(cleanHTML(post.content) || "Not content found");
+            NS.createEl("h2", postCard, { className: "overflow" }).text(capitalizeFirstLetter(post.title) || "No title found");
             const analyticsGroup = NS.createEl("div", postCard, { className: "center-overflow" });
 
             // Quick analytics
             NS.createEl("button", analyticsGroup, { className: "analytics-item w-full" }).text(`Likes: ${likes.toLocaleString()}`);
+            NS.createEl("button", analyticsGroup, { className: "analytics-item w-full" }).text(`Comments: ${comments}`);
             NS.createEl("button", analyticsGroup, { className: "analytics-item w-full" }).text(`Level: ${level}`);
             NS.createEl("p", postCard, { style: "text-align: center" })
                 .html(
@@ -91,21 +94,12 @@ export default async function renderProfilePost({
     post = post || {};
     const postCard = NS.createEl("div", container, { className: "card" });
     const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-    NS.createEl("h2", postHeader, { className: "overflow" }).text(post.title || "Untitled post");
+    NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(post.title) || "Untitled post");
 
     // Copy
     NS.createEl("i", postHeader, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })
         .on("click", async function () {
-            NS.copy({
-                text: generatePostLink(post._id),
-                onSuccess: () => {
-                    Swal.fire("Success", "Copied!", "success")
-                },
-
-                onFailure: () => {
-                    Swal.fire("Error", "Failed to copy. Try again later", "error");
-                }
-            });
+            copy(generatePostLink(post._id));
         });
 
     // Content

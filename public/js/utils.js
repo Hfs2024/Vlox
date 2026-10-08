@@ -21,6 +21,17 @@ export async function initQuickInfo() {
     }
 }
 
+export async function copy(str) {
+    if (typeof str !== "string" || !str) return "";
+
+    try {
+        await navigator.clipboard.writeText(str);
+        Swal.fire("Success", "Copied!", "success");
+    } catch {
+        Swal.fire("Error", "Failed to copy!", "error");
+    }
+}
+
 export function cleanHTML(html, parse = true) {
     const safeHTML = typeof html === "string" ? html : "";
     const code = parse ? marked.parse(safeHTML) : safeHTML;
@@ -68,10 +79,10 @@ export async function sendRequest({ body, ...requestConfig }) {
     return response && response.data ? response.data : {};
 }
 
-export function capitalizeFirstLetter(string) {
-    if (typeof string !== "string" || !string) return "";
-    const newString = string.at(0).toUpperCase() + string.slice(1);
-    return newString.trim();
+export function capitalizeFirstLetter(str) {
+    if (typeof str !== "string" || !str) return "";
+    const newStr = str.at(0).toUpperCase() + str.slice(1);
+    return newStr.trim();
 }
 
 initQuickInfo();
