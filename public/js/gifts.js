@@ -1,7 +1,7 @@
 import NS from "../nanoscript.min.js";
 import { sendRequest } from "./utils.js";
 
-export async function getGifts() {
+export default async function showGifts() {
     const response = await sendRequest({
         url: "/api/v1/get/gifts"
     });

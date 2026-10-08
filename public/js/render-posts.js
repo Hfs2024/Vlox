@@ -1,6 +1,6 @@
 import NS from "../nanoscript.min.js";
 import { sendRequest, capitalizeFirstLetter, cleanHTML, generatePostLink, initAccessibility, lockEvent } from "./utils.js";
-import { showProfile } from "./profile.js";
+import showProfile from "./profile.js";
 
 const query = new URLSearchParams(window.location.search);
 export const postsState = {

@@ -49,9 +49,9 @@ textarea {
 
 textarea {
     height: 130px;
+    resize: none;
 }
 
-.text-count,
 .text-forget-password {
     text-align: right;
     color: var(--accent-main-gray);

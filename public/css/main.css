@@ -35,10 +35,6 @@ footer {
     transition: background-color 0.3s ease;
 }
 
-footer {
-    margin-top: auto;
-}
-
 .logo {
     font-size: 20px;
     font-weight: bold;

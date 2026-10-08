@@ -24,6 +24,12 @@ export default class Editor {
     }
 
     async start() {
+        if (!this.#isString(this.api.endpoint) || !this.#isString(this.api.method)) {
+            console.error("Editor Error: Missing 'api.endpoint' or 'api.method' configurations.");
+            return Swal.fire("Configuration Error", "Unable to process the request due to missing API details.", "error");
+        }
+
+        // Container
         const result = await Swal.fire({
             title: this.title,
             html: `
