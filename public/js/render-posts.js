@@ -30,13 +30,13 @@ export async function renderPosts(posts = []) {
 
     // Posts
     posts.forEach(async post => {
-        const safePost = post || {};
-        const safeBy = safePost.by || {};
+        post = post || {};
+        const safeBy = post.by || {};
 
         // Elements
         const postCard = NS.createEl("div", postsContainer, { className: "card" });
         const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-        NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(safePost.title) || "No title found");
+        NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(post.title) || "No title found");
         const postIconsGroup = NS.createEl("div", postHeader, { className: "center" });
 
         // Icons
@@ -44,7 +44,7 @@ export async function renderPosts(posts = []) {
         NS.createEl("i", postIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })
             .on("click", lockEvent(async function () {
                 const bookmarkResponse = await sendRequest({
-                    url: `/api/v1/bookmark/post/${safePost._id}`,
+                    url: `/api/v1/bookmark/post/${post._id}`,
                     method: "POST"
                 });
 
@@ -55,18 +55,18 @@ export async function renderPosts(posts = []) {
         // Copy link
         NS.createEl("i", postIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })
             .on("click", async function () {
-                copy(generatePostLink(safePost._id));
+                copy(generatePostLink(post._id));
             });
 
         // Content
-        NS.createEl("div", postCard, {}).html(cleanHTML(safePost.content) || "No content found");
+        NS.createEl("div", postCard, {}).html(cleanHTML(post.content) || "No content found");
 
         // Author
         NS.createEl("p", postCard, {
             style: "color: red; cursor: pointer",
             role: "button", tabIndex: "0"
         })
-            .html(`Created by: ${safeBy.emoji || "🚀"} <span class="author-name">${capitalizeFirstLetter(safeBy.username || "User")}</span>`)
+            .html(`Created by: <span class="author-name">${capitalizeFirstLetter(safeBy.username || "User")}</span>`)
             .on("click", async function () {
                 showProfile(safeBy._id);
             });
@@ -75,13 +75,13 @@ export async function renderPosts(posts = []) {
         const reactionsContainer = NS.createEl("div", postCard, { className: "reactions" });
 
         // Likes
-        const likes = Number(safePost.likes ?? 0);
+        const likes = Number(post.likes ?? 0);
 
         NS.createEl("button", reactionsContainer, {})
             .html(`<i class="fas fa-thumbs-up"></i> <span class="likes-count">${likes.toLocaleString()}</span>`)
             .on("click", lockEvent(async function () {
                 const likesResponse = await sendRequest({
-                    url: `/api/v1/react/like/post/${safePost._id}`,
+                    url: `/api/v1/react/like/post/${post._id}`,
                     method: "POST"
                 });
 
@@ -104,7 +104,7 @@ export async function renderPosts(posts = []) {
             .html("<i class='fas fa-warning'></i>")
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: `/api/v1/react/report/post/${safePost._id}`,
+                    url: `/api/v1/react/report/post/${post._id}`,
                     method: "POST"
                 });
 

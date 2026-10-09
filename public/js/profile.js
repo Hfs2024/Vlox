@@ -1,9 +1,18 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
-import { sendRequest, capitalizeFirstLetter, initQuickInfo, initAccessibility, lockEvent, cleanHTML } from "./utils.js";
-import renderProfilePost from "./render-profile-post.js";
-import  showGifts from "./gifts.js";
+import Editor from "./editor.js";
+import showGifts from "./gifts.js";
 import showBookmarks from "./bookmarks.js";
+import {
+    sendRequest,
+    capitalizeFirstLetter,
+    copy,
+    initQuickInfo,
+    initAccessibility,
+    lockEvent,
+    cleanHTML,
+    generatePostLink
+} from "./utils.js";
 
 let state = {
     skip: 0,
@@ -12,7 +21,7 @@ let state = {
     user: {}
 }
 
-const renderPosts = async () => {
+async function renderPosts() {
     const response = await sendRequest({
         url: `/api/v1/get/user-posts/${state.user.id}/?skip=${state.skip}`
     });
@@ -29,11 +38,74 @@ const renderPosts = async () => {
     }
 
     response.posts.forEach(post => {
-        renderProfilePost({
-            post: post || {},
-            isUser: state.isUser,
-            container: NS("#user-posts-container")
-        });
+        post = post || {};
+        const postCard = NS.createEl("div", state.container, { className: "card" });
+        const postHeader = NS.createEl("div", postCard, { className: "space-between" });
+        NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(post.title) || "Untitled post");
+
+        // Copy
+        NS.createEl("i", postHeader, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })
+            .on("click", async function () {
+                copy(generatePostLink(post._id));
+            });
+
+        // Content
+        NS.createEl("div", postCard, {}).html(cleanHTML(post.content) || "Not content found");
+
+        // Actions
+        if (state.isUser) {
+            NS.createEl("p", postCard, { style: "font-size: 15px;" })
+                .html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
+
+            const buttonsContainer = NS.createEl("div", postCard, { className: "center-overflow" });
+
+            NS.createEl("button", buttonsContainer, {
+                className: "btn-danger w-full"
+            })
+                .html("<i class='fas fa-trash'></i>")
+                .on("click", lockEvent(async function () {
+                    const response = await sendRequest({
+                        url: `/api/v1/delete/post/${post._id}`,
+                        method: "DELETE"
+                    });
+
+                    if (!response.success) return Swal.fire(response.error);
+                    Swal.fire("Success", "Post deleted!", "success");
+                }));
+
+            NS.createEl("button", buttonsContainer, {
+                className: "w-full"
+            })
+                .html("<i class='fas fa-edit'></i>")
+                .on("click", lockEvent(async function () {
+                    const editorInstance = new Editor({
+                        initial: post,
+                        successMessage: "Post updated!",
+                        title: "Update post: ",
+                        api: {
+                            endpoint: `/api/v1/update/post/${post._id}`,
+                            method: "PUT"
+                        },
+                    });
+
+                    await editorInstance.start();
+                }));
+
+            NS.createEl("button", buttonsContainer, {
+                className: "w-full"
+            })
+                .html(`<i class='fas fa-${post.private ? "eye" : "eye-slash"}'></i>`)
+                .on("click", lockEvent(async function () {
+                    const response = await sendRequest({
+                        url: `/api/v1/update/post-visibility/${post._id}`,
+                        method: "PUT",
+                        body: { value: !post.private }
+                    });
+
+                    if (!response.success) return Swal.fire(response.error);
+                    Swal.fire("Success", `Post visibility set as ${post.private ? "public" : "private"}!`, "success");
+                }));
+        }
     });
 }
 
@@ -56,8 +128,6 @@ export default async function showProfile(id) {
     const user = response?.user || {};
     state.user = {
         username: capitalizeFirstLetter(user.username) || "User",
-        emoji: user.emoji || config.EMOJIS[0],
-        coins: user.coins || 0,
         bio: user.bio || "",
         private: user.private || false,
         id: user._id
@@ -66,7 +136,7 @@ export default async function showProfile(id) {
 
     // Render
     Swal.fire({
-        titleText: `Hello, ${state.user.emoji} ${state.user.username}!`,
+        titleText: `Hello, ${state.user.username}!`,
         html: `
 <div class="card">
   <div class="space-between">
@@ -77,17 +147,12 @@ export default async function showProfile(id) {
     <p><b>Visibility:</b> ${state.user.private ? "Private" : "Public"}</p>
     ${state.isUser ? `<i class="fas fa-${state.user.private ? "eye" : "eye-slash"} icon-helper" id="profile-visibility-toggle-btn" role="button" tabindex="0"></i>` : ""}
   </div>
-    <p><b>Coins:</b> ${state.user.coins}/${config.COINS_MAX}</p>
   ${state.isUser ? `
-  <div class="center emoji-container"></div>
-
   <div class="center">
-    <button id="view-gifts-btn" class="w-full">
-       <i class="fas fa-gift"></i>
-    </button>
     <button id="profile-bookmarks-btn" class="w-full">
        <i class="fas fa-bookmark"></i>
     </button>
+
     <button id="reset-password-recovery-codes-btn" class="w-full">
       <i class="fas fa-arrow-left-rotate"></i>
     </button>
@@ -113,8 +178,7 @@ export default async function showProfile(id) {
         `,
         confirmButtonText: "Close",
         didOpen: () => {
-            const container = NS("#user-posts-container");
-            state.container = container;
+            state.container = NS("#user-posts-container");
 
             NS("#view-gifts-btn").on("click", lockEvent(async function () {
                 await showGifts();
@@ -157,9 +221,9 @@ export default async function showProfile(id) {
 
                 // Update bio
                 const response = await sendRequest({
-                    url: "/api/v1/update/user",
+                    url: "/api/v1/update/user-bio",
                     method: "PUT",
-                    body: { newBio: result.value }
+                    body: { bio: result.value }
                 });
 
                 if (!response.success) return Swal.fire(response.error);
@@ -169,7 +233,7 @@ export default async function showProfile(id) {
 
             NS("#profile-visibility-toggle-btn").on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: "/api/v1/change-visibility/user-profile",
+                    url: "/api/v1/update/user-visibility",
                     method: "PUT",
                     body: { value: !state.user.private }
                 });
@@ -193,28 +257,10 @@ export default async function showProfile(id) {
             }));
 
             NS("#profile-posts-next-btn").on("click", lockEvent(async function () {
-                if (container.get(".state-nothing-found")?.elements) return;
+                if (state.container.get(".state-nothing-found")?.elements) return;
                 state.skip += config.USER_POSTS_LIMIT;
                 await renderPosts();
             }));
-
-            // Emojis
-            if (state.isUser) {
-                config.EMOJIS.forEach(emoji => {
-                    NS.createEl("button", NS(".emoji-container"), { className: "emoji-container-btn" })
-                        .text(emoji)
-                        .on("click", lockEvent(async function () {
-                            const response = await sendRequest({
-                                url: "/api/v1/update/user",
-                                method: "PUT",
-                                body: { newEmoji: emoji }
-                            });
-
-                            if (!response.success) return Swal.fire(response.error);
-                            return Swal.fire("Success", "Emoji successfully changed!", "success");
-                        }));
-                });
-            }
 
             // Init
             initAccessibility();

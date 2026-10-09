@@ -5,11 +5,6 @@ const usersSchema = new mongoose.Schema({
     username: { type: String, trim: true, required: true, lowercase: true, minLength: config.USERNAME_MIN_LENGTH, maxLength: config.USERNAME_MAX_LENGTH },
     password: { type: String, required: true },
     bio: { type: String, trim: true, required: true, minLength: config.BIO_MIN_LENGTH, maxLength: config.BIO_MAX_LENGTH },
-    emoji: {
-        type: String,
-        default: "🚀",
-        enum: config.EMOJIS
-    },
     email: {
         type: String,
         trim: true,
@@ -18,7 +13,6 @@ const usersSchema = new mongoose.Schema({
         maxLength: config.EMAIL_MAX_LENGTH
     },
     recoveryCodes: { type: [String], default: [] },
-    coins: { type: Number, default: config.COINS_MIN, min: 0, max: config.COINS_MAX },
     private: { type: Boolean, default: false }
 }, { timestamps: true });
 

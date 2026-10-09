@@ -25,13 +25,6 @@ const config = {
     BIO_MAX_LENGTH: 20,
     EMAIL_MAX_LENGTH: 100,
     RECOVERY_CODE_LENGTH: 20,
-    EMOJIS: ["🚀", "👦🏻", "👧🏻", "🐣", "🏇🏻"],
-
-    // Coins and gifts
-    COINS_MIN: 100,
-    COINS_MAX: 5000,
-    POST_REDEEM_LIKES_REQUIRED: 100,
-    POST_REDEEM_PROGRESS_STEP_PERCENT: 20
 }
 
 export default config;

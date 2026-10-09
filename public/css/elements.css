@@ -90,32 +90,6 @@ button:hover {
     background-color: red;
 }
 
-.emoji-container-btn {
-    background-color: var(--accent-main-blue);
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    margin-top: 0;
-    font-size: 18px;
-}
-
-.emoji-container-btn:hover {
-    background-color: var(--accent-secondary-blue);
-}
-
 .btn-danger:hover {
     background-color: darkred;
-}
-
-/* Analytics bar */
-.analytics-likes-bar {
-    width: 100%;
-    background-color: var(--accent-secondary-gray);
-    margin-top: 20px;
-    border-radius: 20px;
-}
-
-.analytics-likes-bar-fill {
-    background-color: gold;
-    border-radius: 20px;
-    width: 0%;
-    height: 20px;
 }

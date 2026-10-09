@@ -16,16 +16,16 @@ export default async function showGifts() {
         confirmButtonText: "Close",
         didOpen: () => {
             response.gifts.forEach(gift => {
-                const safeGift = gift || {};
+                gift = gift || {};
                 const giftCard = NS.createEl("div", NS("#active-links-container"), { className: "card" });
-                NS.createEl("h2", giftCard, { className: "overflow" }).text(safeGift.name) || "Gift";
-                NS.createEl("p", giftCard, {}).html(`<b>Max Uses:</b> ${Number(safeGift.usesCount) || 0} times`);
-                NS.createEl("p", giftCard, {}).html(`<b>Used:</b> ${Number(safeGift.usedCount) || 0} times`);
+                NS.createEl("h2", giftCard, { className: "overflow" }).text(gift.name) || "Gift";
+                NS.createEl("p", giftCard, {}).html(`<b>Max Uses:</b> ${Number(gift.usesCount) || 0} times`);
+                NS.createEl("p", giftCard, {}).html(`<b>Used:</b> ${Number(gift.usedCount) || 0} times`);
                 NS.createEl("button", giftCard, { className: "w-full" })
                     .text("Redeem")
                     .on("click", lockEvent(async function () {
                         const response = await sendRequest({
-                            url: `/api/v1/redeem/gift-link/${safeGift._id}`,
+                            url: `/api/v1/redeem/gift-link/${gift._id}`,
                             method: "POST"
                         });
 
