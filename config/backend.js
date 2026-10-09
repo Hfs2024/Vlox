@@ -22,13 +22,8 @@ const config = {
     // Environment values
     MONGO_URI: process.env.MONGO_URI,
     SESSION_SECRET: process.env.SESSION_SECRET,
-    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
     PORT: process.env.PORT,
     NODE_ENV: process.env.NODE_ENV,
-
-    // Gifts
-    GIFT_NAME_MAX_LENGTH: 100,
-    GIFT_USES_MAX: 100,
 }
 
 export default config;

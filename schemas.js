@@ -50,25 +50,9 @@ const bookmarksSchema = new mongoose.Schema({
 
 bookmarksSchema.index({ for: 1, by: 1 }, { unique: true });
 
-const giftsSchema = new mongoose.Schema({
-    usedBy: { type: [mongoose.Schema.Types.ObjectId], default: [] },
-    usedCount: { type: Number, default: 0, min: 0 },
-    usesCount: { type: Number, required: true, max: config.GIFT_USES_MAX },
-    name: { type: String, trim: true, required: true, maxLength: config.GIFT_NAME_MAX_LENGTH },
-    status: { type: String, enum: ["active", "expired"], default: "active" },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-        expires: "1d"
-    }
-}, { timestamps: true });
-
-giftsSchema.index({ name: 1 }, { unique: true });
-
 export default {
     Users: mongoose.model("Users", usersSchema, "users"),
     Reactions: mongoose.model("Reactions", reactionsSchema, "reactions"),
     Posts: mongoose.model("Posts", postsSchema, "posts"),
     Bookmarks: mongoose.model("Bookmarks", bookmarksSchema, "bookmarks"),
-    Gifts: mongoose.model("Gifts", giftsSchema, "gifts")
 };

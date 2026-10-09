@@ -1,7 +1,6 @@
 import NS from "../nanoscript.min.js";
 import config from "/config/shared.js";
 import Editor from "./editor.js";
-import showGifts from "./gifts.js";
 import showBookmarks from "./bookmarks.js";
 import {
     sendRequest,
@@ -179,11 +178,7 @@ export default async function showProfile(id) {
         confirmButtonText: "Close",
         didOpen: () => {
             state.container = NS("#user-posts-container");
-
-            NS("#view-gifts-btn").on("click", lockEvent(async function () {
-                await showGifts();
-            }));
-
+            
             NS("#reset-password-recovery-codes-btn").on("click", lockEvent(async function () {
                 const response = await sendRequest({
                     url: "/api/v1/users/recovery-codes",
