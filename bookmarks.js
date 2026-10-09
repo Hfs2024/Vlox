@@ -10,7 +10,7 @@ import {
 } from "./validators.js";
 const router = express.Router();
 
-router.post("/api/v1/get/bookmarks", checkAuth, getBookmarksValidator, async (req, res) => {
+router.post("/api/v1/bookmarks", checkAuth, getBookmarksValidator, async (req, res) => {
     const skip = req.cleanData.skip;
     const bookmarks = await schemas.Bookmarks.find({
         by: req.session.userId
@@ -23,13 +23,15 @@ router.post("/api/v1/get/bookmarks", checkAuth, getBookmarksValidator, async (re
     return res.status(200).json({ success: true, bookmarks: bookmarks });
 });
 
-router.post("/api/v1/bookmark/post/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
+router.post("/api/v1/bookmarks/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
     const id = req.cleanData.id;
     const post = await schemas.Posts.findOne({ _id: id, private: false })
         .select("title")
         .lean();
+
     if (!post) return res.status(400).json({ error: "Post not found!" });
 
+    // Insert bookmark
     const newBookmark = new schemas.Bookmarks({
         for: id,
         by: req.session.userId,
@@ -40,7 +42,7 @@ router.post("/api/v1/bookmark/post/:id", checkAuth, defaultPostFindValidator, as
     return res.status(200).json({ success: true });
 });
 
-router.put("/api/v1/rename/bookmark/:id", checkAuth, renameBookmarkValidator, async (req, res) => {
+router.put("/api/v1/bookmark/:id/rename", checkAuth, renameBookmarkValidator, async (req, res) => {
     const { id, title } = req.cleanData;
 
     const result = await schemas.Bookmarks.updateOne({
@@ -56,7 +58,7 @@ router.put("/api/v1/rename/bookmark/:id", checkAuth, renameBookmarkValidator, as
     return res.status(200).json({ success: true });
 });
 
-router.delete("/api/v1/delete/bookmark/:id", checkAuth, deleteBookmarkValidator, async (req, res) => {
+router.delete("/api/v1/bookmarks/:id/delete", checkAuth, deleteBookmarkValidator, async (req, res) => {
     const id = req.cleanData.id;
     const result = await schemas.Bookmarks.deleteOne({
         _id: id,

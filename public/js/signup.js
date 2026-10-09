@@ -41,13 +41,9 @@ async function showResetPasswordModal() {
 
     // Send request to reset passwords
     const response = await sendRequest({
-        url: "/api/v1/reset/password",
+        url: "/api/v1/users/password",
         method: "POST",
-        body: {
-            recoveryCode: result.value.recoveryCode,
-            newPassword: result.value.newPassword,
-            username: result.value.username
-        }
+        body: result.value
     });
 
     if (!response.success) return Swal.fire(response.error);
@@ -91,12 +87,9 @@ async function showLoginModal() {
 
     // Send request to login
     const response = await sendRequest({
-        url: `/api/v1/login`,
+        url: `/api/v1/users/login`,
         method: "POST",
-        body: {
-            username: result.value.username,
-            password: result.value.password,
-        }
+        body: result.value
     });
 
     if (!response.success) return Swal.fire(response.error);
@@ -146,14 +139,9 @@ async function showSignUpModal() {
 
     // Send request to create account
     const response = await sendRequest({
-        url: `/api/v1/signup`,
+        url: `/api/v1/users/signup`,
         method: "POST",
-        body: {
-            username: result.value.username,
-            password: result.value.password,
-            email: result.value.email,
-            bio: result.value.bio
-        }
+        body: result.value
     });
 
     if (!response.success) return Swal.fire(response.error);
@@ -174,7 +162,7 @@ async function showSignUpModal() {
 // User status
 async function determineAuthButtonsDisplay() {
     const status = await sendRequest({
-        url: "/api/v1/get/user-status"
+        url: "/api/v1/me/status"
     });
 
     if (!status.success) return Swal.fire(status.error);
@@ -196,7 +184,7 @@ signUpBtn.on("click", lockEvent(async function () {
 
 signOutBtn.on("click", lockEvent(async function () {
     const response = await sendRequest({
-        url: "/api/v1/signout",
+        url: "/api/v1/me/signout",
         method: "DELETE"
     });
 

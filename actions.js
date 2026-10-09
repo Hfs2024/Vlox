@@ -11,7 +11,7 @@ import {
 } from "./validators.js";
 const router = express.Router();
 
-router.put("/api/v1/update/post-visibility/:id", checkAuth, changePostVisibilityValidator, async (req, res) => {
+router.put("/api/v1/posts/:id/visibility", checkAuth, changePostVisibilityValidator, async (req, res) => {
     const { id, value } = req.cleanData;
     const result = await schemas.Posts.updateOne(postQueries.modify_post(id, req.session.userId), {
         $set: {
@@ -23,7 +23,7 @@ router.put("/api/v1/update/post-visibility/:id", checkAuth, changePostVisibility
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/react/:action/post/:id", checkAuth, reactOnPostValidator, async (req, res) => {
+router.post("/api/v1/posts/:id/react/:action", checkAuth, reactOnPostValidator, async (req, res) => {
     const session = await mongoose.startSession();
     const { action, id } = req.cleanData;
 
@@ -53,7 +53,7 @@ router.post("/api/v1/react/:action/post/:id", checkAuth, reactOnPostValidator, a
     return res.status(200).json({ success: true });
 });
 
-router.put("/api/v1/update/post/:id", checkAuth, editPostsValidator, async (req, res) => {
+router.put("/api/v1/posts/:id/update", checkAuth, editPostsValidator, async (req, res) => {
     const { content, title, id, keywords } = req.cleanData;
     const result = await schemas.Posts.updateOne(postQueries.modify_post(id, req.session.userId), {
         $set: {
@@ -67,7 +67,7 @@ router.put("/api/v1/update/post/:id", checkAuth, editPostsValidator, async (req,
     return res.status(200).json({ success: true });
 });
 
-router.delete("/api/v1/delete/post/:id", checkAuth, defaultPostFindValidator, async function (req, res) {
+router.delete("/api/v1/posts/:id/delete", checkAuth, defaultPostFindValidator, async function (req, res) {
     const session = await mongoose.startSession();
     const id = req.cleanData.id;
     await session.withTransaction(async () => {

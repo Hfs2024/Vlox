@@ -35,13 +35,12 @@ const postsSchema = new mongoose.Schema({
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true },
     private: { type: Boolean, default: false },
     redeemed: { type: Boolean, default: false },
-    keywords: { type: [String], default: [] },
-    level: { type: Number, default: config.POST_LEVEL_MIN, min: config.POST_LEVEL_MIN, max: config.POST_LEVEL_MAX }
+    keywords: { type: [String], default: [] }
 }, { timestamps: true });
 
 postsSchema.index({ by: 1 });
 postsSchema.index({ keywords: 1 });
-postsSchema.index({ level: -1, likes: -1, createdAt: -1, _id: -1 });
+postsSchema.index({ likes: -1, createdAt: -1, _id: -1 });
 
 const bookmarksSchema = new mongoose.Schema({
     for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts", required: true },

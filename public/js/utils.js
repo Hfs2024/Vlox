@@ -12,7 +12,7 @@ export function initAccessibility() {
 export async function initQuickInfo() {
     try {
         const quickInfo = await sendRequest({
-            url: "/api/v1/get/user-quick-info"
+            url: "/api/v1/me/quick-info"
         });
 
         window.quickInfo = quickInfo || {};
