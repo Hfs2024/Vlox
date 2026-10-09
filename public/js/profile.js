@@ -23,7 +23,7 @@ let state = {
 
 async function renderPosts() {
     const response = await sendRequest({
-        url: `/api/v1/get/user-posts/${state.user.id}/?skip=${state.skip}`
+        url: `/api/v1/users/${state.user.id}/posts/?skip=${state.skip}`
     });
 
     if (!response.success) return Swal.fire(response.error);
@@ -65,7 +65,7 @@ async function renderPosts() {
                 .html("<i class='fas fa-trash'></i>")
                 .on("click", lockEvent(async function () {
                     const response = await sendRequest({
-                        url: `/api/v1/delete/post/${post._id}`,
+                        url: `/api/v1/posts/${post._id}/delete`,
                         method: "DELETE"
                     });
 
@@ -83,7 +83,7 @@ async function renderPosts() {
                         successMessage: "Post updated!",
                         title: "Update post: ",
                         api: {
-                            endpoint: `/api/v1/update/post/${post._id}`,
+                            endpoint: `/api/v1/posts/${post._id}/update`,
                             method: "PUT"
                         },
                     });
@@ -97,7 +97,7 @@ async function renderPosts() {
                 .html(`<i class='fas fa-${post.private ? "eye" : "eye-slash"}'></i>`)
                 .on("click", lockEvent(async function () {
                     const response = await sendRequest({
-                        url: `/api/v1/update/post-visibility/${post._id}`,
+                        url: `/api/v1/posts/${post._id}/visibility`,
                         method: "PUT",
                         body: { value: !post.private }
                     });
@@ -119,7 +119,7 @@ export default async function showProfile(id) {
     }
 
     const response = await sendRequest({
-        url: `/api/v1/get/user-profile/${id}`
+        url: `/api/v1/users/${id}/profile`
     });
 
     if (!response.success) return Swal.fire(response.error);
@@ -186,7 +186,7 @@ export default async function showProfile(id) {
 
             NS("#reset-password-recovery-codes-btn").on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: "/api/v1/reset/password/recovery-codes",
+                    url: "/api/v1/users/recovery-codes",
                     method: "POST"
                 });
 
@@ -210,10 +210,12 @@ export default async function showProfile(id) {
                     input: "text",
                     inputPlaceholder: "Enter new bio...",
                     inputValue: state.user.bio,
+                    inputAttributes: {
+                        maxLength: config.BIO_MAX_LENGTH
+                    },
                     showCancelButton: true,
                     preConfirm: result => {
-                        if (!result) return Swal.showValidationMessage("You must enter a new bio!");
-                        if (result.length < config.BIO_MIN_LENGTH || result.length > config.BIO_MAX_LENGTH) return Swal.showValidationMessage(`Bio must be between ${config.BIO_MIN_LENGTH} and ${config.BIO_MAX_LENGTH} chars!`);
+                        if (result.length < config.BIO_MIN_LENGTH) return Swal.showValidationMessage(`Bio must be at least ${config.BIO_MIN_LENGTH} chars!`);
                     }
                 });
 
@@ -221,7 +223,7 @@ export default async function showProfile(id) {
 
                 // Update bio
                 const response = await sendRequest({
-                    url: "/api/v1/update/user-bio",
+                    url: "/api/v1/me/bio",
                     method: "PUT",
                     body: { bio: result.value }
                 });
@@ -233,7 +235,7 @@ export default async function showProfile(id) {
 
             NS("#profile-visibility-toggle-btn").on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: "/api/v1/update/user-visibility",
+                    url: "/api/v1/me/visibility",
                     method: "PUT",
                     body: { value: !state.user.private }
                 });

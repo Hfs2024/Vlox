@@ -15,7 +15,7 @@ const router = express.Router();
 
 const authRateLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 
-router.post("/api/v1/login", authRateLimiter, loginValidator, async (req, res) => {
+router.post("/api/v1/users/login", authRateLimiter, loginValidator, async (req, res) => {
     const { username, password } = req.cleanData;
 
     const user = await schemas.Users.findOne({ username: username }).select("password");
@@ -34,7 +34,7 @@ router.post("/api/v1/login", authRateLimiter, loginValidator, async (req, res) =
     });
 });
 
-router.post("/api/v1/signup", authRateLimiter, signupValidator, async (req, res) => {
+router.post("/api/v1/users/signup", authRateLimiter, signupValidator, async (req, res) => {
     const { username, password, email, bio } = req.cleanData;
     const recoveryCodes = await generateRecoveryCodes();
     const hashedPassword = await bcrypt.hash(password, config.BCRYPT_SALT_ROUNDS);
@@ -60,58 +60,7 @@ router.post("/api/v1/signup", authRateLimiter, signupValidator, async (req, res)
     });
 });
 
-router.put("/api/v1/update/user-visibility", checkAuth, updateUserVisibilityValidator, async (req, res) => {
-    const value = req.cleanData.value;
-    const result = await schemas.Users.updateOne({
-        _id: req.session.userId,
-        private: value ? false : true
-    }, {
-        $set: {
-            private: value
-        }
-    });
-
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Something went wrong. Try again." });
-    return res.status(200).json({ success: true });
-});
-
-router.put("/api/v1/update/user-bio", checkAuth, updateUserBioValidator, async (req, res) => {
-    const bio = req.cleanData.bio;
-    const result = await schemas.Users.updateOne({
-        _id: req.session.userId
-    }, {
-        $set: {
-            bio: bio
-        }
-    }, {
-        runValidators: true
-    });
-
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update!" });
-    return res.status(200).json({ success: true });
-});
-
-router.delete("/api/v1/signout", checkAuth, async (req, res) => {
-    req.session.destroy(err => {
-        if (err) {
-            console.log("Error: " + err.message);
-            return res.status(500).json({ error: "Server Error" });
-        }
-
-        res.clearCookie("connect.sid");
-        return res.status(200).json({ success: true });
-    });
-});
-
-router.get("/api/v1/get/user-quick-info", checkAuth, async (req, res) => {
-    return res.status(200).json({
-        success: true,
-        username: req.currentUser.username,
-        _id: req.currentUser._id
-    });
-});
-
-router.get("/api/v1/get/user-profile/:id", checkAuth, getUserProfileValidator, async function (req, res) {
+router.get("/api/v1/users/:id/profile", checkAuth, getUserProfileValidator, async function (req, res) {
     const id = req.cleanData.id;
 
     const user = await schemas.Users.findOne({
@@ -129,7 +78,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, getUserProfileValidator, a
     return res.status(200).json({ success: true, user: user });
 });
 
-router.get("/api/v1/get/user-posts/:id", checkAuth, getUserPostsValidator, async function (req, res) {
+router.get("/api/v1/users/:id/posts", checkAuth, getUserPostsValidator, async function (req, res) {
     const { id, skip } = req.cleanData;
     const posts = await schemas.Posts.find({
         by: id,
@@ -146,7 +95,58 @@ router.get("/api/v1/get/user-posts/:id", checkAuth, getUserPostsValidator, async
     return res.json({ success: true, posts: posts });
 });
 
-router.get("/api/v1/get/user-status", async function (req, res) {
+router.put("/api/v1/me/visibility", checkAuth, updateUserVisibilityValidator, async (req, res) => {
+    const value = req.cleanData.value;
+    const result = await schemas.Users.updateOne({
+        _id: req.session.userId,
+        private: value ? false : true
+    }, {
+        $set: {
+            private: value
+        }
+    });
+
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Something went wrong. Try again." });
+    return res.status(200).json({ success: true });
+});
+
+router.put("/api/v1/me/bio", checkAuth, updateUserBioValidator, async (req, res) => {
+    const bio = req.cleanData.bio;
+    const result = await schemas.Users.updateOne({
+        _id: req.session.userId
+    }, {
+        $set: {
+            bio: bio
+        }
+    }, {
+        runValidators: true
+    });
+
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update!" });
+    return res.status(200).json({ success: true });
+});
+
+router.delete("/api/v1/me/signout", checkAuth, async (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            console.log("Error: " + err.message);
+            return res.status(500).json({ error: "Server Error" });
+        }
+
+        res.clearCookie("connect.sid");
+        return res.status(200).json({ success: true });
+    });
+});
+
+router.get("/api/v1/me/quick-info", checkAuth, async (req, res) => {
+    return res.status(200).json({
+        success: true,
+        username: req.currentUser.username,
+        _id: req.currentUser._id
+    });
+});
+
+router.get("/api/v1/me/status", async function (req, res) {
     return res.status(200).json({ success: true, loggedIn: req.session.isLoggedIn });
 });
 

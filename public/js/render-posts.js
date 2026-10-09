@@ -1,5 +1,6 @@
 import NS from "../nanoscript.min.js";
 import showProfile from "./profile.js";
+import config from "/config/shared.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
@@ -44,7 +45,7 @@ export async function renderPosts(posts = []) {
         NS.createEl("i", postIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })
             .on("click", lockEvent(async function () {
                 const bookmarkResponse = await sendRequest({
-                    url: `/api/v1/bookmark/post/${post._id}`,
+                    url: `/api/v1/bookmarks/${post._id}`,
                     method: "POST"
                 });
 
@@ -81,7 +82,7 @@ export async function renderPosts(posts = []) {
             .html(`<i class="fas fa-thumbs-up"></i> <span class="likes-count">${likes.toLocaleString()}</span>`)
             .on("click", lockEvent(async function () {
                 const likesResponse = await sendRequest({
-                    url: `/api/v1/react/like/post/${post._id}`,
+                    url: `/api/v1/posts/${post._id}/react/like`,
                     method: "POST"
                 });
 
@@ -96,7 +97,7 @@ export async function renderPosts(posts = []) {
         NS.createEl("button", reactionsContainer, {})
             .html(`<i class="fas fa-comments"></i> <span class="likes-count">${likes.toLocaleString()}</span>`)
             .on("click", lockEvent(async function () {
-                Swal.fire("Info", "Still working on this feature...", "info");
+                Swal.fire("Info", "Still working on ths feature...", "info");
             }));
 
         // Reports
@@ -104,7 +105,7 @@ export async function renderPosts(posts = []) {
             .html("<i class='fas fa-warning'></i>")
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: `/api/v1/react/report/post/${post._id}`,
+                    url: `/api/v1/posts/${post._id}/react/report`,
                     method: "POST"
                 });
 
@@ -123,8 +124,8 @@ export async function getPosts(
 ) {
     const data = await sendRequest({
         url: postId ?
-            `/api/v1/get/post/${postId}` :
-            `/api/v1/get/posts/?chronological=${chronological}&skip=${postsState.skip}`,
+            `/api/v1/posts/${postId}` :
+            `/api/v1/posts/?chronological=${chronological}&skip=${postsState.skip}`,
     });
 
     if (!data.success) return Swal.fire(data.error);

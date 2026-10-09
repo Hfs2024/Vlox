@@ -10,7 +10,7 @@ let state = {
 
 async function renderBookmarks() {
     const response = await sendRequest({
-        url: `/api/v1/get/bookmarks/?skip=${state.skip}`,
+        url: `/api/v1/bookmarks/?skip=${state.skip}`,
         method: "POST"
     });
 
@@ -38,7 +38,7 @@ async function renderBookmarks() {
         NS.createEl("i", bookmarkHeader, { className: "fas fa-eye icon-helper", role: "button", tabIndex: "0" })
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: `/api/v1/get/post/${bookmark.for}`
+                    url: `/api/v1/posts/${bookmark.for}`
                 });
 
                 if (!response.success) return Swal.fire(response.error);
@@ -50,7 +50,7 @@ async function renderBookmarks() {
             .text("Delete")
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: `/api/v1/delete/bookmark/${bookmark._id}`,
+                    url: `/api/v1/bookmarks/${bookmark._id}/delete`,
                     method: "DELETE"
                 });
 
@@ -78,7 +78,7 @@ async function renderBookmarks() {
 
                 // Rename bookmark
                 const response = await sendRequest({
-                    url: `/api/v1/rename/bookmark/${bookmark._id}`,
+                    url: `/api/v1/bookmarks/${bookmark._id}/rename`,
                     method: "PUT",
                     body: { title: result.value }
                 });

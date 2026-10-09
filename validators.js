@@ -97,12 +97,6 @@ export const resetPasswordValidator = [
     validateResult
 ]
 
-// Gifts
-export const redeemGiftLinkValidator = [
-    mongoIdParam("id", "Gift link ID"),
-    validateResult
-]
-
 // Bookmarks
 export const getBookmarksValidator = [
     skipQuery(),

@@ -14,15 +14,13 @@ import {
     checkAuth,
     generateRecoveryCodes,
     createLimiter,
-    postQueries,
-    ClientError
+    postQueries
 } from "./utils.js";
 import {
     defaultPostFindValidator,
     getPostsValidator,
     createPostsValidator,
-    resetPasswordValidator,
-    redeemGiftLinkValidator
+    resetPasswordValidator
 } from "./validators.js";
 
 const __dirname = import.meta.dirname;
@@ -58,7 +56,7 @@ app.use(
     })
 );
 const mainLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.MAIN_RATE_LIMIT_MAX_REQ, {
-    skip: (req) => ["/api/v1/reset/password", "/api/v1/posts/bulk"].some((path) => req.originalUrl.includes(path))
+    skip: (req) => ["/api/v1/users/password", "/api/v1/users/recovery-codes"].some((path) => req.originalUrl.includes(path))
 });
 
 app.use(mainLimiter);
@@ -87,7 +85,7 @@ app.post("/api/v1/posts", checkAuth, createPostsValidator, async (req, res) => {
     return res.status(200).json({ success: true });
 });
 
-app.get("/api/v1/get/post/:id", defaultPostFindValidator, async (req, res) => {
+app.get("/api/v1/posts/:id", defaultPostFindValidator, async (req, res) => {
     const id = req.cleanData.id;
     const post = await schemas.Posts.findOne({
         ...postQueries.view_post(id, req.session.userId)
@@ -100,13 +98,13 @@ app.get("/api/v1/get/post/:id", defaultPostFindValidator, async (req, res) => {
     return res.status(200).json({ success: true, posts: [post] });
 });
 
-app.get("/api/v1/get/posts", getPostsValidator, async (req, res) => {
+app.get("/api/v1/posts", getPostsValidator, async (req, res) => {
     const { skip, chronological } = req.cleanData;
 
     // Sort query
     const sortQuery = chronological
         ? { createdAt: -1, _id: -1 }
-        : { level: -1, likes: -1, createdAt: -1, _id: -1 };
+        : { likes: -1, createdAt: -1, _id: -1 };
 
     // Find posts
     const posts = await schemas.Posts.find({
@@ -125,7 +123,7 @@ app.get("/api/v1/get/posts", getPostsValidator, async (req, res) => {
 // Password recovery
 const passwordRecoveryLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 
-app.post("/api/v1/reset/password", passwordRecoveryLimiter, resetPasswordValidator, async (req, res) => {
+app.post("/api/v1/users/password", passwordRecoveryLimiter, resetPasswordValidator, async (req, res) => {
     const { username, recoveryCode, newPassword } = req.cleanData;
     const user = await schemas.Users.findOne({ username: username })
         .select("recoveryCodes")
@@ -156,7 +154,7 @@ app.post("/api/v1/reset/password", passwordRecoveryLimiter, resetPasswordValidat
     return res.status(400).json({ error: "Invalid recovery code!" });
 });
 
-app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryLimiter, checkAuth, async (req, res) => {
+app.post("/api/v1/users/recovery-codes", passwordRecoveryLimiter, checkAuth, async (req, res) => {
     const newCodes = await generateRecoveryCodes();
     const result = await schemas.Users.updateOne({
         _id: req.session.userId,
@@ -168,11 +166,6 @@ app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryLimiter, check
 
     if (result.matchedCount === 0) return res.status(400).json({ error: "Could not find your account right now!" });
     return res.status(200).json({ success: true, codes: newCodes.raw });
-});
-
-app.get("/api/v1/get/gifts", checkAuth, async (req, res) => {
-    const gifts = await schemas.Gifts.find({ status: "active" });
-    return res.status(200).json({ success: true, gifts });
 });
 
 app.use((req, res) => {
