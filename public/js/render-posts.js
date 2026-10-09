@@ -74,10 +74,10 @@ export async function renderPosts(posts = []) {
 
         /* Reactions */
         const reactionsContainer = NS.createEl("div", postCard, { className: "reactions" });
+        const likes = Number(post.likes) || 0;
+        const comments = Number(post.comments) || 0;
 
         // Likes
-        const likes = Number(post.likes ?? 0);
-
         NS.createEl("button", reactionsContainer, {})
             .html(`<i class="fas fa-thumbs-up"></i> <span class="likes-count">${likes.toLocaleString()}</span>`)
             .on("click", lockEvent(async function () {
@@ -95,7 +95,7 @@ export async function renderPosts(posts = []) {
 
         // Comment
         NS.createEl("button", reactionsContainer, {})
-            .html(`<i class="fas fa-comments"></i> <span class="likes-count">${likes.toLocaleString()}</span>`)
+            .html(`<i class="fas fa-comments"></i> <span class="comments-count">${comments.toLocaleString()}</span>`)
             .on("click", lockEvent(async function () {
                 Swal.fire("Info", "Still working on ths feature...", "info");
             }));
