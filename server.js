@@ -170,65 +170,6 @@ app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryLimiter, check
     return res.status(200).json({ success: true, codes: newCodes.raw });
 });
 
-app.post("/api/v1/redeem/gift-link/:id", checkAuth, redeemGiftLinkValidator, async (req, res) => {
-    const id = req.cleanData.id;
-    const remaining = Math.max(0, config.COINS_MAX - req.currentUser.coins);
-    const inc = Math.min(config.COINS_MIN, remaining);
-    if (inc <= 0) return res.status(400).json({ error: "You already reached the max amount of coins!" });
-
-    const session = await mongoose.startSession();
-    await session.withTransaction(async () => {
-        // Gift link redemption
-        const giftResult = await schemas.Gifts.updateOne(
-            { _id: id, status: "active", usedBy: { $ne: req.session.userId } },
-            [
-                {
-                    $set: {
-                        status: {
-                            $cond: {
-                                if: { $eq: [{ $subtract: ["$usesCount", "$usedCount"] }, 1] },
-                                then: "expired",
-                                else: "$status"
-                            }
-                        },
-                        usedCount: {
-                            $cond: {
-                                if: { $eq: ["$usedCount", "$usesCount"] },
-                                then: "$usedCount",
-                                else: { $add: ["$usedCount", 1] }
-                            }
-                        },
-                        usedBy: {
-                            $setUnion: [
-                                { $ifNull: ["$usedBy", []] },
-                                [new mongoose.Types.ObjectId(req.session.userId)]
-                            ]
-                        }
-                    }
-                }
-            ],
-            { session }
-        );
-
-        if (giftResult.matchedCount === 0) throw new ClientError("You may not have access to this gift!");
-
-        // Update user's coins
-        const userResult = await schemas.Users.updateOne({
-            _id: req.session.userId,
-            coins: { $lt: config.COINS_MAX }
-        }, {
-            $inc: {
-                coins: inc
-            }
-        }, { session });
-
-        if (userResult.matchedCount === 0) throw new ClientError(`You must've less than ${config.COINS_MAX} coins for this operation to succeed!`);
-    });
-
-    await session.endSession();
-    return res.status(200).json({ success: true });
-});
-
 app.get("/api/v1/get/gifts", checkAuth, async (req, res) => {
     const gifts = await schemas.Gifts.find({ status: "active" });
     return res.status(200).json({ success: true, gifts });

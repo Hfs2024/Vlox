@@ -161,13 +161,8 @@ export const signupValidator = [
     validateResult
 ]
 
-export const updateUserValidator = [
-    body("newEmoji")
-        .optional({ values: "falsy" })
-        .isString().withMessage("Emoji must be a string")
-        .isIn(config.EMOJIS).withMessage("Emoji is not supported")
-        .trim(),
-    body("newBio")
+export const updateUserBioValidator = [
+    body("bio")
         .optional({ values: "falsy" })
         .isString().withMessage("Bio must be a string")
         .isLength({ max: config.BIO_MAX_LENGTH }).withMessage(`Bio must not exceed ${config.BIO_MAX_LENGTH} characters`)
@@ -175,7 +170,7 @@ export const updateUserValidator = [
     validateResult
 ]
 
-export const changeUserVisibilityValidator = [
+export const updateUserVisibilityValidator = [
     visibilityValue(),
     validateResult
 ]

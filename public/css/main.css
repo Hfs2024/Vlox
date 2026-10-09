@@ -46,7 +46,7 @@ footer {
 /* Containers */
 main {
     display: flex;
-    flex: 1;
+    height: calc(100vh - 120px); 
     flex-direction: column;
     margin: 20px;
     background-color: whitesmoke;
@@ -55,12 +55,13 @@ main {
     box-sizing: border-box;
 }
 
-main:has(.state-nothing-found) {
-    justify-content: center;
+.scroll-container {
+    max-height: 300px;
+    overflow: auto;
 }
 
-.scroll-container {
-    max-height: 400px;
+#posts-container {
+    height: 100%;
     overflow: auto;
 }
 
@@ -85,7 +86,7 @@ main:has(.state-nothing-found) {
 }
 
 .swal2-popup {
-    border-radius: 8px !important; 
+    border-radius: 8px !important;
 }
 
 /* Helpers */
@@ -145,18 +146,11 @@ main:has(.state-nothing-found) {
     color: var(--accent-main-gray);
 }
 
-[inert], .disabled {
+[inert],
+.disabled {
     opacity: 0.5;
     transition: 0.3s opacity ease;
     cursor: not-allowed;
-}
-
-/* Responsiveness */
-@media (max-width: 768px) {
-    #posts-container {
-        max-height: 400px;
-        overflow: auto;
-    }
 }
 
 /* Cool scrollbar design */

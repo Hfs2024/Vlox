@@ -4,29 +4,14 @@ import { checkAuth, generateRecoveryCodes, createLimiter } from "./utils.js";
 import schemas from "./schemas.js";
 import config from "./config/backend.js";
 import {
-    changeUserVisibilityValidator,
+    updateUserBioValidator,
     loginValidator,
     signupValidator,
-    updateUserValidator,
+    updateUserVisibilityValidator,
     getUserProfileValidator,
     getUserPostsValidator
 } from "./validators.js";
 const router = express.Router();
-
-router.put("/api/v1/change-visibility/user-profile", checkAuth, changeUserVisibilityValidator, async (req, res) => {
-    const value = req.cleanData.value;
-    const result = await schemas.Users.updateOne({
-        _id: req.session.userId,
-        private: value ? false : true
-    }, {
-        $set: {
-            private: value
-        }
-    });
-
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Something went wrong. Try again." });
-    return res.status(200).json({ success: true });
-});
 
 const authRateLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 
@@ -75,16 +60,29 @@ router.post("/api/v1/signup", authRateLimiter, signupValidator, async (req, res)
     });
 });
 
-router.put("/api/v1/update/user", checkAuth, updateUserValidator, async (req, res) => {
-    const { newBio, newEmoji } = req.cleanData;
-    const updateQuery = {};
-    if (newEmoji) updateQuery.emoji = newEmoji.normalize("NFC");
-    if (newBio) updateQuery.bio = newBio;
+router.put("/api/v1/update/user-visibility", checkAuth, updateUserVisibilityValidator, async (req, res) => {
+    const value = req.cleanData.value;
+    const result = await schemas.Users.updateOne({
+        _id: req.session.userId,
+        private: value ? false : true
+    }, {
+        $set: {
+            private: value
+        }
+    });
 
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Something went wrong. Try again." });
+    return res.status(200).json({ success: true });
+});
+
+router.put("/api/v1/update/user-bio", checkAuth, updateUserBioValidator, async (req, res) => {
+    const bio = req.cleanData.bio;
     const result = await schemas.Users.updateOne({
         _id: req.session.userId
     }, {
-        $set: updateQuery
+        $set: {
+            bio: bio
+        }
     }, {
         runValidators: true
     });
@@ -109,8 +107,7 @@ router.get("/api/v1/get/user-quick-info", checkAuth, async (req, res) => {
     return res.status(200).json({
         success: true,
         username: req.currentUser.username,
-        _id: req.currentUser._id,
-        coins: req.currentUser.coins,
+        _id: req.currentUser._id
     });
 });
 
@@ -124,7 +121,7 @@ router.get("/api/v1/get/user-profile/:id", checkAuth, getUserProfileValidator, a
             { private: false }
         ]
     })
-        .select("username emoji bio private coins")
+        .select("username bio private")
         .lean();
 
     if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
