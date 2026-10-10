@@ -66,15 +66,25 @@ export const changePostVisibilityValidator = [
     validateResult
 ]
 
-export const reactOnPostValidator = [
+export const defaultPostFindValidator = [
     mongoIdParam("id", "Post ID"),
-    param("action")
-        .exists().withMessage("Action is required")
-        .isIn(["like", "report"]).withMessage("Action must be 'like' or 'report'"),
     validateResult
 ]
 
-export const defaultPostFindValidator = [
+// Comments
+export const commentsValidator = [
+    mongoIdParam("id", "Post ID"),
+    body("content")
+        .exists().withMessage(`Content is required`)
+        .notEmpty().withMessage(`Content cannot be empty`)
+        .isString().withMessage(`Content must be a string`)
+        .isLength({ max: config.COMMENTS_MAX_LENGTH }).withMessage(`Content must not exceed ${config.COMMENTS_MAX_LENGTH} chars`)
+        .trim(),
+    validateResult
+]
+
+export const getCommentsValidator = [
+    skipQuery(),
     mongoIdParam("id", "Post ID"),
     validateResult
 ]

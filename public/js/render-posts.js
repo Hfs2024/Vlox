@@ -1,6 +1,7 @@
 import NS from "../nanoscript.min.js";
 import showProfile from "./profile.js";
 import config from "/config/shared.js";
+import showComments from "./comments.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
@@ -25,7 +26,7 @@ export async function renderPosts(posts = []) {
     // Nothing found
     if (!Array.isArray(posts) || posts.length <= 0) {
         NS.createEl("div", postsContainer, { className: "state-nothing-found" })
-            .html("<b>No posts yet.</b>");
+            .html("<b>No posts found!</b>");
         return;
     }
 
@@ -67,7 +68,7 @@ export async function renderPosts(posts = []) {
             style: "color: red; cursor: pointer",
             role: "button", tabIndex: "0"
         })
-            .html(`Created by: <span class="author-name">${capitalizeFirstLetter(safeBy.username || "User")}</span>`)
+            .html(`Created by: <span class="author-name">${capitalizeFirstLetter(safeBy.username) || "User"}</span>`)
             .on("click", async function () {
                 showProfile(safeBy._id);
             });
@@ -75,14 +76,13 @@ export async function renderPosts(posts = []) {
         /* Reactions */
         const reactionsContainer = NS.createEl("div", postCard, { className: "reactions" });
         const likes = Number(post.likes) || 0;
-        const comments = Number(post.comments) || 0;
 
-        // Likes
+        // Like
         NS.createEl("button", reactionsContainer, {})
-            .html(`<i class="fas fa-thumbs-up"></i> <span class="likes-count">${likes.toLocaleString()}</span>`)
+            .html(`<i class="fas fa-thumbs-up"></i> <span class="likes-count">${likes}</span>`)
             .on("click", lockEvent(async function () {
                 const likesResponse = await sendRequest({
-                    url: `/api/v1/posts/${post._id}/react/like`,
+                    url: `/api/v1/posts/${post._id}/like`,
                     method: "POST"
                 });
 
@@ -93,24 +93,43 @@ export async function renderPosts(posts = []) {
                 Swal.fire("Success", "Post liked!", "success");
             }));
 
-        // Comment
+        // Add comment
         NS.createEl("button", reactionsContainer, {})
-            .html(`<i class="fas fa-comments"></i> <span class="comments-count">${comments.toLocaleString()}</span>`)
+            .html(`<i class="fas fa-comment-medical"></i>`)
             .on("click", lockEvent(async function () {
-                Swal.fire("Info", "Still working on ths feature...", "info");
-            }));
+                const result = await Swal.fire({
+                    title: "Add comment: ",
+                    input: "text",
+                    inputPlaceholder: "Enter comment...",
+                    inputAttributes: {
+                        maxLength: config.COMMENTS_MAX_LENGTH
+                    },
+                    showCancelButton: true,
+                    preConfirm: result => {
+                        if (!result.length) return Swal.showValidationMessage("Please enter a comment!");
+                    }
+                });
 
-        // Reports
-        NS.createEl("button", reactionsContainer, {})
-            .html("<i class='fas fa-warning'></i>")
-            .on("click", lockEvent(async function () {
+                if (!result.isConfirmed) return;
+
+                // Send request
                 const response = await sendRequest({
-                    url: `/api/v1/posts/${post._id}/react/report`,
-                    method: "POST"
+                    url: `/api/v1/posts/${post._id}/comments`,
+                    method: "POST",
+                    body: {
+                        content: result.value
+                    }
                 });
 
                 if (!response.success) return Swal.fire(response.error);
-                Swal.fire("Success", "Post reported", "success");
+                Swal.fire("Success", "Comment added!", "success");
+            }));
+
+        // View comments
+        NS.createEl("button", reactionsContainer, {})
+            .html(`<i class="fas fa-comments"></i>`)
+            .on("click", lockEvent(async function () {
+                await showComments(post._id);
             }));
     });
 

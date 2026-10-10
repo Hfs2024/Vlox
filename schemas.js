@@ -19,19 +19,17 @@ const usersSchema = new mongoose.Schema({
 usersSchema.index({ username: 1 }, { unique: true });
 usersSchema.index({ email: 1 }, { unique: true });
 
-const reactionsSchema = new mongoose.Schema({
-    type: { type: String, enum: ["like", "report"], required: true },
+const likesSchema = new mongoose.Schema({
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true },
     for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts", required: true },
 }, { timestamps: true });
 
-reactionsSchema.index({ by: 1, for: 1, type: 1 }, { unique: true });
+likesSchema.index({ by: 1, for: 1 }, { unique: true });
 
 const postsSchema = new mongoose.Schema({
     title: { type: String, trim: true, required: true, maxLength: config.POST_TITLE_MAX_LENGTH },
     content: { type: String, trim: true, required: true, maxLength: config.POST_CONTENT_MAX_LENGTH },
     likes: { type: Number, default: 0, min: 0 },
-    reports: { type: Number, default: 0, min: 0 },
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true },
     private: { type: Boolean, default: false },
     redeemed: { type: Boolean, default: false },
@@ -50,9 +48,18 @@ const bookmarksSchema = new mongoose.Schema({
 
 bookmarksSchema.index({ for: 1, by: 1 }, { unique: true });
 
+const commentsSchema = new mongoose.Schema({
+    for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts", required: true },
+    by: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true },
+    content: { type: String, trim: true, required: true, maxLength: config.COMMENTS_MAX_LENGTH }
+}, { timestamps: true });
+
+commentsSchema.index({ for: 1 });
+
 export default {
     Users: mongoose.model("Users", usersSchema, "users"),
-    Reactions: mongoose.model("Reactions", reactionsSchema, "reactions"),
+    Likes: mongoose.model("Likes", likesSchema, "likes"),
     Posts: mongoose.model("Posts", postsSchema, "posts"),
     Bookmarks: mongoose.model("Bookmarks", bookmarksSchema, "bookmarks"),
+    Comments: mongoose.model("Comments", commentsSchema, "comments")
 };

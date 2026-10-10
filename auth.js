@@ -1,18 +1,20 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import { checkAuth, generateRecoveryCodes, createLimiter } from "./utils.js";
 import schemas from "./schemas.js";
 import config from "./config/backend.js";
+import { checkAuth, generateRecoveryCodes, createLimiter } from "./utils.js";
 import {
     updateUserBioValidator,
     loginValidator,
     signupValidator,
     updateUserVisibilityValidator,
     getUserProfileValidator,
-    getUserPostsValidator
+    getUserPostsValidator,
+    resetPasswordValidator
 } from "./validators.js";
-const router = express.Router();
 
+const router = express.Router();
+const passwordRecoveryLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 const authRateLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 
 router.post("/api/v1/users/login", authRateLimiter, loginValidator, async (req, res) => {
@@ -74,7 +76,7 @@ router.get("/api/v1/users/:id/profile", checkAuth, getUserProfileValidator, asyn
         .lean();
 
     if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
-    
+
     return res.status(200).json({ success: true, user: user });
 });
 
@@ -93,6 +95,51 @@ router.get("/api/v1/users/:id/posts", checkAuth, getUserPostsValidator, async fu
         .lean();
 
     return res.json({ success: true, posts: posts });
+});
+
+router.post("/api/v1/users/password", passwordRecoveryLimiter, resetPasswordValidator, async (req, res) => {
+    const { username, recoveryCode, newPassword } = req.cleanData;
+    const user = await schemas.Users.findOne({ username: username })
+        .select("recoveryCodes")
+        .lean();
+    if (!user) return res.status(400).json({ error: "Failed to find user!" });
+
+    for (const code of user.recoveryCodes) {
+        const isValid = await bcrypt.compare(recoveryCode, code);
+        if (!isValid) continue;
+
+        const result = await schemas.Users.updateOne({
+            username: username,
+            recoveryCodes: code
+        }, {
+            $set: {
+                password: await bcrypt.hash(newPassword, config.BCRYPT_SALT_ROUNDS)
+            },
+            $pull: {
+                recoveryCodes: code
+            }
+        });
+
+        if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update password!" });
+
+        return res.status(200).json({ success: true });
+    }
+
+    return res.status(400).json({ error: "Invalid recovery code!" });
+});
+
+router.post("/api/v1/users/recovery-codes", passwordRecoveryLimiter, checkAuth, async (req, res) => {
+    const newCodes = await generateRecoveryCodes();
+    const result = await schemas.Users.updateOne({
+        _id: req.session.userId,
+    }, {
+        $set: {
+            recoveryCodes: newCodes.hashed
+        }
+    });
+
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Could not find your account right now!" });
+    return res.status(200).json({ success: true, codes: newCodes.raw });
 });
 
 router.put("/api/v1/me/visibility", checkAuth, updateUserVisibilityValidator, async (req, res) => {

@@ -1,13 +1,9 @@
 const config = {
-    // Others
-    POSTS_LIMIT: 100,
-    BOOKMARKS_LIMIT: 10,
-    USER_POSTS_LIMIT: 10,
-
-    // Posts
+    // Posts and comments
     POST_TITLE_MAX_LENGTH: 20,
     POST_CONTENT_MAX_LENGTH: 1000,
     POST_KEYWORDS_MAX_LENGTH: 5,
+    COMMENTS_MAX_LENGTH: 100,
     ALLOWED_TAGS: [
         "pre", "code", "b", "i", "br", "span", "em", "strong", "u", "s", "sub", "sup", "small",
         "p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "ul", "ol", "li",
@@ -23,6 +19,13 @@ const config = {
     BIO_MAX_LENGTH: 20,
     EMAIL_MAX_LENGTH: 100,
     RECOVERY_CODE_LENGTH: 20,
+
+    
+    // Others
+    POSTS_LIMIT: 15,
+    BOOKMARKS_LIMIT: 10,
+    USER_POSTS_LIMIT: 10,
+    COMMENTS_LIMIT: 20
 }
 
 export default config;

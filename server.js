@@ -2,7 +2,6 @@ import "express-async-errors";
 import express from "express";
 import path from "path";
 import session from "express-session";
-import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
 import schemas from "./schemas.js";
@@ -12,7 +11,6 @@ import authRouter from "./auth.js";
 import config from "./config/backend.js";
 import {
     checkAuth,
-    generateRecoveryCodes,
     createLimiter,
     postQueries
 } from "./utils.js";
@@ -20,7 +18,7 @@ import {
     defaultPostFindValidator,
     getPostsValidator,
     createPostsValidator,
-    resetPasswordValidator
+    getCommentsValidator
 } from "./validators.js";
 
 const __dirname = import.meta.dirname;
@@ -90,7 +88,6 @@ app.get("/api/v1/posts/:id", defaultPostFindValidator, async (req, res) => {
     const post = await schemas.Posts.findOne({
         ...postQueries.view_post(id, req.session.userId)
     })
-        .select("-reports")
         .populate("by", "-password -recoveryCodes -email")
         .lean();
 
@@ -113,59 +110,22 @@ app.get("/api/v1/posts", getPostsValidator, async (req, res) => {
         .sort(sortQuery)
         .skip(skip)
         .limit(config.POSTS_LIMIT)
-        .select("-reports")
         .populate("by", "-password -recoveryCodes -email")
         .lean();
 
     return res.status(200).json({ success: true, posts });
 });
 
-// Password recovery
-const passwordRecoveryLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
-
-app.post("/api/v1/users/password", passwordRecoveryLimiter, resetPasswordValidator, async (req, res) => {
-    const { username, recoveryCode, newPassword } = req.cleanData;
-    const user = await schemas.Users.findOne({ username: username })
-        .select("recoveryCodes")
+app.get("/api/v1/posts/:id/comments", checkAuth, getCommentsValidator, async (req, res) => {
+    const { skip, id } = req.cleanData;
+    const comments = await schemas.Comments.find({ for: id })
+        .skip(skip)
+        .limit(config.COMMENTS_LIMIT)
+        .sort({ createdAt: -1, _id: -1 })
+        .populate("by", "-password -recoveryCodes -email")
         .lean();
-    if (!user) return res.status(400).json({ error: "Failed to find user!" });
 
-    for (const code of user.recoveryCodes) {
-        const isValid = await bcrypt.compare(recoveryCode, code);
-        if (!isValid) continue;
-
-        const result = await schemas.Users.updateOne({
-            username: username,
-            recoveryCodes: code
-        }, {
-            $set: {
-                password: await bcrypt.hash(newPassword, config.BCRYPT_SALT_ROUNDS)
-            },
-            $pull: {
-                recoveryCodes: code
-            }
-        });
-
-        if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update password!" });
-
-        return res.status(200).json({ success: true });
-    }
-
-    return res.status(400).json({ error: "Invalid recovery code!" });
-});
-
-app.post("/api/v1/users/recovery-codes", passwordRecoveryLimiter, checkAuth, async (req, res) => {
-    const newCodes = await generateRecoveryCodes();
-    const result = await schemas.Users.updateOne({
-        _id: req.session.userId,
-    }, {
-        $set: {
-            recoveryCodes: newCodes.hashed
-        }
-    });
-
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Could not find your account right now!" });
-    return res.status(200).json({ success: true, codes: newCodes.raw });
+    return res.status(200).json({ success: true, comments });
 });
 
 app.use((req, res) => {
