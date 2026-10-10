@@ -254,7 +254,7 @@ export default async function showProfile(id) {
             }));
 
             NS("#profile-posts-next-btn").on("click", lockEvent(async function () {
-                if (state.container.get(".state-nothing-found")?.elements) return;
+                if (state.container.get(".state-nothing-found")?.elements[0]) return;
                 state.skip += config.USER_POSTS_LIMIT;
                 await renderPosts();
             }));
