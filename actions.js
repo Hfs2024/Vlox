@@ -2,12 +2,11 @@ import schemas from "./schemas.js";
 import { checkAuth, postQueries, ClientError } from "./utils.js";
 import express from "express";
 import mongoose from "mongoose";
-import config from "./config/backend.js";
 import {
     changePostVisibilityValidator,
     editPostsValidator,
     defaultPostFindValidator,
-    reactOnPostValidator
+    commentsValidator
 } from "./validators.js";
 const router = express.Router();
 
@@ -23,30 +22,30 @@ router.put("/api/v1/posts/:id/visibility", checkAuth, changePostVisibilityValida
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/posts/:id/react/:action", checkAuth, reactOnPostValidator, async (req, res) => {
+router.post("/api/v1/posts/:id/like", checkAuth, defaultPostFindValidator, async (req, res) => {
     const session = await mongoose.startSession();
-    const { action, id } = req.cleanData;
+    const { id } = req.cleanData;
 
     await session.withTransaction(async () => {
-        const newReaction = new schemas.Reactions({
-            by: req.session.userId,
-            for: id,
-            type: action
-        });
-
-        await newReaction.save({ session });
-
+        // Update post
         const updatePostResult = await schemas.Posts.updateOne(postQueries.view_post(id, req.session.userId),
             {
                 $inc: {
-                    likes: action === "like" ? 1 : 0,
-                    reports: action === "report" ? 1 : 0
+                    likes: 1
                 }
             }, {
             session
         });
 
         if (updatePostResult.matchedCount === 0) throw new ClientError("You may not have access to this post!");
+
+        // Insert like
+        const newLike = new schemas.Likes({
+            by: req.session.userId,
+            for: id
+        });
+
+        await newLike.save({ session });
     });
 
     await session.endSession();
@@ -74,12 +73,26 @@ router.delete("/api/v1/posts/:id/delete", checkAuth, defaultPostFindValidator, a
         const deletePostResult = await schemas.Posts.deleteOne(postQueries.modify_post(id, req.session.userId), { session });
         if (deletePostResult.deletedCount === 0) throw new ClientError("You may not have access to this post!");
 
-        await schemas.Reactions.deleteMany({
+        await schemas.Likes.deleteMany({
             for: id
         }, { session });
     });
 
     await session.endSession();
+    return res.status(200).json({ success: true });
+});
+
+router.post("/api/v1/posts/:id/comments", checkAuth, commentsValidator, async (req, res) => {
+    const { id, content } = req.cleanData;
+
+    // Insert comment
+    const newComment = new schemas.Comments({
+        content: content,
+        for: id,
+        by: req.session.userId
+    });
+
+    await newComment.save();
     return res.status(200).json({ success: true });
 });
 
