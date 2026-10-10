@@ -46,8 +46,8 @@ footer {
 /* Containers */
 main {
     display: flex;
-    height: calc(100vh - 120px); 
     flex-direction: column;
+    height: calc(100vh - 120px); 
     margin: 20px;
     background-color: whitesmoke;
     border-radius: 20px;
