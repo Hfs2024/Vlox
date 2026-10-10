@@ -34,7 +34,7 @@ if (!postsState.isCustomPost) {
     NS.createEl("button", postsNavigationContainer, {})
         .html("<i class='fas fa-chevron-right'></i> Next")
         .on("click", lockEvent(async () => {
-            if (NS("#posts-container").get(".state-nothing-found")?.elements) return;
+            if (NS("#posts-container").get(".state-nothing-found")?.elements[0]) return;
             postsState.skip += config.POSTS_LIMIT;
             await getPosts(postsState.chronological);
         }));
