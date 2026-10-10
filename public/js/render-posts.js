@@ -93,9 +93,16 @@ export async function renderPosts(posts = []) {
                 Swal.fire("Success", "Post liked!", "success");
             }));
 
+        // View comments
+        NS.createEl("button", reactionsContainer, {})
+            .html(`<i class="fas fa-comments"></i>`)
+            .on("click", lockEvent(async function () {
+                await showComments(post._id);
+            }));
+
         // Add comment
         NS.createEl("button", reactionsContainer, {})
-            .html(`<i class="fas fa-comment-medical"></i>`)
+            .html(`<i class="fas fa-share"></i>`)
             .on("click", lockEvent(async function () {
                 const result = await Swal.fire({
                     title: "Add comment: ",
@@ -123,13 +130,6 @@ export async function renderPosts(posts = []) {
 
                 if (!response.success) return Swal.fire(response.error);
                 Swal.fire("Success", "Comment added!", "success");
-            }));
-
-        // View comments
-        NS.createEl("button", reactionsContainer, {})
-            .html(`<i class="fas fa-comments"></i>`)
-            .on("click", lockEvent(async function () {
-                await showComments(post._id);
             }));
     });
 
