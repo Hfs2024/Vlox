@@ -1,9 +1,9 @@
-import config from "/config/shared.js";
-import NS from "../nanoscript.min.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
-    lockEvent
+    lockEvent,
+    $,
+    config
 } from "./utils.js";
 
 let state = {
@@ -19,11 +19,11 @@ async function renderComments() {
 
     if (!response.success) return Swal.fire(response.error);
 
-    state.container.html("");
+    $(state.container).html("");
 
     if (!Array.isArray(response.comments) || response.comments.length <= 0) {
-        NS.createEl("div", state.container, { className: "state-nothing-found" })
-            .html("<b>No comments found!</b>");
+        const empty = $("<div>").addClass("state-nothing-found").html("<b>No comments found!</b>");
+        $(state.container).append(empty);
         return;
     }
 
@@ -31,14 +31,15 @@ async function renderComments() {
         comment = comment || {};
         const safeBy = comment.by || {};
 
-        const commentsCard = NS.createEl("div", state.container, { className: "card" });
-        NS.createEl("h3", commentsCard, { className: "overflow" }).text(capitalizeFirstLetter(safeBy.username) || "User");
-        NS.createEl("p", commentsCard, {}).text(comment.content || "No content found");
+        const commentsCard = $("<div>").addClass("card");
+        $(state.container).append(commentsCard);
+        $("<h3>").addClass("overflow").text(capitalizeFirstLetter(safeBy.username) || "User").appendTo(commentsCard);
+        $("<p>").text(comment.content || "No content found").appendTo(commentsCard);
     });
 }
 
 export default async function showComments(id) {
-    state = { id, skip: 0, container: null }
+    state = { id, skip: 0, container: null };
 
     Swal.fire({
         title: "Comments",
@@ -51,16 +52,16 @@ export default async function showComments(id) {
         `,
         confirmButtonText: "Close",
         didOpen: () => {
-            state.container = NS("#comments-container");
+            state.container = $("#comments-container");
 
-            NS("#comments-prev-btn").on("click", lockEvent(async function () {
+            $("#comments-prev-btn").on("click", lockEvent(async function () {
                 if (state.skip <= 0) return;
                 state.skip -= config.COMMENTS_LIMIT;
                 await renderComments();
             }));
 
-            NS("#comments-next-btn").on("click", lockEvent(async function () {
-                if (state.container.get(".state-nothing-found")?.elements[0]) return;
+            $("#comments-next-btn").on("click", lockEvent(async function () {
+                if ($(state.container).find(".state-nothing-found").length) return;
                 state.skip += config.COMMENTS_LIMIT;
                 await renderComments();
             }));

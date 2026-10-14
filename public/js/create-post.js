@@ -1,13 +1,10 @@
-import NS from "../nanoscript.min.js";
-import config from "/config/shared.js";
-import { lockEvent } from "./utils.js";
+import { lockEvent, config, $ } from "./utils.js";
 import { getPosts, postsState } from "./render-posts.js";
 import Editor from "./editor.js";
 
-const createPostBtn = NS("#create-post-btn");
-const postsNavigationContainer = NS("#posts-navigation-container");
+const createPostBtn = $("#create-post-btn");
+const postsNavigationContainer = $("#posts-navigation-container");
 
-// Create post
 createPostBtn.on("click", lockEvent(async function () {
     const editorInstance = new Editor({
         title: "Create post:",
@@ -18,24 +15,25 @@ createPostBtn.on("click", lockEvent(async function () {
         }
     });
 
-    await editorInstance.start();
+    await editorInstance.init();
 }));
 
-// Navigation
 if (!postsState.isCustomPost) {
-    NS.createEl("button", postsNavigationContainer, {})
+    $("<button>")
         .html("<i class='fas fa-chevron-left'></i> Prev")
         .on("click", lockEvent(async () => {
             if (postsState.skip <= 0) return;
             postsState.skip -= config.POSTS_LIMIT;
-            await getPosts(postsState.chronological);
-        }));
+            await getPosts();
+        }))
+        .appendTo(postsNavigationContainer);
 
-    NS.createEl("button", postsNavigationContainer, {})
+    $("<button>")
         .html("<i class='fas fa-chevron-right'></i> Next")
         .on("click", lockEvent(async () => {
-            if (NS("#posts-container").get(".state-nothing-found")?.elements[0]) return;
+            if ($("#posts-container").find(".state-nothing-found").length) return;
             postsState.skip += config.POSTS_LIMIT;
-            await getPosts(postsState.chronological);
-        }));
+            await getPosts();
+        }))
+        .appendTo(postsNavigationContainer);
 }

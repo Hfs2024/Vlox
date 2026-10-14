@@ -1,17 +1,17 @@
-import NS from "../nanoscript.min.js";
-import config from "/config/shared.js";
 import showProfile from "./profile.js";
 import {
     sendRequest,
     initQuickInfo,
     initAccessibility,
-    lockEvent
+    lockEvent,
+    config,
+    $
 } from "./utils.js";
 
-const signUpBtn = NS("#signup-btn");
-const signOutBtn = NS("#signout-btn");
-const profileBtn = NS("#profile-btn");
-const loggedInGroup = NS("#auth-buttons");
+const signUpBtn = $("#signup-btn");
+const signOutBtn = $("#signout-btn");
+const profileBtn = $("#profile-btn");
+const loggedInGroup = $("#auth-buttons");
 
 async function showResetPasswordModal() {
     const result = await Swal.fire({
@@ -24,9 +24,9 @@ async function showResetPasswordModal() {
         showCancelButton: true,
         confirmButtonText: "Submit",
         preConfirm: () => {
-            const username = NS("#username").value();
-            const newPassword = NS("#password").value();
-            const recoveryCode = NS("#recovery-code").value();
+            const username = $("#username").val();
+            const newPassword = $("#password").val();
+            const recoveryCode = $("#recovery-code").val();
 
             if (!username || !newPassword || !recoveryCode) return Swal.showValidationMessage("You must enter a username, password and one of your recovery code!");
             if (username.length < config.USERNAME_MIN_LENGTH || username.length > config.USERNAME_MAX_LENGTH) return Swal.showValidationMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
@@ -39,7 +39,6 @@ async function showResetPasswordModal() {
 
     if (!result.isConfirmed) return;
 
-    // Send request to reset passwords
     const response = await sendRequest({
         url: "/api/v1/users/password",
         method: "POST",
@@ -68,12 +67,12 @@ async function showLoginModal() {
         cancelButtonText: 'Cancel',
         didOpen: () => {
             initAccessibility();
-            NS(".text-forget-password").on("click", showResetPasswordModal);
-            NS(".link-swal-toggle").on("click", showSignUpModal);
+            $(".text-forget-password").on("click", showResetPasswordModal);
+            $(".link-swal-toggle").on("click", showSignUpModal);
         },
         preConfirm: () => {
-            const username = NS("#username").value();
-            const password = NS("#password").value();
+            const username = $("#username").val();
+            const password = $("#password").val();
 
             if (!username || !password) return Swal.showValidationMessage("You must enter a username and a password!");
             if (username.length < config.USERNAME_MIN_LENGTH || username.length > config.USERNAME_MAX_LENGTH) return Swal.showValidationMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
@@ -85,7 +84,6 @@ async function showLoginModal() {
 
     if (!result.isConfirmed) return;
 
-    // Send request to login
     const response = await sendRequest({
         url: `/api/v1/users/login`,
         method: "POST",
@@ -114,16 +112,16 @@ async function showSignUpModal() {
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
         didOpen: () => {
-            NS("#bio").attr("maxLength", config.BIO_MAX_LENGTH);
-            NS(".link-swal-toggle").on("click", showLoginModal);
+            $("#bio").attr("maxLength", config.BIO_MAX_LENGTH);
+            $(".link-swal-toggle").on("click", showLoginModal);
             initAccessibility();
         },
 
         preConfirm: () => {
-            const username = NS("#username").value();
-            const password = NS("#password").value();
-            const email = NS("#email").value();
-            const bio = NS("#bio").value();
+            const username = $("#username").val();
+            const password = $("#password").val();
+            const email = $("#email").val();
+            const bio = $("#bio").val();
 
             if (!username || !password || !email || !bio) return Swal.showValidationMessage("You must enter a username, password, email and bio!");
             if (username.length < config.USERNAME_MIN_LENGTH || username.length > config.USERNAME_MAX_LENGTH) return Swal.showValidationMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
@@ -137,7 +135,6 @@ async function showSignUpModal() {
 
     if (!result.isConfirmed) return;
 
-    // Send request to create account
     const response = await sendRequest({
         url: `/api/v1/users/signup`,
         method: "POST",
@@ -148,10 +145,11 @@ async function showSignUpModal() {
     const recoveryCodes = Array.isArray(response.recoveryCodes) ? response.recoveryCodes : [];
     const blob = new Blob([recoveryCodes.join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    NS.createEl("a", document.body, {})
+    $("<a>")
         .attr("href", url)
         .attr("download", "recovery-codes.txt")
-        .click()
+        .appendTo(document.body)
+        .trigger("click")
         .remove();
     URL.revokeObjectURL(url);
     Swal.fire("Success", "Account created successfully!", "success");
@@ -159,7 +157,6 @@ async function showSignUpModal() {
     initQuickInfo();
 }
 
-// User status
 async function determineAuthButtonsDisplay() {
     const status = await sendRequest({
         url: "/api/v1/me/status"
@@ -167,7 +164,6 @@ async function determineAuthButtonsDisplay() {
 
     if (!status.success) return Swal.fire(status.error);
 
-    // Show/hide auth buttons
     if (status.loggedIn) {
         signUpBtn.css("display", "none");
         loggedInGroup.css("display", "");
@@ -177,7 +173,6 @@ async function determineAuthButtonsDisplay() {
     }
 }
 
-// Attach the events
 signUpBtn.on("click", lockEvent(async function () {
     await showLoginModal();
 }));
@@ -198,5 +193,4 @@ profileBtn.on("click", lockEvent(async function () {
     await showProfile(window?.quickInfo?._id);
 }));
 
-// Init
 determineAuthButtonsDisplay();

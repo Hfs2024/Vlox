@@ -1,9 +1,9 @@
-import NS from "../nanoscript.min.js";
+import $ from "https://cdn.jsdelivr.net/npm/cash-dom@8.1.0/dist/cash.esm.js";
 import config from "/config/shared.js";
 
 export function initAccessibility() {
-    NS("[role='button']").each(btn => {
-        NS(btn).on("keydown", function (e) {
+    $("[role='button']").each((index, btn) => {
+        $(btn).on("keydown", function (e) {
             if (e.key === "Enter" || e.key === " ") btn.click();
         });
     });
@@ -52,19 +52,18 @@ export function lockEvent(fn) {
     if (typeof fn !== "function") return;
 
     return async function (e) {
-        const el = NS(e.currentTarget);
+        const el = $(e.currentTarget);
         el.attr("inert", true);
 
         try {
             await fn.call(this, e);
         } catch (e) {
-            // For debugging only
             console.error(e);
             Swal.fire("Something went wrong!");
         } finally {
             el.removeAttr("inert");
         }
-    }
+    };
 }
 
 export async function sendRequest({ body, ...requestConfig }) {
@@ -83,6 +82,23 @@ export function capitalizeFirstLetter(str) {
     if (typeof str !== "string" || !str) return "";
     const newStr = str.at(0).toUpperCase() + str.slice(1);
     return newStr.trim();
+}
+
+export async function input({ ...inputConfig }) {
+    const result = await Swal.fire({
+        title: "Enter new value:",
+        input: "text",
+        inputPlaceholder: "Enter value...",
+        showCancelButton: true,
+        ...inputConfig // You can overwrite existing values
+    });
+
+    return result;
+}
+
+export {
+    $,
+    config
 }
 
 initQuickInfo();

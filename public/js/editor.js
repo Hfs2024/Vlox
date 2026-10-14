@@ -1,6 +1,4 @@
-import NS from "../nanoscript.min.js";
-import config from "/config/shared.js";
-import { sendRequest } from "./utils.js";
+import { sendRequest, config, $ } from "./utils.js";
 
 export default class Editor {
     constructor({
@@ -9,19 +7,18 @@ export default class Editor {
         title,
         successMessage
     }) {
-        this.initial = initial || {}
+        this.initial = initial || {};
         this.api = api || {};
         this.title = title || "Post Editor";
         this.successMessage = successMessage || "Action done successfully!";
     }
 
-    async start() {
+    async init() {
         if (!this.api.endpoint || !this.api.method) {
             console.error("Editor Error: Missing 'api.endpoint' or 'api.method' in api configuration.");
             return Swal.fire("Error", "Unable to process the request.", "error");
         }
 
-        // Container
         const result = await Swal.fire({
             title: this.title,
             html: `
@@ -36,21 +33,21 @@ export default class Editor {
             didOpen: () => {
                 const keywords = Array.isArray(this.initial.keywords) ? this.initial.keywords.join(", ") : "";
 
-                NS("#post-editor-title")
-                    .value(this.initial.title || "")
+                $("#post-editor-title")
+                    .val(this.initial.title || "")
                     .attr("maxLength", config.POST_TITLE_MAX_LENGTH);
-                NS("#post-editor-keywords")
-                    .value(keywords);
-                NS("#post-editor-content")
-                    .value(this.initial.content || "")
+                $("#post-editor-keywords")
+                    .val(keywords);
+                $("#post-editor-content")
+                    .val(this.initial.content || "")
                     .attr("maxLength", config.POST_CONTENT_MAX_LENGTH);
             },
 
             preConfirm: () => {
-                const title = NS("#post-editor-title").value().trim();
-                const content = NS("#post-editor-content").value().trim();
-                const keywords = NS("#post-editor-keywords")
-                    .value()
+                const title = $("#post-editor-title").val().trim();
+                const content = $("#post-editor-content").val().trim();
+                const keywords = $("#post-editor-keywords")
+                    .val()
                     .split(",")
                     .filter(Boolean);
 
@@ -61,7 +58,6 @@ export default class Editor {
             }
         });
 
-        // Send request
         if (!result.isConfirmed) return;
 
         const response = await sendRequest({

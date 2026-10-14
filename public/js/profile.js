@@ -1,5 +1,3 @@
-import NS from "../nanoscript.min.js";
-import config from "/config/shared.js";
 import Editor from "./editor.js";
 import showBookmarks from "./bookmarks.js";
 import {
@@ -10,7 +8,10 @@ import {
     initAccessibility,
     lockEvent,
     cleanHTML,
-    generatePostLink
+    generatePostLink,
+    config,
+    input,
+    $
 } from "./utils.js";
 
 let state = {
@@ -27,40 +28,52 @@ async function renderPosts() {
 
     if (!response.success) return Swal.fire(response.error);
 
-    // Render
-    state.container.html(""); // Clear the container
+    $(state.container).html("");
 
     if (!Array.isArray(response.posts) || response.posts.length <= 0) {
-        NS.createEl("div", state.container, { className: "state-nothing-found" })
-            .html("<b>No posts yet.</b>");
+        $("<div>")
+            .addClass("state-nothing-found")
+            .html("<b>No posts yet.</b>")
+            .appendTo(state.container);
         return;
     }
 
     response.posts.forEach(post => {
         post = post || {};
-        const postCard = NS.createEl("div", state.container, { className: "card" });
-        const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-        NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(post.title) || "Untitled post");
+        const postCard = $("<div>").addClass("card");
+        const postHeader = $("<div>").addClass("space-between");
+        $(state.container).append(postCard);
+        postCard.append(postHeader);
 
-        // Copy
-        NS.createEl("i", postHeader, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })
+        $("<h2>")
+            .addClass("overflow")
+            .text(capitalizeFirstLetter(post.title) || "Untitled post")
+            .appendTo(postHeader);
+
+        $("<i>")
+            .addClass("fas fa-link icon-post")
+            .attr("role", "button")
+            .attr("tabindex", "0")
             .on("click", async function () {
                 copy(generatePostLink(post._id));
-            });
-
-        // Content
-        NS.createEl("div", postCard, {}).html(cleanHTML(post.content) || "Not content found");
-
-        // Actions
-        if (state.isUser) {
-            NS.createEl("p", postCard, { style: "font-size: 15px;" })
-                .html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`);
-
-            const buttonsContainer = NS.createEl("div", postCard, { className: "center-overflow" });
-
-            NS.createEl("button", buttonsContainer, {
-                className: "btn-danger w-full"
             })
+            .appendTo(postHeader);
+
+        $("<div>")
+            .html(cleanHTML(post.content) || "Not content found")
+            .appendTo(postCard);
+
+        if (state.isUser) {
+            $("<p>")
+                .css("font-size", "15px")
+                .html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`)
+                .appendTo(postCard);
+
+            const buttonsContainer = $("<div>").addClass("center-overflow");
+            postCard.append(buttonsContainer);
+
+            $("<button>")
+                .addClass("btn-danger w-full")
                 .html("<i class='fas fa-trash'></i>")
                 .on("click", lockEvent(async function () {
                     const response = await sendRequest({
@@ -70,11 +83,11 @@ async function renderPosts() {
 
                     if (!response.success) return Swal.fire(response.error);
                     Swal.fire("Success", "Post deleted!", "success");
-                }));
+                }))
+                .appendTo(buttonsContainer);
 
-            NS.createEl("button", buttonsContainer, {
-                className: "w-full"
-            })
+            $("<button>")
+                .addClass("w-full")
                 .html("<i class='fas fa-edit'></i>")
                 .on("click", lockEvent(async function () {
                     const editorInstance = new Editor({
@@ -87,12 +100,12 @@ async function renderPosts() {
                         },
                     });
 
-                    await editorInstance.start();
-                }));
+                    await editorInstance.init();
+                }))
+                .appendTo(buttonsContainer);
 
-            NS.createEl("button", buttonsContainer, {
-                className: "w-full"
-            })
+            $("<button>")
+                .addClass("w-full")
                 .html(`<i class='fas fa-${post.private ? "eye" : "eye-slash"}'></i>`)
                 .on("click", lockEvent(async function () {
                     const response = await sendRequest({
@@ -103,12 +116,12 @@ async function renderPosts() {
 
                     if (!response.success) return Swal.fire(response.error);
                     Swal.fire("Success", `Post visibility set as ${post.private ? "public" : "private"}!`, "success");
-                }));
+                }))
+                .appendTo(buttonsContainer);
         }
     });
 }
 
-// Show profile
 export default async function showProfile(id) {
     state = {
         skip: 0,
@@ -117,13 +130,13 @@ export default async function showProfile(id) {
         user: {}
     }
 
+    // Show profile
     const response = await sendRequest({
         url: `/api/v1/users/${id}/profile`
     });
 
     if (!response.success) return Swal.fire(response.error);
 
-    // Fields
     const user = response?.user || {};
     state.user = {
         username: capitalizeFirstLetter(user.username) || "User",
@@ -133,7 +146,6 @@ export default async function showProfile(id) {
     }
     state.isUser = window?.quickInfo?._id === state.user.id;
 
-    // Render
     Swal.fire({
         titleText: `Hello, ${state.user.username}!`,
         html: `
@@ -177,9 +189,9 @@ export default async function showProfile(id) {
         `,
         confirmButtonText: "Close",
         didOpen: () => {
-            state.container = NS("#user-posts-container");
-            
-            NS("#reset-password-recovery-codes-btn").on("click", lockEvent(async function () {
+            state.container = $("#user-posts-container");
+
+            $("#reset-password-recovery-codes-btn").on("click", lockEvent(async function () {
                 const response = await sendRequest({
                     url: "/api/v1/users/recovery-codes",
                     method: "POST"
@@ -187,28 +199,24 @@ export default async function showProfile(id) {
 
                 if (!response.success) return Swal.fire(response.error);
 
-                // Download recovery codes
                 const recoveryCodes = Array.isArray(response.codes) ? response.codes : [];
                 const blob = new Blob([recoveryCodes.join("\n")], { type: "text/plain" });
                 const url = URL.createObjectURL(blob);
-                NS.createEl("a", document.body, {})
+                $("<a>")
                     .attr("href", url)
                     .attr("download", "recovery-codes.txt")
-                    .click()
+                    .appendTo(document.body)
+                    .trigger("click")
                     .remove();
                 Swal.fire("Success", "Password Recovery Codes Reseted!", "success");
             }));
 
-            NS("#profile-bio-edit-btn").on("click", lockEvent(async function () {
-                const result = await Swal.fire({
-                    title: "Enter new bio: ",
-                    input: "text",
-                    inputPlaceholder: "Enter new bio...",
-                    inputValue: state.user.bio,
+            $("#profile-bio-edit-btn").on("click", lockEvent(async function () {
+                const result = await input({
+                    inputValue: state.user.bio || "",
                     inputAttributes: {
                         maxLength: config.BIO_MAX_LENGTH
                     },
-                    showCancelButton: true,
                     preConfirm: result => {
                         if (result.length < config.BIO_MIN_LENGTH) return Swal.showValidationMessage(`Bio must be at least ${config.BIO_MIN_LENGTH} chars!`);
                     }
@@ -216,7 +224,7 @@ export default async function showProfile(id) {
 
                 if (!result.isConfirmed) return;
 
-                // Update bio
+                // Send request
                 const response = await sendRequest({
                     url: "/api/v1/me/bio",
                     method: "PUT",
@@ -228,7 +236,7 @@ export default async function showProfile(id) {
                 initQuickInfo();
             }));
 
-            NS("#profile-visibility-toggle-btn").on("click", lockEvent(async function () {
+            $("#profile-visibility-toggle-btn").on("click", lockEvent(async function () {
                 const response = await sendRequest({
                     url: "/api/v1/me/visibility",
                     method: "PUT",
@@ -239,27 +247,26 @@ export default async function showProfile(id) {
                 Swal.fire("Success", `Account is ${state.user.private ? "public" : "private"}`, "success");
             }));
 
-            NS("#profile-load-posts-btn").on("click", lockEvent(async function () {
+            $("#profile-load-posts-btn").on("click", lockEvent(async function () {
                 await renderPosts();
             }));
 
-            NS("#profile-bookmarks-btn").on("click", lockEvent(async function () {
+            $("#profile-bookmarks-btn").on("click", lockEvent(async function () {
                 await showBookmarks();
             }));
 
-            NS("#profile-posts-prev-btn").on("click", lockEvent(async function () {
+            $("#profile-posts-prev-btn").on("click", lockEvent(async function () {
                 if (state.skip <= 0) return;
                 state.skip -= config.USER_POSTS_LIMIT;
                 await renderPosts();
             }));
 
-            NS("#profile-posts-next-btn").on("click", lockEvent(async function () {
-                if (state.container.get(".state-nothing-found")?.elements[0]) return;
+            $("#profile-posts-next-btn").on("click", lockEvent(async function () {
+                if ($(state.container).find(".state-nothing-found").length) return;
                 state.skip += config.USER_POSTS_LIMIT;
                 await renderPosts();
             }));
 
-            // Init
             initAccessibility();
         }
     });
