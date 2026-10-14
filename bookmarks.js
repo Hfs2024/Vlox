@@ -42,7 +42,7 @@ router.post("/api/v1/bookmarks/:id", checkAuth, defaultPostFindValidator, async 
     return res.status(200).json({ success: true });
 });
 
-router.put("/api/v1/bookmark/:id/rename", checkAuth, renameBookmarkValidator, async (req, res) => {
+router.put("/api/v1/bookmarks/:id/rename", checkAuth, renameBookmarkValidator, async (req, res) => {
     const { id, title } = req.cleanData;
 
     const result = await schemas.Bookmarks.updateOne({

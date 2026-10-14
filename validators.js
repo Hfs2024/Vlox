@@ -54,9 +54,6 @@ export const editPostsValidator = [
 
 export const getPostsValidator = [
     skipQuery(),
-    query("chronological")
-        .exists().withMessage("Chronological flag is required")
-        .customSanitizer(value => value === "true"),
     validateResult
 ]
 

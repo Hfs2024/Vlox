@@ -1,6 +1,4 @@
-import NS from "../nanoscript.min.js";
 import showProfile from "./profile.js";
-import config from "/config/shared.js";
 import showComments from "./comments.js";
 import {
     sendRequest,
@@ -9,41 +7,50 @@ import {
     generatePostLink,
     initAccessibility,
     lockEvent,
-    copy
+    copy,
+    config, 
+    $
 } from "./utils.js";
 
 const query = new URLSearchParams(window.location.search);
 export const postsState = {
     skip: 0,
-    customPostId: query.get("id"),
-    isCustomPost: query.get("id") ? true : false,
-    chronological: query.get("chronological")
-}
+    customPostId: query.get("id")
+};
 
 export async function renderPosts(posts = []) {
-    const postsContainer = NS("#posts-container").html("");
+    const postsContainer = $("#posts-container");
+    postsContainer.html("");
 
-    // Nothing found
     if (!Array.isArray(posts) || posts.length <= 0) {
-        NS.createEl("div", postsContainer, { className: "state-nothing-found" })
-            .html("<b>No posts found!</b>");
+        $("<div>")
+            .addClass("state-nothing-found")
+            .html("<b>No posts found!</b>")
+            .appendTo(postsContainer);
         return;
     }
 
-    // Posts
     posts.forEach(async post => {
         post = post || {};
         const safeBy = post.by || {};
 
-        // Elements
-        const postCard = NS.createEl("div", postsContainer, { className: "card" });
-        const postHeader = NS.createEl("div", postCard, { className: "space-between" });
-        NS.createEl("h2", postHeader, { className: "overflow" }).text(capitalizeFirstLetter(post.title) || "No title found");
-        const postIconsGroup = NS.createEl("div", postHeader, { className: "center" });
+        const postCard = $("<div>").addClass("card");
+        const postHeader = $("<div>").addClass("space-between");
+        postsContainer.append(postCard);
+        postCard.append(postHeader);
 
-        // Icons
-        // Bookmark
-        NS.createEl("i", postIconsGroup, { className: "fas fa-bookmark icon-post", role: "button", tabIndex: "0" })
+        $("<h2>")
+            .addClass("overflow")
+            .text(capitalizeFirstLetter(post.title) || "No title found")
+            .appendTo(postHeader);
+
+        const postIconsGroup = $("<div>").addClass("center");
+        postHeader.append(postIconsGroup);
+
+        $("<i>")
+            .addClass("fas fa-bookmark icon-post")
+            .attr("role", "button")
+            .attr("tabindex", "0")
             .on("click", lockEvent(async function () {
                 const bookmarkResponse = await sendRequest({
                     url: `/api/v1/bookmarks/${post._id}`,
@@ -52,33 +59,38 @@ export async function renderPosts(posts = []) {
 
                 if (!bookmarkResponse.success) return Swal.fire(bookmarkResponse.error);
                 Swal.fire("Success", "Post bookmarked!", "success");
-            }));
+            }))
+            .appendTo(postIconsGroup);
 
-        // Copy link
-        NS.createEl("i", postIconsGroup, { className: "fas fa-link icon-post", role: "button", tabIndex: "0" })
+        $("<i>")
+            .addClass("fas fa-link icon-post")
+            .attr("role", "button")
+            .attr("tabindex", "0")
             .on("click", async function () {
                 copy(generatePostLink(post._id));
-            });
+            })
+            .appendTo(postIconsGroup);
 
-        // Content
-        NS.createEl("div", postCard, {}).html(cleanHTML(post.content) || "No content found");
+        $("<div>")
+            .html(cleanHTML(post.content) || "No content found")
+            .appendTo(postCard);
 
-        // Author
-        NS.createEl("p", postCard, {
-            style: "color: red; cursor: pointer",
-            role: "button", tabIndex: "0"
-        })
+        $("<p>")
+            .css("color", "red")
+            .css("cursor", "pointer")
+            .attr("role", "button")
+            .attr("tabindex", "0")
             .html(`Created by: <span class="author-name">${capitalizeFirstLetter(safeBy.username) || "User"}</span>`)
             .on("click", async function () {
                 showProfile(safeBy._id);
-            });
+            })
+            .appendTo(postCard);
 
-        /* Reactions */
-        const reactionsContainer = NS.createEl("div", postCard, { className: "reactions" });
+        const reactionsContainer = $("<div>").addClass("reactions");
+        postCard.append(reactionsContainer);
         const likes = Number(post.likes) || 0;
 
-        // Like
-        NS.createEl("button", reactionsContainer, {})
+        $("<button>")
             .html(`<i class="fas fa-thumbs-up"></i> <span class="likes-count">${likes}</span>`)
             .on("click", lockEvent(async function () {
                 const likesResponse = await sendRequest({
@@ -87,21 +99,19 @@ export async function renderPosts(posts = []) {
                 });
 
                 if (likesResponse.error) return Swal.fire(likesResponse.error);
-
-                // Update UI
-                NS(this).get(".likes-count").text(likes + 1);
+                $(this).find(".likes-count").text(likes + 1);
                 Swal.fire("Success", "Post liked!", "success");
-            }));
+            }))
+            .appendTo(reactionsContainer);
 
-        // View comments
-        NS.createEl("button", reactionsContainer, {})
+        $("<button>")
             .html(`<i class="fas fa-comments"></i>`)
             .on("click", lockEvent(async function () {
                 await showComments(post._id);
-            }));
+            }))
+            .appendTo(reactionsContainer);
 
-        // Add comment
-        NS.createEl("button", reactionsContainer, {})
+        $("<button>")
             .html(`<i class="fas fa-share"></i>`)
             .on("click", lockEvent(async function () {
                 const result = await Swal.fire({
@@ -119,7 +129,6 @@ export async function renderPosts(posts = []) {
 
                 if (!result.isConfirmed) return;
 
-                // Send request
                 const response = await sendRequest({
                     url: `/api/v1/posts/${post._id}/comments`,
                     method: "POST",
@@ -130,25 +139,22 @@ export async function renderPosts(posts = []) {
 
                 if (!response.success) return Swal.fire(response.error);
                 Swal.fire("Success", "Comment added!", "success");
-            }));
+            }))
+            .appendTo(reactionsContainer);
     });
 
-    // Accessibility
     initAccessibility();
 }
 
-export async function getPosts(
-    chronological = false,
-    postId = null
-) {
+export async function getPosts(postId = null) {
     const data = await sendRequest({
         url: postId ?
             `/api/v1/posts/${postId}` :
-            `/api/v1/posts/?chronological=${chronological}&skip=${postsState.skip}`,
+            `/api/v1/posts/?skip=${postsState.skip}`,
     });
 
     if (!data.success) return Swal.fire(data.error);
     renderPosts(data.posts);
 }
 
-getPosts(postsState.chronological, postsState.customPostId);
+getPosts(postsState.customPostId);

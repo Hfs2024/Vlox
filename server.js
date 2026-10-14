@@ -96,18 +96,13 @@ app.get("/api/v1/posts/:id", defaultPostFindValidator, async (req, res) => {
 });
 
 app.get("/api/v1/posts", getPostsValidator, async (req, res) => {
-    const { skip, chronological } = req.cleanData;
-
-    // Sort query
-    const sortQuery = chronological
-        ? { createdAt: -1, _id: -1 }
-        : { likes: -1, createdAt: -1, _id: -1 };
+    const skip = req.cleanData.skip;
 
     // Find posts
     const posts = await schemas.Posts.find({
         private: false
     })
-        .sort(sortQuery)
+        .sort({ createdAt: -1, _id: -1 })
         .skip(skip)
         .limit(config.POSTS_LIMIT)
         .populate("by", "-password -recoveryCodes -email")
