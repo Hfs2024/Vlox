@@ -86,7 +86,7 @@ export function capitalizeFirstLetter(str) {
 
 export async function input({ ...inputConfig }) {
     const result = await Swal.fire({
-        title: "Enter new value:",
+        title: "Enter value:",
         input: "text",
         inputPlaceholder: "Enter value...",
         showCancelButton: true,
