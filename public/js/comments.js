@@ -2,8 +2,9 @@ import {
     sendRequest,
     capitalizeFirstLetter,
     lockEvent,
-    $,
-    config
+    config,
+    input,
+    $
 } from "./utils.js";
 
 let state = {
@@ -33,8 +34,15 @@ async function renderComments() {
 
         const commentsCard = $("<div>").addClass("card");
         $(state.container).append(commentsCard);
-        $("<h3>").addClass("overflow").text(capitalizeFirstLetter(safeBy.username) || "User").appendTo(commentsCard);
-        $("<p>").text(comment.content || "No content found").appendTo(commentsCard);
+
+        // Elements
+        $("<h3>")
+            .addClass("overflow")
+            .text(capitalizeFirstLetter(safeBy.username) || "User").appendTo(commentsCard);
+
+        $("<p>")
+            .text(comment.content || "No content found")
+            .appendTo(commentsCard);
     });
 }
 

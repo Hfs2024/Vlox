@@ -4,13 +4,13 @@ export default class Editor {
     constructor({
         initial = {},
         api = {},
-        title,
-        successMessage
+        title = "Post Editor",
+        successMessage = "Action done successfully!"
     }) {
-        this.initial = initial || {};
-        this.api = api || {};
-        this.title = title || "Post Editor";
-        this.successMessage = successMessage || "Action done successfully!";
+        this.initial = initial;
+        this.api = api;
+        this.title = title;
+        this.successMessage = successMessage;
     }
 
     async init() {
