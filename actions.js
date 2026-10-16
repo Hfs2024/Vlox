@@ -73,9 +73,8 @@ router.delete("/api/v1/posts/:id/delete", checkAuth, defaultPostFindValidator, a
         const deletePostResult = await schemas.Posts.deleteOne(postQueries.modify_post(id, req.session.userId), { session });
         if (deletePostResult.deletedCount === 0) throw new ClientError("You may not have access to this post!");
 
-        await schemas.Likes.deleteMany({
-            for: id
-        }, { session });
+        await schemas.Likes.deleteMany({ for: id }, { session });
+        await schemas.Comments.deleteMany({ for: id }, { session });
     });
 
     await session.endSession();
