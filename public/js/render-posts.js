@@ -8,7 +8,7 @@ import {
     initAccessibility,
     lockEvent,
     copy,
-    config, 
+    config,
     $,
     input
 } from "./utils.js";
@@ -49,6 +49,7 @@ export async function renderPosts(posts = []) {
         const postIconsGroup = $("<div>").addClass("center");
         postHeader.append(postIconsGroup);
 
+        // Icons
         $("<i>")
             .addClass("fas fa-bookmark icon-post")
             .attr("role", "button")
@@ -73,10 +74,12 @@ export async function renderPosts(posts = []) {
             })
             .appendTo(postIconsGroup);
 
+        // Content
         $("<div>")
             .html(cleanHTML(post.content) || "No content found")
             .appendTo(postCard);
 
+        // Author
         $("<p>")
             .css("color", "red")
             .css("cursor", "pointer")
@@ -88,6 +91,7 @@ export async function renderPosts(posts = []) {
             })
             .appendTo(postCard);
 
+        // Reactions
         const reactionsContainer = $("<div>").addClass("reactions");
         postCard.append(reactionsContainer);
         const likes = Number(post.likes) || 0;
