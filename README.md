@@ -17,7 +17,7 @@ When planning my next platform, **Vlox**, I evaluated my frontend options:
 * **Modern Frameworks (React/Vue)?** Too heavy.
 * **Vanilla JS?** Too verbose.
 
-Since I have no plans to turn Vlox into a massive enterprise application, heavy frameworks felt like overkill. To keep the project lightweight while avoiding verbose native code, I chose Cash for fast, simple DOM manipulation.
+Since I have no plans to turn Vlox into a massive enterprise application, heavy frameworks felt like overkill. To keep the project lightweight while avoiding verbose native code, I chose Cash for fast, simple DOM manipulation. I also chose a simple DOM library over heavy frameworks to prove a really important point: You don't need the traditional tools to build something clean, working and safe.
 
 ## Bringing Vlox to Life
 

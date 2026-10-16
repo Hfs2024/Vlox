@@ -3,7 +3,6 @@ import {
     capitalizeFirstLetter,
     lockEvent,
     config,
-    input,
     $
 } from "./utils.js";
 
@@ -38,11 +37,17 @@ async function renderComments() {
         // Elements
         $("<h3>")
             .addClass("overflow")
-            .text(capitalizeFirstLetter(safeBy.username) || "User").appendTo(commentsCard);
+            .text(capitalizeFirstLetter(safeBy.username) || "User")
+            .appendTo(commentsCard);
 
         $("<p>")
             .text(comment.content || "No content found")
             .appendTo(commentsCard);
+
+        // Edit
+        commentsCard.on("click", function () {
+            Swal.fire("Info", "Still working on comment editing feature...", "info");
+        });
     });
 }
 
