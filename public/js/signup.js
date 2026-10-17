@@ -25,15 +25,15 @@ async function showResetPasswordModal() {
         confirmButtonText: "Submit",
         preConfirm: () => {
             const username = $("#username").val();
-            const newPassword = $("#password").val();
+            const password = $("#password").val();
             const recoveryCode = $("#recovery-code").val();
 
-            if (!username || !newPassword || !recoveryCode) return Swal.showValidationMessage("You must enter a username, password and one of your recovery code!");
+            if (!username || !password || !recoveryCode) return Swal.showValidationMessage("You must enter a username, password and one of your recovery code!");
             if (username.length < config.USERNAME_MIN_LENGTH || username.length > config.USERNAME_MAX_LENGTH) return Swal.showValidationMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
-            if (newPassword.length < config.PASSWORD_MIN_LENGTH || newPassword.length > config.PASSWORD_MAX_LENGTH) return Swal.showValidationMessage(`Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
+            if (password.length < config.PASSWORD_MIN_LENGTH || password.length > config.PASSWORD_MAX_LENGTH) return Swal.showValidationMessage(`Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
             if (recoveryCode.length !== config.RECOVERY_CODE_LENGTH) return Swal.showValidationMessage(`Recovery code must be exactly ${config.RECOVERY_CODE_LENGTH} chars long!`);
 
-            return { username, newPassword, recoveryCode };
+            return { username, password, recoveryCode };
         }
     });
 

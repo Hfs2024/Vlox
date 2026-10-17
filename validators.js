@@ -7,13 +7,22 @@ const skipQuery = () => query("skip")
     .exists().withMessage("Skip value is required")
     .isInt({ min: 0 }).withMessage("Skip value must be a non-negative integer");
 
-const usernameBody = () => body("username")
-    .exists().withMessage("Username is required")
-    .notEmpty().withMessage("Username cannot be empty")
-    .isString().withMessage("Username must be a string")
-    .isLength({ min: config.USERNAME_MIN_LENGTH, max: config.USERNAME_MAX_LENGTH }).withMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} characters`)
-    .toLowerCase()
-    .trim();
+const userValidator = () => [
+    body("username")
+        .exists().withMessage("Username is required")
+        .notEmpty().withMessage("Username cannot be empty")
+        .isString().withMessage("Username must be a string")
+        .isLength({ min: config.USERNAME_MIN_LENGTH, max: config.USERNAME_MAX_LENGTH }).withMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} characters`)
+        .toLowerCase()
+        .trim(),
+
+    body("password")
+        .exists().withMessage("Password is required")
+        .notEmpty().withMessage("Password cannot be empty")
+        .isString().withMessage("Password must be a string")
+        .isLength({ max: config.PASSWORD_MAX_LENGTH }).withMessage(`Password must not exceed ${config.PASSWORD_MAX_LENGTH} characters`)
+        .trim(),
+]
 
 const visibilityValue = () => body("value")
     .exists().withMessage("Visibility value is required")
@@ -88,13 +97,7 @@ export const getCommentsValidator = [
 
 // Security
 export const resetPasswordValidator = [
-    usernameBody(),
-    body("newPassword")
-        .exists().withMessage("New password is required")
-        .notEmpty().withMessage("New password cannot be empty")
-        .isString().withMessage("New password must be a string")
-        .isLength({ min: config.PASSWORD_MIN_LENGTH, max: config.PASSWORD_MAX_LENGTH }).withMessage(`New password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} characters`)
-        .trim(),
+    ...userValidator(),
     body("recoveryCode")
         .exists().withMessage("Recovery code is required")
         .notEmpty().withMessage("Recovery code cannot be empty")
@@ -128,24 +131,12 @@ export const deleteBookmarkValidator = [
 
 // Users
 export const loginValidator = [
-    usernameBody(),
-    body("password")
-        .exists().withMessage("Password is required")
-        .notEmpty().withMessage("Password cannot be empty")
-        .isString().withMessage("Password must be a string")
-        .isLength({ max: config.PASSWORD_MAX_LENGTH }).withMessage(`Password must not exceed ${config.PASSWORD_MAX_LENGTH} characters`)
-        .trim(),
+    ...userValidator(),
     validateResult
 ]
 
 export const signupValidator = [
-    usernameBody(),
-    body("password")
-        .exists().withMessage("Password is required")
-        .notEmpty().withMessage("Password cannot be empty")
-        .isString().withMessage("Password must be a string")
-        .isLength({ min: config.PASSWORD_MIN_LENGTH, max: config.PASSWORD_MAX_LENGTH }).withMessage(`Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} characters`)
-        .trim(),
+    ...userValidator(),
     body("bio")
         .exists().withMessage("Bio is required")
         .notEmpty().withMessage("Bio cannot be empty")

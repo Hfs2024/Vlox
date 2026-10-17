@@ -98,7 +98,7 @@ router.get("/api/v1/users/:id/posts", checkAuth, getUserPostsValidator, async fu
 });
 
 router.post("/api/v1/users/password", passwordRecoveryLimiter, resetPasswordValidator, async (req, res) => {
-    const { username, recoveryCode, newPassword } = req.cleanData;
+    const { username, recoveryCode, password } = req.cleanData;
     const user = await schemas.Users.findOne({ username: username })
         .select("recoveryCodes")
         .lean();
@@ -113,7 +113,7 @@ router.post("/api/v1/users/password", passwordRecoveryLimiter, resetPasswordVali
             recoveryCodes: code
         }, {
             $set: {
-                password: await bcrypt.hash(newPassword, config.BCRYPT_SALT_ROUNDS)
+                password: await bcrypt.hash(password, config.BCRYPT_SALT_ROUNDS)
             },
             $pull: {
                 recoveryCodes: code
