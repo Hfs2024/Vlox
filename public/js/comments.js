@@ -43,11 +43,6 @@ async function renderComments() {
         $("<p>")
             .text(comment.content || "No content found")
             .appendTo(commentsCard);
-
-        // Edit
-        commentsCard.on("click", function () {
-            Swal.fire("Info", "Still working on comment editing feature...", "info");
-        });
     });
 }
 

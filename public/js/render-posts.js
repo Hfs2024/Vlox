@@ -81,8 +81,7 @@ export async function renderPosts(posts = []) {
 
         // Author
         $("<p>")
-            .css("color", "red")
-            .css("cursor", "pointer")
+            .css({ color: "red", cursor: "pointer" })
             .attr("role", "button")
             .attr("tabindex", "0")
             .html(`Created by: <span class="author-name">${capitalizeFirstLetter(safeBy.username) || "User"}</span>`)
