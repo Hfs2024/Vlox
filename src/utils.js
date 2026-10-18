@@ -3,7 +3,7 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 import rateLimit from "express-rate-limit";
 import { validationResult, matchedData } from "express-validator";
-import config from "./config/backend.js";
+import config from "../config/backend.js";
 
 export async function checkAuth(req, res, next) {
     if (!req.session.isLoggedIn || !req.session.userId) return res.status(401).json({ error: "You are not logged in!" });

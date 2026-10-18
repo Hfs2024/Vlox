@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import config from "./config/backend.js";
+import config from "../config/backend.js";
 
 const usersSchema = new mongoose.Schema({
     username: { type: String, trim: true, required: true, lowercase: true, minLength: config.USERNAME_MIN_LENGTH, maxLength: config.USERNAME_MAX_LENGTH },

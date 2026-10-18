@@ -1,8 +1,8 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import schemas from "./schemas.js";
-import config from "./config/backend.js";
-import { checkAuth, generateRecoveryCodes, createLimiter } from "./utils.js";
+import schemas from "../schemas.js";
+import config from "../../config/backend.js";
+import { checkAuth, generateRecoveryCodes, createLimiter } from "../utils.js";
 import {
     updateUserBioValidator,
     loginValidator,
@@ -11,7 +11,7 @@ import {
     getUserProfileValidator,
     getUserPostsValidator,
     resetPasswordValidator
-} from "./validators.js";
+} from "../validators.js";
 
 const router = express.Router();
 const passwordRecoveryLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);

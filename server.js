@@ -4,22 +4,22 @@ import path from "path";
 import session from "express-session";
 import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
-import schemas from "./schemas.js";
-import bookmarksRouter from "./bookmarks.js";
-import actionsRouter from "./actions.js";
-import authRouter from "./auth.js";
 import config from "./config/backend.js";
+import schemas from "./src/schemas.js";
+import bookmarksRouter from "./src/controllers/bookmarks.js";
+import postsRouter from "./src/controllers/posts.js";
+import authRouter from "./src/controllers/auth.js";
 import {
     checkAuth,
     createLimiter,
     postQueries
-} from "./utils.js";
+} from "./src/utils.js";
 import {
     defaultPostFindValidator,
     getPostsValidator,
     createPostsValidator,
     getCommentsValidator
-} from "./validators.js";
+} from "./src/validators.js";
 
 const __dirname = import.meta.dirname;
 const isProduction = config.NODE_ENV === "production";
@@ -61,7 +61,7 @@ app.use(mainLimiter);
 
 // Sub routes
 app.use("/", bookmarksRouter);
-app.use("/", actionsRouter);
+app.use("/", postsRouter);
 app.use("/", authRouter);
 
 // Main routes

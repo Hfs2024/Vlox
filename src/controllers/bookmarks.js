@@ -1,13 +1,13 @@
 import express from "express";
-import { checkAuth } from "./utils.js";
-import schemas from "./schemas.js";
-import config from "./config/backend.js";
+import { checkAuth } from "../utils.js";
+import schemas from "../schemas.js";
+import config from "../../config/backend.js";
 import {
     getBookmarksValidator,
     defaultPostFindValidator,
     renameBookmarkValidator,
     deleteBookmarkValidator
-} from "./validators.js";
+} from "../validators.js";
 const router = express.Router();
 
 router.post("/api/v1/bookmarks", checkAuth, getBookmarksValidator, async (req, res) => {

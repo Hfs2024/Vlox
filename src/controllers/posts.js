@@ -1,5 +1,5 @@
-import schemas from "./schemas.js";
-import { checkAuth, postQueries, ClientError } from "./utils.js";
+import schemas from "../schemas.js";
+import { checkAuth, postQueries, ClientError } from "../utils.js";
 import express from "express";
 import mongoose from "mongoose";
 import {
@@ -7,7 +7,7 @@ import {
     editPostsValidator,
     defaultPostFindValidator,
     commentsValidator
-} from "./validators.js";
+} from "../validators.js";
 const router = express.Router();
 
 router.put("/api/v1/posts/:id/visibility", checkAuth, changePostVisibilityValidator, async (req, res) => {
