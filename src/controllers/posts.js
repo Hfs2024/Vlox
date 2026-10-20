@@ -56,9 +56,7 @@ router.put("/api/v1/posts/:id/update", checkAuth, editPostsValidator, async (req
     const { content, title, id, keywords } = req.cleanData;
     const result = await schemas.Posts.updateOne(postQueries.modify_post(id, req.session.userId), {
         $set: {
-            content: content,
-            title: title,
-            keywords: keywords
+            content, title, keywords
         }
     });
 

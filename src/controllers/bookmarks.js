@@ -49,9 +49,7 @@ router.put("/api/v1/bookmarks/:id/rename", checkAuth, renameBookmarkValidator, a
         _id: id,
         by: req.session.userId
     }, {
-        $set: {
-            title: title
-        }
+        $set: { title }
     });
 
     if (result.matchedCount === 0) return res.status(400).json({ error: "Bookmark not found!" });

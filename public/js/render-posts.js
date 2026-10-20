@@ -35,7 +35,6 @@ export async function renderPosts(posts = []) {
     posts.forEach(async post => {
         post = post || {};
         const safeBy = post.by || {};
-
         const postCard = $("<div>").addClass("card");
         const postHeader = $("<div>").addClass("space-between");
         postsContainer.append(postCard);
@@ -51,7 +50,7 @@ export async function renderPosts(posts = []) {
 
         // Icons
         $("<i>")
-            .addClass("fas fa-bookmark icon-post")
+            .addClass("fas fa-bookmark post-icon")
             .attr("role", "button")
             .attr("tabindex", "0")
             .on("click", lockEvent(async function () {
@@ -66,7 +65,7 @@ export async function renderPosts(posts = []) {
             .appendTo(postIconsGroup);
 
         $("<i>")
-            .addClass("fas fa-link icon-post")
+            .addClass("fas fa-link post-icon")
             .attr("role", "button")
             .attr("tabindex", "0")
             .on("click", async function () {
@@ -76,6 +75,7 @@ export async function renderPosts(posts = []) {
 
         // Content
         $("<div>")
+            .addClass("post-content")
             .html(cleanHTML(post.content) || "No content found")
             .appendTo(postCard);
 
@@ -90,9 +90,9 @@ export async function renderPosts(posts = []) {
             })
             .appendTo(postCard);
 
-        // Reactions
-        const reactionsContainer = $("<div>").addClass("reactions");
-        postCard.append(reactionsContainer);
+        // reactions-container
+        const reactions = $("<div>").addClass("reactions-container");
+        postCard.append(reactions);
         const likes = Number(post.likes) || 0;
 
         $("<button>")
@@ -107,14 +107,14 @@ export async function renderPosts(posts = []) {
                 $(this).find(".likes-count").text(likes + 1);
                 Swal.fire("Success", "Post liked!", "success");
             }))
-            .appendTo(reactionsContainer);
+            .appendTo(reactions);
 
         $("<button>")
             .html(`<i class="fas fa-comments"></i>`)
             .on("click", lockEvent(async function () {
                 await showComments(post._id);
             }))
-            .appendTo(reactionsContainer);
+            .appendTo(reactions);
 
         $("<button>")
             .html(`<i class="fas fa-share"></i>`)
@@ -142,7 +142,7 @@ export async function renderPosts(posts = []) {
                 if (!response.success) return Swal.fire(response.error);
                 Swal.fire("Success", "Comment added!", "success");
             }))
-            .appendTo(reactionsContainer);
+            .appendTo(reactions);
     });
 
     initAccessibility();

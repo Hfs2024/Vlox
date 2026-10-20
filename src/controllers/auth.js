@@ -20,7 +20,7 @@ const authRateLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_R
 router.post("/api/v1/users/login", authRateLimiter, loginValidator, async (req, res) => {
     const { username, password } = req.cleanData;
 
-    const user = await schemas.Users.findOne({ username: username }).select("password");
+    const user = await schemas.Users.findOne({ username }).select("password");
     if (!user) return res.status(400).json({ error: "Invalid username or password" });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -77,7 +77,7 @@ router.get("/api/v1/users/:id/profile", checkAuth, getUserProfileValidator, asyn
 
     if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
 
-    return res.status(200).json({ success: true, user: user });
+    return res.status(200).json({ success: true, user });
 });
 
 router.get("/api/v1/users/:id/posts", checkAuth, getUserPostsValidator, async function (req, res) {
@@ -94,12 +94,12 @@ router.get("/api/v1/users/:id/posts", checkAuth, getUserPostsValidator, async fu
         .populate("by", "-password -recoveryCodes -email")
         .lean();
 
-    return res.json({ success: true, posts: posts });
+    return res.status(200).json({ success: true, posts });
 });
 
 router.post("/api/v1/users/password", passwordRecoveryLimiter, resetPasswordValidator, async (req, res) => {
     const { username, recoveryCode, password } = req.cleanData;
-    const user = await schemas.Users.findOne({ username: username })
+    const user = await schemas.Users.findOne({ username })
         .select("recoveryCodes")
         .lean();
     if (!user) return res.status(400).json({ error: "Failed to find user!" });

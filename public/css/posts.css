@@ -9,7 +9,10 @@
     color: black;
     transition: transform 0.3s ease;
     margin-bottom: 20px;
-    word-break: break-all;
+}
+
+.post-content {   
+    overflow-wrap: break-word;
 }
 
 .state-nothing-found {
@@ -18,19 +21,19 @@
     font-size: 20px;
 }
 
-.icon-post {
+.post-icon {
     font-size: 20px;
     color: var(--accent-main-blue);
     cursor: pointer;
     transition: color 0.3s ease;
 }
 
-.icon-post:hover {
+.post-icon:hover {
     color: var(--accent-secondary-blue);
 }
 
 /* Post actions */
-.reactions {
+.reactions-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -42,7 +45,7 @@
     overflow: auto;
 }
 
-.reactions button {
+.reactions-container button {
     background-color: var(--accent-white);
     text-align: center;
     display: flex;
@@ -56,11 +59,11 @@
     color: black;
 }
 
-.reactions button:hover {
+.reactions-container button:hover {
     background-color: wheat;
 }
 
-.reactions i {
+.reactions-container i {
     font-size: 20px;
     color: var(--accent-charcoal);
 }

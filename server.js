@@ -73,10 +73,10 @@ app.get("/", (req, res) => {
 app.post("/api/v1/posts", checkAuth, createPostsValidator, async (req, res) => {
     const { title, content, keywords } = req.cleanData;
     const newPost = new schemas.Posts({
-        title: title,
-        content: content,
-        by: req.session.userId,
-        keywords: keywords
+        title,
+        content,
+        keywords,
+        by: req.session.userId
     });
 
     await newPost.save();

@@ -51,7 +51,7 @@ async function renderPosts() {
             .appendTo(postHeader);
 
         $("<i>")
-            .addClass("fas fa-link icon-post")
+            .addClass("fas fa-link post-icon")
             .attr("role", "button")
             .attr("tabindex", "0")
             .on("click", async function () {
@@ -60,9 +60,11 @@ async function renderPosts() {
             .appendTo(postHeader);
 
         $("<div>")
+            .addClass("post-content")
             .html(cleanHTML(post.content) || "Not content found")
             .appendTo(postCard);
 
+        // Actions
         if (state.isUser) {
             $("<p>")
                 .css("font-size", "15px")
