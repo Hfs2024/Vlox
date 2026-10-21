@@ -43,10 +43,6 @@ const postFieldsValidators = () => [
         .isString().withMessage("Post content must be a string")
         .trim()
         .isLength({ max: config.POST_CONTENT_MAX_LENGTH }).withMessage(`Post content must not exceed ${config.POST_CONTENT_MAX_LENGTH} characters`),
-    body("keywords")
-        .exists().withMessage("Post keywords are required")
-        .isArray({ max: config.POST_KEYWORDS_MAX_LENGTH }).withMessage(`Post keywords must be an array with no more than ${config.POST_KEYWORDS_MAX_LENGTH} items`)
-        .customSanitizer(value => value.filter(Boolean).map(kw => kw.toLowerCase().trim()))
 ]
 
 // Posts

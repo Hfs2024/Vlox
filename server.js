@@ -32,9 +32,6 @@ mongoose.connect(config.MONGO_URI)
 
 // Basic config
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
-app.get("/config/shared.js", (req, res) => {
-    res.sendFile(path.join(__dirname, "config", "shared.js"));
-});
 app.use(express.json({ limit: config.JSON_BODY_LIMIT }));
 app.use(
     session({
@@ -69,13 +66,16 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
+app.get("/config/shared.js", (req, res) => {
+    res.sendFile(path.join(__dirname, "config", "shared.js"));
+});
+
 // Posts
 app.post("/api/v1/posts", checkAuth, createPostsValidator, async (req, res) => {
-    const { title, content, keywords } = req.cleanData;
+    const { title, content } = req.cleanData;
     const newPost = new schemas.Posts({
         title,
         content,
-        keywords,
         by: req.session.userId
     });
 
@@ -83,7 +83,7 @@ app.post("/api/v1/posts", checkAuth, createPostsValidator, async (req, res) => {
     return res.status(200).json({ success: true });
 });
 
-app.get("/api/v1/posts/:id", defaultPostFindValidator, async (req, res) => {
+app.get("/api/v1/posts/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
     const id = req.cleanData.id;
     const post = await schemas.Posts.findOne({
         ...postQueries.view_post(id, req.session.userId)

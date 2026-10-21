@@ -53,10 +53,10 @@ router.post("/api/v1/posts/:id/like", checkAuth, defaultPostFindValidator, async
 });
 
 router.put("/api/v1/posts/:id/update", checkAuth, editPostsValidator, async (req, res) => {
-    const { content, title, id, keywords } = req.cleanData;
+    const { content, title, id } = req.cleanData;
     const result = await schemas.Posts.updateOne(postQueries.modify_post(id, req.session.userId), {
         $set: {
-            content, title, keywords
+            content, title
         }
     });
 
@@ -81,6 +81,8 @@ router.delete("/api/v1/posts/:id/delete", checkAuth, defaultPostFindValidator, a
 
 router.post("/api/v1/posts/:id/comments", checkAuth, commentsValidator, async (req, res) => {
     const { id, content } = req.cleanData;
+    const post = await schemas.Posts.exists(postQueries.view_post(id, req.session.userId));
+    if (!post) return res.status(400).json({ error: "Post not found!" });
 
     // Insert comment
     const newComment = new schemas.Comments({

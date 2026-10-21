@@ -2,7 +2,6 @@ const config = {
     // Posts and comments
     POST_TITLE_MAX_LENGTH: 20,
     POST_CONTENT_MAX_LENGTH: 1000,
-    POST_KEYWORDS_MAX_LENGTH: 5,
     COMMENTS_MAX_LENGTH: 100,
     ALLOWED_TAGS: [
         "pre", "code", "b", "i", "br", "span", "em", "strong", "u", "s", "sub", "sup", "small",

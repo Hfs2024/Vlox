@@ -36,7 +36,7 @@ export const postQueries = {
         return {
             by: userId,
             _id: postId
-        };
+        }
     },
 
     view_post: (postId, userId) => {
@@ -46,7 +46,7 @@ export const postQueries = {
                 { by: userId },
                 { private: false }
             ]
-        };
+        }
     }
 };
 

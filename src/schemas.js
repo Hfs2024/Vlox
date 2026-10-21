@@ -32,12 +32,10 @@ const postsSchema = new mongoose.Schema({
     likes: { type: Number, default: 0, min: 0 },
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true },
     private: { type: Boolean, default: false },
-    redeemed: { type: Boolean, default: false },
-    keywords: { type: [String], default: [] }
+    redeemed: { type: Boolean, default: false }
 }, { timestamps: true });
 
 postsSchema.index({ by: 1 });
-postsSchema.index({ keywords: 1 });
 postsSchema.index({ likes: -1, createdAt: -1, _id: -1 });
 
 const bookmarksSchema = new mongoose.Schema({
