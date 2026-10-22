@@ -10,7 +10,7 @@ import {
 } from "../validators.js";
 const router = express.Router();
 
-router.post("/api/v1/bookmarks", checkAuth, getBookmarksValidator, async (req, res) => {
+router.post("/bookmarks", checkAuth, getBookmarksValidator, async (req, res) => {
     const skip = req.cleanData.skip;
     const bookmarks = await schemas.Bookmarks.find({
         by: req.session.userId
@@ -23,7 +23,7 @@ router.post("/api/v1/bookmarks", checkAuth, getBookmarksValidator, async (req, r
     return res.status(200).json({ success: true, bookmarks: bookmarks });
 });
 
-router.post("/api/v1/bookmarks/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
+router.post("/bookmarks/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
     const id = req.cleanData.id;
     const post = await schemas.Posts.findOne({ _id: id, private: false })
         .select("title")
@@ -42,7 +42,7 @@ router.post("/api/v1/bookmarks/:id", checkAuth, defaultPostFindValidator, async 
     return res.status(200).json({ success: true });
 });
 
-router.put("/api/v1/bookmarks/:id/rename", checkAuth, renameBookmarkValidator, async (req, res) => {
+router.put("/bookmarks/:id/rename", checkAuth, renameBookmarkValidator, async (req, res) => {
     const { id, title } = req.cleanData;
 
     const result = await schemas.Bookmarks.updateOne({
@@ -56,7 +56,7 @@ router.put("/api/v1/bookmarks/:id/rename", checkAuth, renameBookmarkValidator, a
     return res.status(200).json({ success: true });
 });
 
-router.delete("/api/v1/bookmarks/:id/delete", checkAuth, deleteBookmarkValidator, async (req, res) => {
+router.delete("/bookmarks/:id/delete", checkAuth, deleteBookmarkValidator, async (req, res) => {
     const id = req.cleanData.id;
     const result = await schemas.Bookmarks.deleteOne({
         _id: id,

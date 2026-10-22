@@ -10,7 +10,7 @@ import {
 } from "../validators.js";
 const router = express.Router();
 
-router.put("/api/v1/posts/:id/visibility", checkAuth, changePostVisibilityValidator, async (req, res) => {
+router.put("/posts/:id/visibility", checkAuth, changePostVisibilityValidator, async (req, res) => {
     const { id, value } = req.cleanData;
     const result = await schemas.Posts.updateOne(postQueries.modify_post(id, req.session.userId), {
         $set: {
@@ -22,7 +22,7 @@ router.put("/api/v1/posts/:id/visibility", checkAuth, changePostVisibilityValida
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/posts/:id/like", checkAuth, defaultPostFindValidator, async (req, res) => {
+router.post("/posts/:id/like", checkAuth, defaultPostFindValidator, async (req, res) => {
     const session = await mongoose.startSession();
     const { id } = req.cleanData;
 
@@ -52,7 +52,7 @@ router.post("/api/v1/posts/:id/like", checkAuth, defaultPostFindValidator, async
     return res.status(200).json({ success: true });
 });
 
-router.put("/api/v1/posts/:id/update", checkAuth, editPostsValidator, async (req, res) => {
+router.put("/posts/:id/update", checkAuth, editPostsValidator, async (req, res) => {
     const { content, title, id } = req.cleanData;
     const result = await schemas.Posts.updateOne(postQueries.modify_post(id, req.session.userId), {
         $set: {
@@ -64,7 +64,7 @@ router.put("/api/v1/posts/:id/update", checkAuth, editPostsValidator, async (req
     return res.status(200).json({ success: true });
 });
 
-router.delete("/api/v1/posts/:id/delete", checkAuth, defaultPostFindValidator, async function (req, res) {
+router.delete("/posts/:id/delete", checkAuth, defaultPostFindValidator, async function (req, res) {
     const session = await mongoose.startSession();
     const id = req.cleanData.id;
     await session.withTransaction(async () => {
@@ -79,7 +79,7 @@ router.delete("/api/v1/posts/:id/delete", checkAuth, defaultPostFindValidator, a
     return res.status(200).json({ success: true });
 });
 
-router.post("/api/v1/posts/:id/comments", checkAuth, commentsValidator, async (req, res) => {
+router.post("/posts/:id/comments", checkAuth, commentsValidator, async (req, res) => {
     const { id, content } = req.cleanData;
     const post = await schemas.Posts.exists(postQueries.view_post(id, req.session.userId));
     if (!post) return res.status(400).json({ error: "Post not found!" });

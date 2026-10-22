@@ -17,7 +17,7 @@ const router = express.Router();
 const passwordRecoveryLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 const authRateLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
 
-router.post("/api/v1/users/login", authRateLimiter, loginValidator, async (req, res) => {
+router.post("/users/login", authRateLimiter, loginValidator, async (req, res) => {
     const { username, password } = req.cleanData;
 
     const user = await schemas.Users.findOne({ username }).select("password");
@@ -36,7 +36,7 @@ router.post("/api/v1/users/login", authRateLimiter, loginValidator, async (req, 
     });
 });
 
-router.post("/api/v1/users/signup", authRateLimiter, signupValidator, async (req, res) => {
+router.post("/users/signup", authRateLimiter, signupValidator, async (req, res) => {
     const { username, password, email, bio } = req.cleanData;
     const recoveryCodes = await generateRecoveryCodes();
     const hashedPassword = await bcrypt.hash(password, config.BCRYPT_SALT_ROUNDS);
@@ -62,7 +62,7 @@ router.post("/api/v1/users/signup", authRateLimiter, signupValidator, async (req
     });
 });
 
-router.get("/api/v1/users/:id/profile", checkAuth, getUserProfileValidator, async function (req, res) {
+router.get("/users/:id/profile", checkAuth, getUserProfileValidator, async function (req, res) {
     const id = req.cleanData.id;
 
     const user = await schemas.Users.findOne({
@@ -80,7 +80,7 @@ router.get("/api/v1/users/:id/profile", checkAuth, getUserProfileValidator, asyn
     return res.status(200).json({ success: true, user });
 });
 
-router.get("/api/v1/users/:id/posts", checkAuth, getUserPostsValidator, async function (req, res) {
+router.get("/users/:id/posts", checkAuth, getUserPostsValidator, async function (req, res) {
     const { id, skip } = req.cleanData;
     const posts = await schemas.Posts.find({
         by: id,
@@ -97,7 +97,7 @@ router.get("/api/v1/users/:id/posts", checkAuth, getUserPostsValidator, async fu
     return res.status(200).json({ success: true, posts });
 });
 
-router.post("/api/v1/users/password", passwordRecoveryLimiter, resetPasswordValidator, async (req, res) => {
+router.post("/users/password", passwordRecoveryLimiter, resetPasswordValidator, async (req, res) => {
     const { username, recoveryCode, password } = req.cleanData;
     const user = await schemas.Users.findOne({ username })
         .select("recoveryCodes")
@@ -128,7 +128,7 @@ router.post("/api/v1/users/password", passwordRecoveryLimiter, resetPasswordVali
     return res.status(400).json({ error: "Invalid recovery code!" });
 });
 
-router.post("/api/v1/users/recovery-codes", passwordRecoveryLimiter, checkAuth, async (req, res) => {
+router.post("/users/recovery-codes", passwordRecoveryLimiter, checkAuth, async (req, res) => {
     const newCodes = await generateRecoveryCodes();
     const result = await schemas.Users.updateOne({
         _id: req.session.userId,
@@ -142,7 +142,7 @@ router.post("/api/v1/users/recovery-codes", passwordRecoveryLimiter, checkAuth, 
     return res.status(200).json({ success: true, codes: newCodes.raw });
 });
 
-router.put("/api/v1/me/visibility", checkAuth, updateUserVisibilityValidator, async (req, res) => {
+router.put("/me/visibility", checkAuth, updateUserVisibilityValidator, async (req, res) => {
     const value = req.cleanData.value;
     const result = await schemas.Users.updateOne({
         _id: req.session.userId,
@@ -157,7 +157,7 @@ router.put("/api/v1/me/visibility", checkAuth, updateUserVisibilityValidator, as
     return res.status(200).json({ success: true });
 });
 
-router.put("/api/v1/me/bio", checkAuth, updateUserBioValidator, async (req, res) => {
+router.put("/me/bio", checkAuth, updateUserBioValidator, async (req, res) => {
     const bio = req.cleanData.bio;
     const result = await schemas.Users.updateOne({
         _id: req.session.userId
@@ -173,7 +173,7 @@ router.put("/api/v1/me/bio", checkAuth, updateUserBioValidator, async (req, res)
     return res.status(200).json({ success: true });
 });
 
-router.delete("/api/v1/me/signout", checkAuth, async (req, res) => {
+router.delete("/me/signout", checkAuth, async (req, res) => {
     req.session.destroy(err => {
         if (err) {
             console.log("Error: " + err.message);
@@ -185,7 +185,7 @@ router.delete("/api/v1/me/signout", checkAuth, async (req, res) => {
     });
 });
 
-router.get("/api/v1/me/quick-info", checkAuth, async (req, res) => {
+router.get("/me/quick-info", checkAuth, async (req, res) => {
     return res.status(200).json({
         success: true,
         username: req.currentUser.username,
@@ -193,7 +193,7 @@ router.get("/api/v1/me/quick-info", checkAuth, async (req, res) => {
     });
 });
 
-router.get("/api/v1/me/status", async function (req, res) {
+router.get("/me/status", async function (req, res) {
     return res.status(200).json({ success: true, loggedIn: req.session.isLoggedIn });
 });
 

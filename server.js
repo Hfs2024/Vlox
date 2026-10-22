@@ -57,9 +57,9 @@ const mainLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.MAIN_RATE_
 app.use(mainLimiter);
 
 // Sub routes
-app.use("/", bookmarksRouter);
-app.use("/", postsRouter);
-app.use("/", authRouter);
+app.use("/api/v1", bookmarksRouter);
+app.use("/api/v1", postsRouter);
+app.use("/api/v1", authRouter);
 
 // Main routes
 app.get("/", (req, res) => {
@@ -70,7 +70,7 @@ app.get("/config/shared.js", (req, res) => {
     res.sendFile(path.join(__dirname, "config", "shared.js"));
 });
 
-// Posts
+// Basic routes
 app.post("/api/v1/posts", checkAuth, createPostsValidator, async (req, res) => {
     const { title, content } = req.cleanData;
     const newPost = new schemas.Posts({
