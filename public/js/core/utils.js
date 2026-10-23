@@ -85,7 +85,7 @@ export async function initQuickInfo() {
         const data = await sendRequest({ url: "/api/v1/me/quick-info" });
         Object.assign(quickInfo, data || {});
     } catch {
-        Swal.fire({ title: "Error", text: "Something went wrong!", icon: "error" });
+        Swal.fire("Error", "Something went wrong!", "error");
     }
 }
 

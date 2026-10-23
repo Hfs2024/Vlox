@@ -8,18 +8,21 @@ import {
     $
 } from "../core/utils.js";
 
-async function renderComments(state = {}) {
-    const response = await sendRequest({
+async function getComments(state = {}) {
+    return await sendRequest({
         url: `/api/v1/posts/${state.id}/comments/?skip=${state.skip}`
     });
+}
 
-    if (!response.success) return Swal.fire(response.error);
+async function renderComments(state = {}, preFetchedResponse = null) {
+    const response = preFetchedResponse || await getComments(state);
+    if (response && !response.success) return Swal.fire(response.error);
 
     // Clear container
     $(state.container).empty(); 
 
     // No data
-    if (!Array.isArray(response.comments) || response.comments.length <= 0) {
+    if (!Array.isArray(response?.comments) || response.comments.length <= 0) {
         $("<div>")
             .addClass("state-nothing-found")
             .html("<b>You don't have any comments yet.</b>")
@@ -78,6 +81,8 @@ async function renderComments(state = {}) {
 
 export default async function showComments(id) {
     const state = { id, skip: 0, container: null };
+    const response = await getComments(state);
+    if (!response.success) return Swal.fire(response.error);
 
     Swal.fire({
         title: "Comments",
@@ -98,7 +103,7 @@ export default async function showComments(id) {
                 await renderComments(state);
             }));
 
-            renderComments(state);
+            renderComments(state, response);
         }
     });
 }

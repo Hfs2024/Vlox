@@ -10,22 +10,27 @@ import {
     $
 } from "../core/utils.js";
 
-async function renderBookmarks(state = {}) {
+async function getBookmarks(skip = 0) {
     const response = await sendRequest({
-        url: `/api/v1/bookmarks/?skip=${state.skip}`,
+        url: `/api/v1/bookmarks/?skip=${skip}`,
         method: "POST"
     });
 
-    if (!response.success) return Swal.fire(response.error);
+    return response;
+}
+
+async function renderBookmarks(state = {}, preFetchedResponse = null) {
+    const response = preFetchedResponse || await getBookmarks(state.skip);
+    if (response && !response.success) return Swal.fire(response.error);
 
     // Clear container
     $(state.container).empty();
 
     // No data
-    if (!Array.isArray(response.bookmarks) || response.bookmarks.length <= 0) {
+    if (!Array.isArray(response?.bookmarks) || response.bookmarks.length <= 0) {
         $("<div>")
             .addClass("state-nothing-found")
-            .html("<b>You don't have any bookmarks yet.</b>")
+            .html("<b>No bookmarks yet.</b>")
             .appendTo(state.container);
         return;
     }
@@ -40,7 +45,10 @@ async function renderBookmarks(state = {}) {
         const buttons = $("<div>").addClass("center-overflow").appendTo(bookmarkCard);
 
         // Header
-        $("<h2>").addClass("overflow").text(title).appendTo(capitalizeFirstLetter(safeBookmark.title) || "No title");
+        $("<h2>")
+            .addClass("overflow")
+            .text(capitalizeFirstLetter(safeBookmark.title) || "No title")
+            .appendTo(bookmarkHeader);
 
         $("<i>")
             .addClass("fas fa-eye icon-helper")
@@ -106,6 +114,8 @@ async function renderBookmarks(state = {}) {
 
 export default async function showBookmarks() {
     const state = { skip: 0, container: null };
+    const response = await getBookmarks();
+    if (!response.success) return Swal.fire(response.error);
 
     Swal.fire({
         title: "Your bookmarks: ",
@@ -126,7 +136,7 @@ export default async function showBookmarks() {
                 await renderBookmarks(state);
             }));
 
-            renderBookmarks(state);
+            renderBookmarks(state, response);
         }
     });
 }

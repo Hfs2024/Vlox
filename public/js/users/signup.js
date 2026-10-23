@@ -16,7 +16,7 @@ const profileBtn = $("#profile-btn");
 const loggedInGroup = $("#auth-buttons");
 
 // Quick helpers
-function validateField(value, min, max, errorMessage) {
+function validateAuthField(value, min, max, errorMessage) {
     if (!value) return errorMessage;
     if (min !== undefined && value.length < min) return errorMessage;
     if (max !== undefined && value.length > max) return errorMessage;
@@ -40,10 +40,10 @@ async function showResetPasswordModal() {
             const password = $("#password").val();
             const recoveryCode = $("#recovery-code").val();
 
-            const usernameErr = validateField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, `Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
+            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, `Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
             if (usernameErr) return Swal.showValidationMessage(usernameErr);
 
-            const passwordErr = validateField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, `Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
+            const passwordErr = validateAuthField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, `Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
             if (passwordErr) return Swal.showValidationMessage(passwordErr);
 
             if (recoveryCode.length !== config.RECOVERY_CODE_LENGTH) return Swal.showValidationMessage(`Recovery code must be exactly ${config.RECOVERY_CODE_LENGTH} chars long!`);
@@ -79,10 +79,10 @@ async function showLoginModal() {
             const username = $("#username").val();
             const password = $("#password").val();
 
-            const usernameErr = validateField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, `Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
+            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, `Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
             if (usernameErr) return Swal.showValidationMessage(usernameErr);
 
-            const passwordErr = validateField(password, undefined, config.PASSWORD_MAX_LENGTH, `Password must be no longer than ${config.PASSWORD_MAX_LENGTH} chars!`);
+            const passwordErr = validateAuthField(password, undefined, config.PASSWORD_MAX_LENGTH, `Password must be no longer than ${config.PASSWORD_MAX_LENGTH} chars!`);
             if (passwordErr) return Swal.showValidationMessage(passwordErr);
 
             return { username, password };
@@ -119,15 +119,15 @@ async function showSignUpModal() {
             const email = $("#email").val();
             const bio = $("#bio").val();
 
-            const usernameErr = validateField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, `Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
+            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, `Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
             if (usernameErr) return Swal.showValidationMessage(usernameErr);
 
-            const passwordErr = validateField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, `Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
+            const passwordErr = validateAuthField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, `Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
             if (passwordErr) return Swal.showValidationMessage(passwordErr);
 
             if (email.length > config.EMAIL_MAX_LENGTH || !/.+\@.+\..+/.test(email)) return Swal.showValidationMessage(`Email must be valid and no longer than ${config.EMAIL_MAX_LENGTH} chars!`);
 
-            const bioErr = validateField(bio, config.BIO_MIN_LENGTH, undefined, `Bio must be at least ${config.BIO_MIN_LENGTH} chars!`);
+            const bioErr = validateAuthField(bio, config.BIO_MIN_LENGTH, undefined, `Bio must be at least ${config.BIO_MIN_LENGTH} chars!`);
             if (bioErr) return Swal.showValidationMessage(bioErr);
 
             return { username, password, email, bio };

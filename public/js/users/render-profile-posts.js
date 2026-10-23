@@ -9,18 +9,23 @@ import {
     lockEvent
 } from "../core/utils.js";
 
-export async function renderProfilePosts(state = {}) {
+export async function getProfilePosts(userId, skip) {
     const response = await sendRequest({
-        url: `/api/v1/users/${state.user.id}/posts/?skip=${state.skip}`
-    });
+        url: `/api/v1/users/${userId}/posts/?skip=${skip}`
+    });;
 
-    if (!response.success) return Swal.fire(response.error);
+    return response;
+}
+
+export async function renderProfilePosts(state = {}, preFetchedResponse = null) {
+    const response = preFetchedResponse || await getProfilePosts(state.user.id, state.skip);
+    if (response && !response.success) return Swal.fire(response.error);
 
     // Clear container
     $(state.container).empty();
 
     // No data
-    if (!Array.isArray(response.posts) || response.posts.length <= 0) {
+    if (!Array.isArray(response?.posts) || response.posts.length <= 0) {
         $("<div>")
             .addClass("state-nothing-found")
             .html("<b>No posts yet.</b>")

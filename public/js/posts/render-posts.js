@@ -152,14 +152,18 @@ export async function renderPosts(posts = []) {
 }
 
 export async function getPosts(postId = null) {
-    const data = await sendRequest({
-        url: postId ?
-            `/api/v1/posts/${postId}` :
-            `/api/v1/posts/?skip=${postsState.skip}`,
-    });
+    try {
+        const data = await sendRequest({
+            url: postId ?
+                `/api/v1/posts/${postId}` :
+                `/api/v1/posts/?skip=${postsState.skip}`,
+        });
 
-    if (!data.success) return Swal.fire(data.error);
-    renderPosts(data.posts);
+        if (!data.success) return Swal.fire(data.error);
+        renderPosts(data.posts);
+    } catch {
+        Swal.fire("Error", "Something went wrong!", "error");
+    }
 }
 
 getPosts(postsState.customPostId);

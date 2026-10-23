@@ -32,7 +32,7 @@ export default async function showProfile(id) {
             id: user._id,
             isLoggedInUser: user._id === quickInfo?._id
         }
-    };
+    }
 
     Swal.fire({
         titleText: `Hello, ${state.user.username}!`,
