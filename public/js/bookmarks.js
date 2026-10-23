@@ -31,16 +31,14 @@ async function renderBookmarks() {
     }
 
     response.bookmarks.forEach(bookmark => {
-        bookmark = bookmark || {};
+        const safeBookmark = bookmark || {}
         const bookmarkCard = $("<div>").addClass("card");
-        const bookmarkHeader = $("<div>").addClass("space-between");
-        const buttons = $("<div>").addClass("center-overflow");
-        const title = capitalizeFirstLetter(bookmark.title) || "No title";
-
+        const bookmarkHeader = $("<div>").addClass("space-between").appendTo(bookmarkCard);
+        const buttons = $("<div>").addClass("center-overflow").appendTo(bookmarkCard);
         $(state.container).append(bookmarkCard);
-        bookmarkCard.append(bookmarkHeader);
-        bookmarkCard.append(buttons);
 
+        // Header
+        const title = capitalizeFirstLetter(safeBookmark.title) || "No title";
         $("<h2>").addClass("overflow").text(title).appendTo(bookmarkHeader);
 
         $("<i>")
@@ -49,7 +47,7 @@ async function renderBookmarks() {
             .attr("tabindex", "0")
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: `/api/v1/posts/${bookmark.for}`
+                    url: `/api/v1/posts/${safeBookmark.for}`
                 });
 
                 if (!response.success) return Swal.fire(response.error);
@@ -58,12 +56,13 @@ async function renderBookmarks() {
             }))
             .appendTo(bookmarkHeader);
 
+        // Action
         $("<button>")
             .addClass("btn-danger w-full")
             .text("Delete")
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
-                    url: `/api/v1/bookmarks/${bookmark._id}/delete`,
+                    url: `/api/v1/bookmarks/${safeBookmark._id}/delete`,
                     method: "DELETE"
                 });
 
@@ -91,7 +90,7 @@ async function renderBookmarks() {
 
                 // Send request
                 const response = await sendRequest({
-                    url: `/api/v1/bookmarks/${bookmark._id}/rename`,
+                    url: `/api/v1/bookmarks/${safeBookmark._id}/rename`,
                     method: "PUT",
                     body: { title: result.value }
                 });

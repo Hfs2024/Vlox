@@ -16,7 +16,7 @@ import {
 
 let state = {
     skip: 0,
-    isUser: false,
+    isLoggedInUser: false,
     container: null,
     user: {}
 }
@@ -39,15 +39,15 @@ async function renderPosts() {
     }
 
     response.posts.forEach(post => {
-        post = post || {};
+        const safePost = post || {};
         const postCard = $("<div>").addClass("card");
-        const postHeader = $("<div>").addClass("space-between");
+        const postHeader = $("<div>").addClass("space-between").appendTo(postCard);
         $(state.container).append(postCard);
-        postCard.append(postHeader);
 
+        // Header
         $("<h2>")
             .addClass("overflow")
-            .text(capitalizeFirstLetter(post.title) || "Untitled post")
+            .text(capitalizeFirstLetter(safePost.title) || "Untitled post")
             .appendTo(postHeader);
 
         $("<i>")
@@ -55,20 +55,21 @@ async function renderPosts() {
             .attr("role", "button")
             .attr("tabindex", "0")
             .on("click", async function () {
-                copy(generatePostLink(post._id));
+                copy(generatePostLink(safePost._id));
             })
             .appendTo(postHeader);
 
+        // Content
         $("<div>")
             .addClass("post-content")
-            .html(cleanHTML(post.content) || "Not content found")
+            .html(cleanHTML(safePost.content) || "Not content found")
             .appendTo(postCard);
 
         // Actions
-        if (state.isUser) {
-            $("<p>")
-                .css("font-size", "15px")
-                .html(`Is this post visible to public? <span style='color: green'>${post.private ? "No" : "Yes"}</span>`)
+        if (state.user.isLoggedInUser) {
+            $("<small>")
+                .css("color", "dimgray")
+                .html(`(Private): <span style='color: green'>${safePost.private ? "No" : "Yes"}</span>`)
                 .appendTo(postCard);
 
             const buttonsContainer = $("<div>").addClass("center-overflow");
@@ -79,7 +80,7 @@ async function renderPosts() {
                 .html("<i class='fas fa-trash'></i>")
                 .on("click", lockEvent(async function () {
                     const response = await sendRequest({
-                        url: `/api/v1/posts/${post._id}/delete`,
+                        url: `/api/v1/posts/${safePost._id}/delete`,
                         method: "DELETE"
                     });
 
@@ -97,7 +98,7 @@ async function renderPosts() {
                         successMessage: "Post updated!",
                         title: "Update post: ",
                         api: {
-                            endpoint: `/api/v1/posts/${post._id}/update`,
+                            endpoint: `/api/v1/posts/${safePost._id}/update`,
                             method: "PUT"
                         },
                     });
@@ -108,16 +109,16 @@ async function renderPosts() {
 
             $("<button>")
                 .addClass("w-full")
-                .html(`<i class='fas fa-${post.private ? "eye" : "eye-slash"}'></i>`)
+                .html(`<i class='fas fa-${safePost.private ? "eye" : "eye-slash"}'></i>`)
                 .on("click", lockEvent(async function () {
                     const response = await sendRequest({
-                        url: `/api/v1/posts/${post._id}/visibility`,
+                        url: `/api/v1/posts/${safePost._id}/visibility`,
                         method: "PUT",
-                        body: { value: !post.private }
+                        body: { value: !safePost.private }
                     });
 
                     if (!response.success) return Swal.fire(response.error);
-                    Swal.fire("Success", `Post visibility set as ${post.private ? "public" : "private"}!`, "success");
+                    Swal.fire("Success", `Post visibility set as ${safePost.private ? "public" : "private"}!`, "success");
                 }))
                 .appendTo(buttonsContainer);
         }
@@ -127,7 +128,7 @@ async function renderPosts() {
 export default async function showProfile(id) {
     state = {
         skip: 0,
-        isUser: false,
+        isLoggedInUser: false,
         container: null,
         user: {}
     }
@@ -139,14 +140,14 @@ export default async function showProfile(id) {
 
     if (!response.success) return Swal.fire(response.error);
 
-    const user = response?.user || {};
+    const user = response.user || {};
     state.user = {
         username: capitalizeFirstLetter(user.username) || "User",
         bio: user.bio || "",
         private: user.private || false,
-        id: user._id
+        id: user._id,
+        isLoggedInUser: user._id === window?.quickInfo?._id
     }
-    state.isUser = window?.quickInfo?._id === state.user.id;
 
     Swal.fire({
         titleText: `Hello, ${state.user.username}!`,
@@ -154,13 +155,13 @@ export default async function showProfile(id) {
 <div class="card">
   <div class="space-between">
     <p class="center-overflow"><b>Bio:</b> ${cleanHTML(state.user.bio, false) || "No bio found"}</p>
-    ${state.isUser ? '<i class="fas fa-pen-to-square icon-helper" id="profile-bio-edit-btn" role="button" tabindex="0"></i>' : ""}
+    ${state.user.isLoggedInUser ? '<i class="fas fa-pen-to-square icon-helper" id="profile-bio-edit-btn" role="button" tabindex="0"></i>' : ""}
   </div>
   <div class="space-between">  
     <p><b>Visibility:</b> ${state.user.private ? "Private" : "Public"}</p>
-    ${state.isUser ? `<i class="fas fa-${state.user.private ? "eye" : "eye-slash"} icon-helper" id="profile-visibility-toggle-btn" role="button" tabindex="0"></i>` : ""}
+    ${state.user.isLoggedInUser ? `<i class="fas fa-${state.user.private ? "eye" : "eye-slash"} icon-helper" id="profile-visibility-toggle-btn" role="button" tabindex="0"></i>` : ""}
   </div>
-  ${state.isUser ? `
+  ${state.user.isLoggedInUser ? `
   <div class="center">
     <button id="profile-bookmarks-btn" class="w-full">
        <i class="fas fa-bookmark"></i>

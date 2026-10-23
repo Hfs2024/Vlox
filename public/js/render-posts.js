@@ -33,8 +33,8 @@ export async function renderPosts(posts = []) {
     }
 
     posts.forEach(async post => {
-        post = post || {};
-        const safeBy = post.by || {};
+        const safePost = post || {};
+        const safeBy = safePost.by || {};
         const postCard = $("<div>").addClass("card");
         const postHeader = $("<div>").addClass("space-between");
         postsContainer.append(postCard);
@@ -42,7 +42,7 @@ export async function renderPosts(posts = []) {
 
         $("<h2>")
             .addClass("overflow")
-            .text(capitalizeFirstLetter(post.title) || "No title found")
+            .text(capitalizeFirstLetter(safePost.title) || "No title found")
             .appendTo(postHeader);
 
         const postIconsGroup = $("<div>").addClass("center");
@@ -55,7 +55,7 @@ export async function renderPosts(posts = []) {
             .attr("tabindex", "0")
             .on("click", lockEvent(async function () {
                 const bookmarkResponse = await sendRequest({
-                    url: `/api/v1/bookmarks/${post._id}`,
+                    url: `/api/v1/bookmarks/${safePost._id}`,
                     method: "POST"
                 });
 
@@ -69,14 +69,14 @@ export async function renderPosts(posts = []) {
             .attr("role", "button")
             .attr("tabindex", "0")
             .on("click", async function () {
-                copy(generatePostLink(post._id));
+                copy(generatePostLink(safePost._id));
             })
             .appendTo(postIconsGroup);
 
         // Content
         $("<div>")
             .addClass("post-content")
-            .html(cleanHTML(post.content) || "No content found")
+            .html(cleanHTML(safePost.content) || "No content found")
             .appendTo(postCard);
 
         // Author
@@ -93,13 +93,13 @@ export async function renderPosts(posts = []) {
         // reactions-container
         const reactions = $("<div>").addClass("reactions-container");
         postCard.append(reactions);
-        const likes = Number(post.likes) || 0;
+        const likes = Number(safePost.likes) || 0;
 
         $("<button>")
             .html(`<i class="fas fa-thumbs-up"></i> <span class="likes-count">${likes}</span>`)
             .on("click", lockEvent(async function () {
                 const likesResponse = await sendRequest({
-                    url: `/api/v1/posts/${post._id}/like`,
+                    url: `/api/v1/posts/${safePost._id}/like`,
                     method: "POST"
                 });
 
@@ -112,7 +112,7 @@ export async function renderPosts(posts = []) {
         $("<button>")
             .html(`<i class="fas fa-comments"></i>`)
             .on("click", lockEvent(async function () {
-                await showComments(post._id);
+                await showComments(safePost._id);
             }))
             .appendTo(reactions);
 
@@ -132,7 +132,7 @@ export async function renderPosts(posts = []) {
                 if (!result.isConfirmed) return;
 
                 const response = await sendRequest({
-                    url: `/api/v1/posts/${post._id}/comments`,
+                    url: `/api/v1/posts/${safePost._id}/comments`,
                     method: "POST",
                     body: {
                         content: result.value

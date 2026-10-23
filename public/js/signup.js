@@ -39,6 +39,7 @@ async function showResetPasswordModal() {
 
     if (!result.isConfirmed) return;
 
+    // Send request
     const response = await sendRequest({
         url: "/api/v1/users/password",
         method: "POST",
@@ -84,6 +85,7 @@ async function showLoginModal() {
 
     if (!result.isConfirmed) return;
 
+    // Send request
     const response = await sendRequest({
         url: `/api/v1/users/login`,
         method: "POST",
@@ -135,6 +137,7 @@ async function showSignUpModal() {
 
     if (!result.isConfirmed) return;
 
+    // Send request
     const response = await sendRequest({
         url: `/api/v1/users/signup`,
         method: "POST",

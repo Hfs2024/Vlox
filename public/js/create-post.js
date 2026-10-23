@@ -18,7 +18,7 @@ createPostBtn.on("click", lockEvent(async function () {
     await editorInstance.init();
 }));
 
-if (!postsState.isCustomPost) {
+if (!postsState.customPostId) {
     $("<button>")
         .html("<i class='fas fa-chevron-left'></i> Prev")
         .on("click", lockEvent(async () => {

@@ -28,21 +28,46 @@ async function renderComments() {
     }
 
     response.comments.forEach(comment => {
-        comment = comment || {};
-        const safeBy = comment.by || {};
-
+        const safeComment = comment || {};
+        const safeBy = safeComment.by || {};
         const commentsCard = $("<div>").addClass("card");
         $(state.container).append(commentsCard);
 
-        // Elements
+        // Header
+        const commentsHeader = $("<div>").addClass("space-between").appendTo(commentsCard);
+
         $("<h3>")
             .addClass("overflow")
             .text(capitalizeFirstLetter(safeBy.username) || "User")
+            .appendTo(commentsHeader);
+
+        if (safeBy?._id && safeBy._id === window?.quickInfo?._id) {
+            $("<i>")
+                .addClass("fas fa-pen-to-square icon-helper")
+                .attr("role", "button")
+                .attr("tabindex", "0")
+                .on("click", lockEvent(async function () {
+                    Swal.fire("Info", "Still working on this feature", "info");
+                }))
+                .appendTo(commentsHeader);
+        }
+
+        /// Content
+        $("<p>")
+            .text(safeComment.content || "No content found")
             .appendTo(commentsCard);
 
-        $("<p>")
-            .text(comment.content || "No content found")
-            .appendTo(commentsCard);
+        // Edited badge
+        const createdAt = new Date(safeComment.createdAt || 0).getTime();
+        const updatedAt = new Date(safeComment.updatedAt || 0).getTime();
+        const isEdited = updatedAt > createdAt;
+
+        if (isEdited) {
+            $("<small>")
+                .text("(Edited)")
+                .css("color", "gray")
+                .appendTo(commentsCard);
+        }
     });
 }
 
