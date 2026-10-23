@@ -6,21 +6,30 @@ import {
     lockEvent,
     config,
     $
-} from "./utils.js";
+} from "../core/utils.js";
+import templates from "../core/templates.js";
 
 const signUpBtn = $("#signup-btn");
 const signOutBtn = $("#signout-btn");
 const profileBtn = $("#profile-btn");
 const loggedInGroup = $("#auth-buttons");
 
+function validateField(value, min, max, errorMessage) {
+    if (!value) return errorMessage;
+    if (min !== undefined && value.length < min) return errorMessage;
+    if (max !== undefined && value.length > max) return errorMessage;
+    return null;
+}
+
+function handleAuthSuccess(message) {
+    Swal.fire("Success", message, "success");
+    determineAuthButtonsDisplay();
+    initQuickInfo();
+}
+
 async function showResetPasswordModal() {
     const result = await Swal.fire({
-        html: `
-<h2>Reset your password</h2>
-<input type="text" id="username" placeholder="Username">
-<input type="password" id="recovery-code" placeholder="Recovery code">
-<input type="password" id="password" placeholder="New password">
-        `,
+        html: templates.USER_PASSWORD_RESET(),
         showCancelButton: true,
         confirmButtonText: "Submit",
         preConfirm: () => {
@@ -28,9 +37,12 @@ async function showResetPasswordModal() {
             const password = $("#password").val();
             const recoveryCode = $("#recovery-code").val();
 
-            if (!username || !password || !recoveryCode) return Swal.showValidationMessage("You must enter a username, password and one of your recovery code!");
-            if (username.length < config.USERNAME_MIN_LENGTH || username.length > config.USERNAME_MAX_LENGTH) return Swal.showValidationMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
-            if (password.length < config.PASSWORD_MIN_LENGTH || password.length > config.PASSWORD_MAX_LENGTH) return Swal.showValidationMessage(`Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
+            const usernameErr = validateField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, `Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
+            if (usernameErr) return Swal.showValidationMessage(usernameErr);
+
+            const passwordErr = validateField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, `Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
+            if (passwordErr) return Swal.showValidationMessage(passwordErr);
+
             if (recoveryCode.length !== config.RECOVERY_CODE_LENGTH) return Swal.showValidationMessage(`Recovery code must be exactly ${config.RECOVERY_CODE_LENGTH} chars long!`);
 
             return { username, password, recoveryCode };
@@ -47,37 +59,29 @@ async function showResetPasswordModal() {
     });
 
     if (!response.success) return Swal.fire(response.error);
-    Swal.fire("Success", "Password reseted! You can now login", "success");
+    Swal.fire("Success", "Password reset! You can now login", "success");
 }
 
 async function showLoginModal() {
     const result = await Swal.fire({
-        html: `
-<h2>Login</h2>
-<input type="text" id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
-<p class="text-forget-password" role="button" tabindex="0">
-  Forgot your password?
-</p>
-<p class="text-swal-toggle">
-    Need an account? <span class="link-swal-toggle" role="button" tabindex="0">Sign up</span>
-</p>
-        `,
+        html: templates.USER_LOGIN(),
         showCancelButton: true,
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
         didOpen: () => {
             initAccessibility();
-            $(".text-forget-password").on("click", showResetPasswordModal);
-            $(".link-swal-toggle").on("click", showSignUpModal);
+            $(".text-forget-password").one("click", showResetPasswordModal);
+            $(".link-swal-toggle").one("click", showSignUpModal);
         },
         preConfirm: () => {
             const username = $("#username").val();
             const password = $("#password").val();
 
-            if (!username || !password) return Swal.showValidationMessage("You must enter a username and a password!");
-            if (username.length < config.USERNAME_MIN_LENGTH || username.length > config.USERNAME_MAX_LENGTH) return Swal.showValidationMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
-            if (password.length > config.PASSWORD_MAX_LENGTH) return Swal.showValidationMessage(`Password must be no longer than ${config.PASSWORD_MAX_LENGTH} chars!`);
+            const usernameErr = validateField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, `Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
+            if (usernameErr) return Swal.showValidationMessage(usernameErr);
+
+            const passwordErr = validateField(password, undefined, config.PASSWORD_MAX_LENGTH, `Password must be no longer than ${config.PASSWORD_MAX_LENGTH} chars!`);
+            if (passwordErr) return Swal.showValidationMessage(passwordErr);
 
             return { username, password };
         }
@@ -93,23 +97,13 @@ async function showLoginModal() {
     });
 
     if (!response.success) return Swal.fire(response.error);
-    determineAuthButtonsDisplay();
-    initQuickInfo();
-    Swal.fire("Success", "Successfully logged in!", "success");
+
+    handleAuthSuccess("Successfully logged in!");
 }
 
 async function showSignUpModal() {
     const result = await Swal.fire({
-        html: `
-<h2>Sign Up</h2>
-<input type="text" id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password">
-<input type="email" id="email" placeholder="Email">
-<input type="text" id="bio" placeholder="Bio" autocomplete="off">        
-<p class="text-swal-toggle">
-    Already have an account? <span class="link-swal-toggle" role="button" tabindex="0">Log in</span>
-</p>
-        `,
+        html: templates.USER_SIGNUP(),
         showCancelButton: true,
         confirmButtonText: 'Submit',
         cancelButtonText: 'Cancel',
@@ -118,18 +112,22 @@ async function showSignUpModal() {
             $(".link-swal-toggle").on("click", showLoginModal);
             initAccessibility();
         },
-
         preConfirm: () => {
             const username = $("#username").val();
             const password = $("#password").val();
             const email = $("#email").val();
             const bio = $("#bio").val();
 
-            if (!username || !password || !email || !bio) return Swal.showValidationMessage("You must enter a username, password, email and bio!");
-            if (username.length < config.USERNAME_MIN_LENGTH || username.length > config.USERNAME_MAX_LENGTH) return Swal.showValidationMessage(`Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
-            if (password.length < config.PASSWORD_MIN_LENGTH || password.length > config.PASSWORD_MAX_LENGTH) return Swal.showValidationMessage(`Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
+            const usernameErr = validateField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, `Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} chars!`);
+            if (usernameErr) return Swal.showValidationMessage(usernameErr);
+
+            const passwordErr = validateField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, `Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} chars!`);
+            if (passwordErr) return Swal.showValidationMessage(passwordErr);
+
             if (email.length > config.EMAIL_MAX_LENGTH || !/.+\@.+\..+/.test(email)) return Swal.showValidationMessage(`Email must be valid and no longer than ${config.EMAIL_MAX_LENGTH} chars!`);
-            if (bio.length < config.BIO_MIN_LENGTH) return Swal.showValidationMessage(`Bio must be at least ${config.BIO_MIN_LENGTH} chars!`);
+
+            const bioErr = validateField(bio, config.BIO_MIN_LENGTH, undefined, `Bio must be at least ${config.BIO_MIN_LENGTH} chars!`);
+            if (bioErr) return Swal.showValidationMessage(bioErr);
 
             return { username, password, email, bio };
         }
@@ -145,6 +143,7 @@ async function showSignUpModal() {
     });
 
     if (!response.success) return Swal.fire(response.error);
+
     const recoveryCodes = Array.isArray(response.recoveryCodes) ? response.recoveryCodes : [];
     const blob = new Blob([recoveryCodes.join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -155,9 +154,8 @@ async function showSignUpModal() {
         .trigger("click")
         .remove();
     URL.revokeObjectURL(url);
-    Swal.fire("Success", "Account created successfully!", "success");
-    determineAuthButtonsDisplay();
-    initQuickInfo();
+
+    handleAuthSuccess("Account created successfully!");
 }
 
 async function determineAuthButtonsDisplay() {
@@ -165,19 +163,13 @@ async function determineAuthButtonsDisplay() {
         url: "/api/v1/me/status"
     });
 
-    if (!status.success) return Swal.fire(status.error);
-
-    if (status.loggedIn) {
-        signUpBtn.css("display", "none");
-        loggedInGroup.css("display", "");
-    } else {
-        signUpBtn.css("display", "");
-        loggedInGroup.css("display", "none");
-    }
+    const isLoggedIn = !!status.loggedIn;
+    signUpBtn.toggle(!isLoggedIn);
+    loggedInGroup.toggle(isLoggedIn);
 }
 
 signUpBtn.on("click", lockEvent(async function () {
-    await showLoginModal();
+    await showSignUpModal();
 }));
 
 signOutBtn.on("click", lockEvent(async function () {
@@ -187,9 +179,8 @@ signOutBtn.on("click", lockEvent(async function () {
     });
 
     if (!response.success) return Swal.fire(response.error);
-    determineAuthButtonsDisplay();
-    initQuickInfo();
-    Swal.fire("Success", "You have been logged out!", "success");
+
+    handleAuthSuccess("You have been logged out!");
 }));
 
 profileBtn.on("click", lockEvent(async function () {

@@ -1,9 +1,9 @@
-import showProfile from "./profile.js";
+import showProfile from "../users/profile.js";
 import showComments from "./comments.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
-    cleanHTML,
+    renderSafeHtml,
     generatePostLink,
     initAccessibility,
     lockEvent,
@@ -11,7 +11,7 @@ import {
     config,
     $,
     input
-} from "./utils.js";
+} from "../core/utils.js";
 
 const query = new URLSearchParams(window.location.search);
 
@@ -21,9 +21,11 @@ export const postsState = {
 }
 
 export async function renderPosts(posts = []) {
+    // Clear container
     const postsContainer = $("#posts-container");
-    postsContainer.html("");
+    postsContainer.empty("");
 
+    // No data
     if (!Array.isArray(posts) || posts.length <= 0) {
         $("<div>")
             .addClass("state-nothing-found")
@@ -32,14 +34,16 @@ export async function renderPosts(posts = []) {
         return;
     }
 
+    // Render data
+    const fragment = new DocumentFragment();
+
     posts.forEach(async post => {
         const safePost = post || {};
         const safeBy = safePost.by || {};
         const postCard = $("<div>").addClass("card");
-        const postHeader = $("<div>").addClass("space-between");
-        postsContainer.append(postCard);
-        postCard.append(postHeader);
+        const postHeader = $("<div>").addClass("space-between").appendTo(postCard);
 
+        // Header
         $("<h2>")
             .addClass("overflow")
             .text(capitalizeFirstLetter(safePost.title) || "No title found")
@@ -48,11 +52,9 @@ export async function renderPosts(posts = []) {
         const postIconsGroup = $("<div>").addClass("center");
         postHeader.append(postIconsGroup);
 
-        // Icons
         $("<i>")
             .addClass("fas fa-bookmark post-icon")
-            .attr("role", "button")
-            .attr("tabindex", "0")
+            .attr({ role: "button", tabindex: "0" })
             .on("click", lockEvent(async function () {
                 const bookmarkResponse = await sendRequest({
                     url: `/api/v1/bookmarks/${safePost._id}`,
@@ -66,8 +68,7 @@ export async function renderPosts(posts = []) {
 
         $("<i>")
             .addClass("fas fa-link post-icon")
-            .attr("role", "button")
-            .attr("tabindex", "0")
+            .attr({ role: "button", tabindex: "0" })
             .on("click", async function () {
                 copy(generatePostLink(safePost._id));
             })
@@ -76,10 +77,11 @@ export async function renderPosts(posts = []) {
         // Content
         $("<div>")
             .addClass("post-content")
-            .html(cleanHTML(safePost.content) || "No content found")
+            .html(renderSafeHtml(safePost.content) || "No content found")
             .appendTo(postCard);
 
         // Author
+
         $("<p>")
             .css({ color: "red", cursor: "pointer" })
             .attr("role", "button")
@@ -90,7 +92,7 @@ export async function renderPosts(posts = []) {
             })
             .appendTo(postCard);
 
-        // reactions-container
+        // Actions
         const reactions = $("<div>").addClass("reactions-container");
         postCard.append(reactions);
         const likes = Number(safePost.likes) || 0;
@@ -143,8 +145,12 @@ export async function renderPosts(posts = []) {
                 Swal.fire("Success", "Comment added!", "success");
             }))
             .appendTo(reactions);
+
+
+        fragment.appendChild(postCard[0]);
     });
 
+    postsContainer.append(fragment);
     initAccessibility();
 }
 

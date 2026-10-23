@@ -1,6 +1,6 @@
-import { lockEvent, config, $ } from "./utils.js";
+import { lockEvent, config, $ } from "../core/utils.js";
 import { getPosts, postsState } from "./render-posts.js";
-import Editor from "./editor.js";
+import Editor from "../core/editor.js";
 
 const createPostBtn = $("#create-post-btn");
 const postsNavigationContainer = $("#posts-navigation-container");

@@ -32,9 +32,10 @@ export async function copy(str) {
     }
 }
 
-export function cleanHTML(html, parse = true) {
-    const safeHTML = typeof html === "string" ? html : "";
+export function renderSafeHtml(html, parse = true) {
+    const safeHTML = html || "";
     const code = parse ? marked.parse(safeHTML) : safeHTML;
+
     return DOMPurify
         .sanitize(code, {
             ALLOWED_TAGS: config.ALLOWED_TAGS,

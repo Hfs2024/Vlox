@@ -1,35 +1,30 @@
-import Editor from "./editor.js";
-import showBookmarks from "./bookmarks.js";
+import Editor from "../core/editor.js";
+import showBookmarks from "../posts/bookmarks.js";
+import templates from "../core/templates.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
     copy,
-    initQuickInfo,
     initAccessibility,
     lockEvent,
-    cleanHTML,
+    renderSafeHtml,
     generatePostLink,
     config,
     input,
     $
-} from "./utils.js";
+} from "../core/utils.js";
 
-let state = {
-    skip: 0,
-    isLoggedInUser: false,
-    container: null,
-    user: {}
-}
-
-async function renderPosts() {
+async function renderPosts(state = {}) {
     const response = await sendRequest({
         url: `/api/v1/users/${state.user.id}/posts/?skip=${state.skip}`
     });
 
     if (!response.success) return Swal.fire(response.error);
 
-    $(state.container).html("");
+    // Clear container
+    $(state.container).empty("");
 
+    // No data
     if (!Array.isArray(response.posts) || response.posts.length <= 0) {
         $("<div>")
             .addClass("state-nothing-found")
@@ -38,11 +33,13 @@ async function renderPosts() {
         return;
     }
 
+    // Render data
+    const fragment = new DocumentFragment();
+
     response.posts.forEach(post => {
         const safePost = post || {};
         const postCard = $("<div>").addClass("card");
         const postHeader = $("<div>").addClass("space-between").appendTo(postCard);
-        $(state.container).append(postCard);
 
         // Header
         $("<h2>")
@@ -62,7 +59,7 @@ async function renderPosts() {
         // Content
         $("<div>")
             .addClass("post-content")
-            .html(cleanHTML(safePost.content) || "Not content found")
+            .html(renderSafeHtml(safePost.content) || "Not content found")
             .appendTo(postCard);
 
         // Actions
@@ -122,74 +119,39 @@ async function renderPosts() {
                 }))
                 .appendTo(buttonsContainer);
         }
+
+        fragment.appendChild(postCard[0]);
     });
+
+    $(state.container).append(fragment);
 }
 
 export default async function showProfile(id) {
-    state = {
-        skip: 0,
-        isLoggedInUser: false,
-        container: null,
-        user: {}
-    }
-
-    // Show profile
+    // Get data
     const response = await sendRequest({
         url: `/api/v1/users/${id}/profile`
     });
 
     if (!response.success) return Swal.fire(response.error);
 
+    // Save user data temporarily
     const user = response.user || {};
-    state.user = {
-        username: capitalizeFirstLetter(user.username) || "User",
-        bio: user.bio || "",
-        private: user.private || false,
-        id: user._id,
-        isLoggedInUser: user._id === window?.quickInfo?._id
+    const state = {
+        skip: 0,
+        isLoggedInUser: false,
+        container: null,
+        user: {
+            username: capitalizeFirstLetter(user.username) || "User",
+            bio: user.bio || "",
+            private: user.private || false,
+            id: user._id,
+            isLoggedInUser: user._id === window?.quickInfo?._id
+        }
     }
 
     Swal.fire({
         titleText: `Hello, ${state.user.username}!`,
-        html: `
-<div class="card">
-  <div class="space-between">
-    <p class="center-overflow"><b>Bio:</b> ${cleanHTML(state.user.bio, false) || "No bio found"}</p>
-    ${state.user.isLoggedInUser ? '<i class="fas fa-pen-to-square icon-helper" id="profile-bio-edit-btn" role="button" tabindex="0"></i>' : ""}
-  </div>
-  <div class="space-between">  
-    <p><b>Visibility:</b> ${state.user.private ? "Private" : "Public"}</p>
-    ${state.user.isLoggedInUser ? `<i class="fas fa-${state.user.private ? "eye" : "eye-slash"} icon-helper" id="profile-visibility-toggle-btn" role="button" tabindex="0"></i>` : ""}
-  </div>
-  ${state.user.isLoggedInUser ? `
-  <div class="center">
-    <button id="profile-bookmarks-btn" class="w-full">
-       <i class="fas fa-bookmark"></i>
-    </button>
-
-    <button id="reset-password-recovery-codes-btn" class="w-full">
-      <i class="fas fa-arrow-left-rotate"></i>
-    </button>
-  </div>
-` : ""}
-</div>
-
-<div id="user-posts-container" class="scroll-container">
-  <button id="profile-load-posts-btn" class="w-full">
-    <i class="fas fa-download"></i>
-    Load Posts
-  </button>
-</div>
-
-<div class="center" style="margin-top: 10px">
-  <button id="profile-posts-prev-btn">
-    <i class="fas fa-caret-left"></i>
-  </button>
-  <button id="profile-posts-next-btn">
-    <i class="fas fa-caret-right"></i>
-  </button>
-</div>
-        `,
+        html: templates.USER_PROFILE(state),
         confirmButtonText: "Close",
         didOpen: () => {
             state.container = $("#user-posts-container");
@@ -202,6 +164,7 @@ export default async function showProfile(id) {
 
                 if (!response.success) return Swal.fire(response.error);
 
+                // Download recovery codes
                 const recoveryCodes = Array.isArray(response.codes) ? response.codes : [];
                 const blob = new Blob([recoveryCodes.join("\n")], { type: "text/plain" });
                 const url = URL.createObjectURL(blob);
@@ -211,6 +174,7 @@ export default async function showProfile(id) {
                     .appendTo(document.body)
                     .trigger("click")
                     .remove();
+
                 Swal.fire("Success", "Password Recovery Codes Reseted!", "success");
             }));
 
@@ -236,7 +200,6 @@ export default async function showProfile(id) {
 
                 if (!response.success) return Swal.fire(response.error);
                 Swal.fire("Success", "Bio updated!", "success");
-                initQuickInfo();
             }));
 
             $("#profile-visibility-toggle-btn").on("click", lockEvent(async function () {
@@ -251,7 +214,7 @@ export default async function showProfile(id) {
             }));
 
             $("#profile-load-posts-btn").on("click", lockEvent(async function () {
-                await renderPosts();
+                await renderPosts(state);
             }));
 
             $("#profile-bookmarks-btn").on("click", lockEvent(async function () {
@@ -261,13 +224,13 @@ export default async function showProfile(id) {
             $("#profile-posts-prev-btn").on("click", lockEvent(async function () {
                 if (state.skip <= 0) return;
                 state.skip -= config.USER_POSTS_LIMIT;
-                await renderPosts();
+                await renderPosts(state);
             }));
 
             $("#profile-posts-next-btn").on("click", lockEvent(async function () {
                 if ($(state.container).find(".state-nothing-found").length) return;
                 state.skip += config.USER_POSTS_LIMIT;
-                await renderPosts();
+                await renderPosts(state);
             }));
 
             initAccessibility();

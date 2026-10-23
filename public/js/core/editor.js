@@ -1,4 +1,5 @@
 import { sendRequest, config, $ } from "./utils.js";
+import templates from "./templates.js";
 
 export default class Editor {
     constructor({
@@ -21,11 +22,7 @@ export default class Editor {
 
         const result = await Swal.fire({
             title: this.title,
-            html: `
-<input id="post-editor-title" type="text" placeholder="Enter post title...">
-<textarea id="post-editor-content" placeholder="Enter post content..."></textarea>
-            `,
-
+            html: templates.POST_EDITOR(),
             showCancelButton: true,
             confirmButtonText: "Submit",
 

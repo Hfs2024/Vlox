@@ -1,4 +1,5 @@
 import { renderPosts } from "./render-posts.js";
+import templates from "../core/templates.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
@@ -7,14 +8,9 @@ import {
     config,
     input,
     $
-} from "./utils.js";
+} from "../core/utils.js";
 
-let state = {
-    skip: 0,
-    container: null,
-}
-
-async function renderBookmarks() {
+async function renderBookmarks(state = {}) {
     const response = await sendRequest({
         url: `/api/v1/bookmarks/?skip=${state.skip}`,
         method: "POST"
@@ -22,20 +18,26 @@ async function renderBookmarks() {
 
     if (!response.success) return Swal.fire(response.error);
 
-    $(state.container).html("");
+    // Clear container
+    $(state.container).empty();
 
+    // No data
     if (!Array.isArray(response.bookmarks) || response.bookmarks.length <= 0) {
-        const empty = $("<div>").addClass("state-nothing-found").html("<b>You don't have any bookmarks yet.</b>");
-        $(state.container).append(empty);
+        $("<div>")
+            .addClass("state-nothing-found")
+            .html("<b>You don't have any bookmarks yet.</b>")
+            .appendTo(state.container);
         return;
     }
+
+    // Render data
+    const fragment = new DocumentFragment();
 
     response.bookmarks.forEach(bookmark => {
         const safeBookmark = bookmark || {}
         const bookmarkCard = $("<div>").addClass("card");
         const bookmarkHeader = $("<div>").addClass("space-between").appendTo(bookmarkCard);
         const buttons = $("<div>").addClass("center-overflow").appendTo(bookmarkCard);
-        $(state.container).append(bookmarkCard);
 
         // Header
         const title = capitalizeFirstLetter(safeBookmark.title) || "No title";
@@ -43,8 +45,7 @@ async function renderBookmarks() {
 
         $("<i>")
             .addClass("fas fa-eye icon-helper")
-            .attr("role", "button")
-            .attr("tabindex", "0")
+            .attr({ role: "button", tabindex: "0" })
             .on("click", lockEvent(async function () {
                 const response = await sendRequest({
                     url: `/api/v1/posts/${safeBookmark.for}`
@@ -56,7 +57,7 @@ async function renderBookmarks() {
             }))
             .appendTo(bookmarkHeader);
 
-        // Action
+        // Actions
         $("<button>")
             .addClass("btn-danger w-full")
             .text("Delete")
@@ -68,7 +69,6 @@ async function renderBookmarks() {
 
                 if (!response.success) return Swal.fire(response.error);
                 Swal.fire("Success", "Bookmark deleted!", "success");
-                renderBookmarks();
             }))
             .appendTo(buttons);
 
@@ -97,46 +97,39 @@ async function renderBookmarks() {
 
                 if (!response.success) return Swal.fire(response.error);
                 Swal.fire("Success", "Bookmark renamed successfully!", "success");
-                await renderBookmarks();
             }))
             .appendTo(buttons);
+
+        fragment.appendChild(bookmarkCard[0]);
     });
+
+    $(state.container).append(fragment);
+    initAccessibility();
 }
 
 export default async function showBookmarks() {
-    state = { skip: 0, container: null };
+    const state = { skip: 0, container: null };
 
     Swal.fire({
         title: "Your bookmarks: ",
-        html: `
-<div id="user-bookmarks-container" class="scroll-container"></div>
-<div class="center">
-  <button id="user-bookmarks-prev-btn"> 
-    <i class="fas fa-caret-left"></i>
-  </button>
-  <button id="user-bookmarks-next-btn">
-    <i class="fas fa-caret-right"></i>
-  </button>
-</div>
-        `,
+        confirmButtonText: "Close",
+        html: templates.USER_BOOKMARKS(),
         didOpen: () => {
             state.container = $("#user-bookmarks-container");
 
             $("#user-bookmarks-prev-btn").on("click", lockEvent(async function () {
                 if (state.skip <= 0) return;
                 state.skip -= config.BOOKMARKS_LIMIT;
-                await renderBookmarks();
+                await renderBookmarks(state);
             }));
 
             $("#user-bookmarks-next-btn").on("click", lockEvent(async function () {
                 if ($(state.container).find(".state-nothing-found").length) return;
                 state.skip += config.BOOKMARKS_LIMIT;
-                await renderBookmarks();
+                await renderBookmarks(state);
             }));
 
-            initAccessibility();
-            renderBookmarks();
-        },
-        confirmButtonText: "Close"
+            renderBookmarks(state);
+        }
     });
 }
