@@ -35,13 +35,12 @@ async function renderBookmarks(state = {}) {
 
     response.bookmarks.forEach(bookmark => {
         const safeBookmark = bookmark || {}
-        const bookmarkCard = $("<div>").addClass("card");
+        const bookmarkCard = $("<div>").addClass("card").appendTo(fragment);
         const bookmarkHeader = $("<div>").addClass("space-between").appendTo(bookmarkCard);
         const buttons = $("<div>").addClass("center-overflow").appendTo(bookmarkCard);
 
         // Header
-        const title = capitalizeFirstLetter(safeBookmark.title) || "No title";
-        $("<h2>").addClass("overflow").text(title).appendTo(bookmarkHeader);
+        $("<h2>").addClass("overflow").text(title).appendTo(capitalizeFirstLetter(safeBookmark.title) || "No title");
 
         $("<i>")
             .addClass("fas fa-eye icon-helper")
@@ -77,7 +76,7 @@ async function renderBookmarks(state = {}) {
             .text("Rename")
             .on("click", lockEvent(async function () {
                 const result = await input({
-                    inputValue: title || "",
+                    inputValue: safeBookmark.title || "",
                     inputAttributes: {
                         maxLength: config.POST_TITLE_MAX_LENGTH
                     },
@@ -99,8 +98,6 @@ async function renderBookmarks(state = {}) {
                 Swal.fire("Success", "Bookmark renamed successfully!", "success");
             }))
             .appendTo(buttons);
-
-        fragment.appendChild(bookmarkCard[0]);
     });
 
     $(state.container).append(fragment);

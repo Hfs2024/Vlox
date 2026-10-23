@@ -23,7 +23,7 @@ export const postsState = {
 export async function renderPosts(posts = []) {
     // Clear container
     const postsContainer = $("#posts-container");
-    postsContainer.empty("");
+    postsContainer.empty();
 
     // No data
     if (!Array.isArray(posts) || posts.length <= 0) {
@@ -37,10 +37,10 @@ export async function renderPosts(posts = []) {
     // Render data
     const fragment = new DocumentFragment();
 
-    posts.forEach(async post => {
+    posts.forEach(post => {
         const safePost = post || {};
         const safeBy = safePost.by || {};
-        const postCard = $("<div>").addClass("card");
+        const postCard = $("<div>").addClass("card").appendTo(fragment);
         const postHeader = $("<div>").addClass("space-between").appendTo(postCard);
 
         // Header
@@ -145,9 +145,6 @@ export async function renderPosts(posts = []) {
                 Swal.fire("Success", "Comment added!", "success");
             }))
             .appendTo(reactions);
-
-
-        fragment.appendChild(postCard[0]);
     });
 
     postsContainer.append(fragment);

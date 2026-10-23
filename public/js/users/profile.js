@@ -1,130 +1,16 @@
-import Editor from "../core/editor.js";
 import showBookmarks from "../posts/bookmarks.js";
 import templates from "../core/templates.js";
+import { renderProfilePosts } from "./render-profile-posts.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
-    copy,
     initAccessibility,
     lockEvent,
-    renderSafeHtml,
-    generatePostLink,
     config,
+    quickInfo,
     input,
     $
 } from "../core/utils.js";
-
-async function renderPosts(state = {}) {
-    const response = await sendRequest({
-        url: `/api/v1/users/${state.user.id}/posts/?skip=${state.skip}`
-    });
-
-    if (!response.success) return Swal.fire(response.error);
-
-    // Clear container
-    $(state.container).empty("");
-
-    // No data
-    if (!Array.isArray(response.posts) || response.posts.length <= 0) {
-        $("<div>")
-            .addClass("state-nothing-found")
-            .html("<b>No posts yet.</b>")
-            .appendTo(state.container);
-        return;
-    }
-
-    // Render data
-    const fragment = new DocumentFragment();
-
-    response.posts.forEach(post => {
-        const safePost = post || {};
-        const postCard = $("<div>").addClass("card");
-        const postHeader = $("<div>").addClass("space-between").appendTo(postCard);
-
-        // Header
-        $("<h2>")
-            .addClass("overflow")
-            .text(capitalizeFirstLetter(safePost.title) || "Untitled post")
-            .appendTo(postHeader);
-
-        $("<i>")
-            .addClass("fas fa-link post-icon")
-            .attr("role", "button")
-            .attr("tabindex", "0")
-            .on("click", async function () {
-                copy(generatePostLink(safePost._id));
-            })
-            .appendTo(postHeader);
-
-        // Content
-        $("<div>")
-            .addClass("post-content")
-            .html(renderSafeHtml(safePost.content) || "Not content found")
-            .appendTo(postCard);
-
-        // Actions
-        if (state.user.isLoggedInUser) {
-            $("<small>")
-                .css("color", "dimgray")
-                .html(`(Private): <span style='color: green'>${safePost.private ? "No" : "Yes"}</span>`)
-                .appendTo(postCard);
-
-            const buttonsContainer = $("<div>").addClass("center-overflow");
-            postCard.append(buttonsContainer);
-
-            $("<button>")
-                .addClass("btn-danger w-full")
-                .html("<i class='fas fa-trash'></i>")
-                .on("click", lockEvent(async function () {
-                    const response = await sendRequest({
-                        url: `/api/v1/posts/${safePost._id}/delete`,
-                        method: "DELETE"
-                    });
-
-                    if (!response.success) return Swal.fire(response.error);
-                    Swal.fire("Success", "Post deleted!", "success");
-                }))
-                .appendTo(buttonsContainer);
-
-            $("<button>")
-                .addClass("w-full")
-                .html("<i class='fas fa-edit'></i>")
-                .on("click", lockEvent(async function () {
-                    const editorInstance = new Editor({
-                        initial: post,
-                        successMessage: "Post updated!",
-                        title: "Update post: ",
-                        api: {
-                            endpoint: `/api/v1/posts/${safePost._id}/update`,
-                            method: "PUT"
-                        },
-                    });
-
-                    await editorInstance.init();
-                }))
-                .appendTo(buttonsContainer);
-
-            $("<button>")
-                .addClass("w-full")
-                .html(`<i class='fas fa-${safePost.private ? "eye" : "eye-slash"}'></i>`)
-                .on("click", lockEvent(async function () {
-                    const response = await sendRequest({
-                        url: `/api/v1/posts/${safePost._id}/visibility`,
-                        method: "PUT",
-                        body: { value: !safePost.private }
-                    });
-
-                    if (!response.success) return Swal.fire(response.error);
-                    Swal.fire("Success", `Post visibility set as ${safePost.private ? "public" : "private"}!`, "success");
-                }))
-                .appendTo(buttonsContainer);
-        }
-
-        fragment.appendChild(postCard[0]);
-    });
-
-    $(state.container).append(fragment);
-}
 
 export default async function showProfile(id) {
     // Get data
@@ -138,16 +24,15 @@ export default async function showProfile(id) {
     const user = response.user || {};
     const state = {
         skip: 0,
-        isLoggedInUser: false,
         container: null,
         user: {
             username: capitalizeFirstLetter(user.username) || "User",
             bio: user.bio || "",
             private: user.private || false,
             id: user._id,
-            isLoggedInUser: user._id === window?.quickInfo?._id
+            isLoggedInUser: user._id === quickInfo?._id
         }
-    }
+    };
 
     Swal.fire({
         titleText: `Hello, ${state.user.username}!`,
@@ -214,7 +99,7 @@ export default async function showProfile(id) {
             }));
 
             $("#profile-load-posts-btn").on("click", lockEvent(async function () {
-                await renderPosts(state);
+                await renderProfilePosts(state);
             }));
 
             $("#profile-bookmarks-btn").on("click", lockEvent(async function () {
@@ -224,13 +109,13 @@ export default async function showProfile(id) {
             $("#profile-posts-prev-btn").on("click", lockEvent(async function () {
                 if (state.skip <= 0) return;
                 state.skip -= config.USER_POSTS_LIMIT;
-                await renderPosts(state);
+                await renderProfilePosts(state);
             }));
 
             $("#profile-posts-next-btn").on("click", lockEvent(async function () {
                 if ($(state.container).find(".state-nothing-found").length) return;
                 state.skip += config.USER_POSTS_LIMIT;
-                await renderPosts(state);
+                await renderProfilePosts(state);
             }));
 
             initAccessibility();

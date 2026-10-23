@@ -4,6 +4,7 @@ import {
     capitalizeFirstLetter,
     lockEvent,
     config,
+    quickInfo,
     $
 } from "../core/utils.js";
 
@@ -15,7 +16,7 @@ async function renderComments(state = {}) {
     if (!response.success) return Swal.fire(response.error);
 
     // Clear container
-    $(state.container).empty("");
+    $(state.container).empty(); 
 
     // No data
     if (!Array.isArray(response.comments) || response.comments.length <= 0) {
@@ -32,8 +33,7 @@ async function renderComments(state = {}) {
     response.comments.forEach(comment => {
         const safeComment = comment || {};
         const safeBy = safeComment.by || {};
-        const commentsCard = $("<div>").addClass("card");
-        $(state.container).append(commentsCard);
+        const commentsCard = $("<div>").addClass("card").appendTo(fragment);
 
         // Header
         const commentsHeader = $("<div>").addClass("space-between").appendTo(commentsCard);
@@ -43,7 +43,7 @@ async function renderComments(state = {}) {
             .text(capitalizeFirstLetter(safeBy.username) || "User")
             .appendTo(commentsHeader);
 
-        if (safeBy?._id && safeBy._id === window?.quickInfo?._id) {
+        if (safeBy?._id && safeBy._id === quickInfo?._id) {
             $("<i>")
                 .addClass("fas fa-pen-to-square icon-helper")
                 .attr({ role: "button", tabindex: "0" })

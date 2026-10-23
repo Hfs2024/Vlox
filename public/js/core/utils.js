@@ -2,51 +2,37 @@ import $ from "https://cdn.jsdelivr.net/npm/cash-dom@8.1.0/dist/cash.esm.js";
 import config from "/config/shared.js";
 
 export function initAccessibility() {
-    $("[role='button']").each((index, btn) => {
-        $(btn).on("keydown", function (e) {
-            if (e.key === "Enter" || e.key === " ") btn.click();
-        });
+    $(document).on("keydown", "[role='button']", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            this.click();
+        }
     });
 }
 
-export async function initQuickInfo() {
-    try {
-        const quickInfo = await sendRequest({
-            url: "/api/v1/me/quick-info"
-        });
-
-        window.quickInfo = quickInfo || {};
-    } catch (e) {
-        Swal.fire("Error", "Something went wrong!", "error");
-    }
-}
-
 export async function copy(str) {
-    if (typeof str !== "string" || !str) return "";
+    if (!str || typeof str !== "string") return;
 
     try {
         await navigator.clipboard.writeText(str);
-        Swal.fire("Success", "Copied!", "success");
+        Swal.fire({ title: "Success", text: "Copied!", icon: "success" });
     } catch {
-        Swal.fire("Error", "Failed to copy!", "error");
+        Swal.fire({ title: "Error", text: "Failed to copy!", icon: "error" });
     }
 }
 
 export function renderSafeHtml(html, parse = true) {
-    const safeHTML = html || "";
-    const code = parse ? marked.parse(safeHTML) : safeHTML;
+    const rawHtml = html || "";
+    const code = parse ? marked.parse(rawHtml) : rawHtml;
 
-    return DOMPurify
-        .sanitize(code, {
-            ALLOWED_TAGS: config.ALLOWED_TAGS,
-            KEEP_CONTENT: false
-        })
-        .trim();
+    return DOMPurify.sanitize(code, {
+        ALLOWED_TAGS: config.ALLOWED_TAGS,
+        KEEP_CONTENT: false
+    }).trim();
 }
 
 export function generatePostLink(postId) {
-    const safePostId = postId || "POST_ID";
-    return `${window.location.origin + window.location.pathname}?id=${safePostId}`;
+    return `${window.location.origin}${window.location.pathname}?id=${postId || "POST_ID"}`;
 }
 
 export function lockEvent(fn) {
@@ -58,9 +44,9 @@ export function lockEvent(fn) {
 
         try {
             await fn.call(this, e);
-        } catch (e) {
-            console.error(e);
-            Swal.fire("Something went wrong!");
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ title: "Error", text: "Something went wrong!", icon: "error" });
         } finally {
             el.removeAttr("inert");
         }
@@ -70,37 +56,40 @@ export function lockEvent(fn) {
 export async function sendRequest({ body, ...requestConfig }) {
     const response = await axios({
         ...requestConfig,
-        validateStatus: function (status) {
-            return (status >= 200 && status < 300) || [400, 401].some(s => status === s);
-        },
+        validateStatus: (status) => (status >= 200 && status < 300) || [400, 401].includes(status),
         data: body
     });
 
-    return response && response.data ? response.data : {};
+    return response?.data || {};
 }
 
 export function capitalizeFirstLetter(str) {
-    if (typeof str !== "string" || !str) return "";
-    const newStr = str.at(0).toUpperCase() + str.slice(1);
-    return newStr.trim();
+    if (!str || typeof str !== "string") return "";
+    return (str.charAt(0).toUpperCase() + str.slice(1)).trim();
 }
 
-export async function input({ ...inputConfig }) {
-    const result = await Swal.fire({
+export async function input(inputConfig = {}) {
+    return Swal.fire({
         title: "Enter value:",
         input: "text",
         inputPlaceholder: "Enter value...",
         showCancelButton: true,
-        ...inputConfig // You can overwrite existing values
+        ...inputConfig
     });
-
-    return result;
 }
 
-export {
-    $,
-    config
+export let quickInfo = {};
+
+export async function initQuickInfo() {
+    try {
+        const data = await sendRequest({ url: "/api/v1/me/quick-info" });
+        Object.assign(quickInfo, data || {});
+    } catch {
+        Swal.fire({ title: "Error", text: "Something went wrong!", icon: "error" });
+    }
 }
+
+export { $, config };
 
 initQuickInfo();
 initAccessibility();

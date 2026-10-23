@@ -5,6 +5,7 @@ import {
     initAccessibility,
     lockEvent,
     config,
+    quickInfo, 
     $
 } from "../core/utils.js";
 import templates from "../core/templates.js";
@@ -14,6 +15,7 @@ const signOutBtn = $("#signout-btn");
 const profileBtn = $("#profile-btn");
 const loggedInGroup = $("#auth-buttons");
 
+// Quick helpers
 function validateField(value, min, max, errorMessage) {
     if (!value) return errorMessage;
     if (min !== undefined && value.length < min) return errorMessage;
@@ -27,6 +29,7 @@ function handleAuthSuccess(message) {
     initQuickInfo();
 }
 
+// Actions
 async function showResetPasswordModal() {
     const result = await Swal.fire({
         html: templates.USER_PASSWORD_RESET(),
@@ -51,7 +54,6 @@ async function showResetPasswordModal() {
 
     if (!result.isConfirmed) return;
 
-    // Send request
     const response = await sendRequest({
         url: "/api/v1/users/password",
         method: "POST",
@@ -66,12 +68,12 @@ async function showLoginModal() {
     const result = await Swal.fire({
         html: templates.USER_LOGIN(),
         showCancelButton: true,
-        confirmButtonText: 'Submit',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: "Submit",
+        cancelButtonText: "Cancel",
         didOpen: () => {
             initAccessibility();
-            $(".text-forget-password").one("click", showResetPasswordModal);
-            $(".link-swal-toggle").one("click", showSignUpModal);
+            $(".text-forget-password").on("click", () => showResetPasswordModal());
+            $(".link-swal-toggle").on("click", () => showSignUpModal());
         },
         preConfirm: () => {
             const username = $("#username").val();
@@ -89,7 +91,6 @@ async function showLoginModal() {
 
     if (!result.isConfirmed) return;
 
-    // Send request
     const response = await sendRequest({
         url: `/api/v1/users/login`,
         method: "POST",
@@ -105,11 +106,11 @@ async function showSignUpModal() {
     const result = await Swal.fire({
         html: templates.USER_SIGNUP(),
         showCancelButton: true,
-        confirmButtonText: 'Submit',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: "Submit",
+        cancelButtonText: "Cancel",
         didOpen: () => {
-            $("#bio").attr("maxLength", config.BIO_MAX_LENGTH);
-            $(".link-swal-toggle").on("click", showLoginModal);
+            $("#bio").attr("maxlength", config.BIO_MAX_LENGTH);
+            $(".link-swal-toggle").on("click", () => showLoginModal()); 
             initAccessibility();
         },
         preConfirm: () => {
@@ -135,7 +136,6 @@ async function showSignUpModal() {
 
     if (!result.isConfirmed) return;
 
-    // Send request
     const response = await sendRequest({
         url: `/api/v1/users/signup`,
         method: "POST",
@@ -184,7 +184,7 @@ signOutBtn.on("click", lockEvent(async function () {
 }));
 
 profileBtn.on("click", lockEvent(async function () {
-    await showProfile(window?.quickInfo?._id);
+    await showProfile(quickInfo?._id);
 }));
 
 determineAuthButtonsDisplay();

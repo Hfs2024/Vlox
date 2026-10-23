@@ -25,7 +25,6 @@ export default class Editor {
             html: templates.POST_EDITOR(),
             showCancelButton: true,
             confirmButtonText: "Submit",
-
             didOpen: () => {
                $("#post-editor-title")
                     .val(this.initial.title || "")
@@ -47,6 +46,7 @@ export default class Editor {
 
         if (!result.isConfirmed) return;
 
+        // Send request
         const response = await sendRequest({
             url: this.api.endpoint,
             method: this.api.method,
