@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vlox Light in NS</title>
+    <link rel="stylesheet" href="/main.css" />
+    <link rel="stylesheet" href="/css/card-generator.css" />
+    <link rel="stylesheet" href="/css/posts.css" />
+    <link rel="stylesheet" href="/css/taskbar.css" />
+    <link rel="stylesheet" href="/css/preview.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.8/purify.min.js"></script>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai-sublime.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <a href="/" class="logo">Vlox</a>
+        <div class="center">
+            <i class="fas fa-user-plus" id="signup-btn" role="button" tabindex="0" aria-label="Sign Up"></i>
+            <div id="loggedIn-group">
+                <i class="fas fa-user-circle" id="profile-btn" role="button" tabindex="0" aria-label="Profile"></i>
+                <i class="fas fa-vault" id="private-posts-btn" role="button" tabindex="0"
+                    aria-label="Private Posts"></i>
+                <i id="post-bookmarks-btn" class="fas fa-bookmark" role="button" tabindex="0"
+                    aria-label="Bookmarks"></i>
+                <i class="fas fa-sign-out" id="signout-btn" role="button" tabindex="0" aria-label="Sign Out"></i>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="left">
+            <h1>What's on your mind today?</h1>
+            <div id="create-container">
+                <input id="create-post-title" type="text" placeholder="Enter post title..." /><br /><br />
+                <input id="create-post-keywords" type="text"
+                    placeholder="Enter post keywords (Separated by comma)..." /><br /><br />
+                <textarea id="create-post-content" placeholder="Enter post content..."></textarea>
+            </div>
+            <div id="create-preview-container" class="post-preview"></div>
+
+            <div class="space-between">
+                <div class="center" style="gap: 5px;">
+                    <i id="copy-post-content-btn" class="fas fa-copy helper-icon" role="button" tabindex="0"
+                        title="Copy"></i>
+                    <i id="clear-post-content-btn" class="fas fa-eraser helper-icon" role="button" tabindex="0"
+                        title="Clear"></i>
+                    <i id="card-generator-btn" class="fas fa-address-card helper-icon" role="button" tabindex="0"
+                        title="Card generator"></i>
+                    <i id="create-spoilers-btn" class="fa-solid fa-circle-exclamation helper-icon" role="button"
+                        tabindex="0" title="Spoilers"></i>
+                    <i id="create-preview-mode" class="fas fa-columns helper-icon" role="button" tabindex="0"
+                        title="Peview toggle"></i>
+                </div>
+                <p class="count-text-wrapper">
+                    Count:
+                    <span class="count" id="create-post-content-count">0/2000</span>
+                </p>
+            </div>
+
+            <button id="create-post-btn" style="width: 100%;">Create post</button>
+        </section>
+
+        <section class="right">
+            <div class="center">
+                <input style="width: 100%" placeholder="Search by keywords... (Top 100 results only)"
+                    id="search-posts-input" />
+                <button style="margin-top: 0;" id="search-posts-btn">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div></br></br>
+
+            <div id="posts-parent-container">
+                <div id="posts-container">
+                    <!--Posts will be loaded here -->
+                </div>
+
+                <button id="posts-container-scroll-top">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+            </div>
+
+            <div class="center">
+                <button id="prev-btn">
+                    <i class="fas fa-chevron-left"></i>
+                    Prev
+                </button>
+
+                <button id="next-btn">
+                    <i class="fas fa-chevron-right"></i>
+                    Next
+                </button>
+            </div>
+        </section>
+
+        <button id="change-theme-btn">
+            <i class="fas fa-paint-roller"></i>
+        </button>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Vlox</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="nanoscript.min.js"></script>
+    <script src="js/themes.js"></script>
+    <script src="js/render-posts.js"></script>
+    <script src="js/helpers.js"></script>
+    <script src="js/plugins/ghost-state.js"></script>
+    <script src="js/create-post.js"></script>
+    <script src="js/private-posts.js"></script>
+    <script src="js/render-profile-post.js"></script>
+    <script src="js/card-generator.js"></script>
+    <script src="js/signup.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/plugins/live-counter.js"></script>
+    <script src="js/plugins/copy.js"></script>
+</body>
+
+</html>

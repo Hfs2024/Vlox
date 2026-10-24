@@ -1,0 +1,43 @@
+pre {
+    overflow: auto;
+    border-radius: 20px;
+    border: 20px;
+    padding: 10px;
+    background-color: black;
+    color: white;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+}
+
+pre:hover {
+    background-color: #333 !important;
+}
+
+blockquote {
+    margin: 20px 0;
+    padding: 10px;
+    background-color: white;
+    border-left: 5px solid #0055b3;
+    border-radius: 0 8px 8px 0;
+    font-family: 'Georgia', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: #334155;
+}
+
+img, video {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+table {
+    min-width: 100%;
+}
+
+th,
+td {
+    border-bottom: 2px solid black;
+    padding: 10px;
+    white-space: nowrap;
+}

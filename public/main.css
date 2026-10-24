@@ -1,0 +1,362 @@
+/* Basic stylesheet */
+html {
+    box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+body {
+    background-color: white;
+    margin: 0;
+    padding: 0;
+    font-family: "Roboto Slab", serif;
+    transition: background-color 0.3s ease;
+}
+
+/* Theme */
+.theme-red {
+    background-color: #df4632 !important;
+}
+
+.theme-green {
+    background-color: rgb(14, 73, 14) !important;
+}
+
+/* Header/footer */
+header,
+footer {
+    background-color: rgb(33, 65, 152);
+    padding: 10px;
+    color: white;
+    margin: 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+header i {
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+header i:hover {
+    color: #918f8f;
+    cursor: pointer;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 10px;
+    color: white;
+    text-decoration: none;
+}
+
+/* Containers */
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.left,
+.right {
+    margin: 20px;
+    background-color: aliceblue;
+    border-radius: 20px;
+    padding: 20px;
+    height: 100vh;
+    text-align: center;
+    box-sizing: border-box;
+    overflow: auto;
+}
+
+.right {
+    flex-grow: 1;
+    width: 100%;
+}
+
+#posts-parent-container {
+    position: relative;
+}
+
+#posts-container {
+    max-height: 100%;
+    overflow: auto;
+}
+
+.scroll-container {
+    max-height: 400px;
+    overflow: auto;
+}
+
+/* Main elements */
+input:not([type="range"]),
+.password-input-container,
+textarea,
+select {
+    width: 100%;
+    font-weight: bold;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 2px solid rgba(24, 67, 186, 0.642);
+    box-shadow: 0 2px 5px rgba(238, 0, 119, 0.1);
+    border-radius: 10px;
+}
+
+textarea {
+    height: 130px;
+}
+
+.count-text-wrapper,
+.forget-password {
+    text-align: right;
+    color: gray;
+    font-size: 14px;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.forget-password {
+    cursor: pointer;
+}
+
+.forget-password:hover {
+    color: #aaa;
+}
+
+.password-input-container {
+    padding: 0;
+}
+
+.password-input-eye {
+    margin-right: 7px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.password-input-eye:hover {
+    color: #aaa;
+}
+
+.password-input {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.password-input:focus {
+    outline: none !important;
+}
+
+/* Buttons */
+button,
+.analytics-item {
+    border-radius: 100px;
+    background-color: rgb(63, 62, 62);
+    color: white;
+    border: none;
+    font-weight: bold;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+    white-space: nowrap;
+}
+
+button:hover,
+.analytics-item:hover {
+    background-color: #222;
+}
+
+#change-theme-btn {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    border: 2px solid #eee;
+}
+
+#posts-container-scroll-top {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    border: 2px solid #eee;
+}
+
+.delete-btn,
+.show-spoliers-btn {
+    background-color: red;
+}
+
+.delete-btn:hover,
+.show-spoliers-btn:hover {
+    background-color: darkred;
+}
+
+/* Analytics bar */
+.analytics-likes-bar {
+    width: 100%;
+    background-color: gray;
+    margin-top: 20px;
+    border-radius: 20px;
+}
+
+.analytics-likes-bar-fill {
+    background-color: gold;
+    border-radius: 20px;
+    width: 0%;
+    height: 20px;
+}
+
+/* Helper icons */
+.helper-icon {
+    cursor: pointer;
+    transition: color 0.3s ease;
+    font-size: 18px;
+}
+
+.helper-icon:hover {
+    color: #aaa;
+}
+
+/* Emojis */
+.emoji-container-item {
+    padding: 10px;
+    background-color: #07E;
+    border-radius: 100px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+.emoji-container-item:hover {
+    background-color: #0055b3;
+}
+
+#user-current-emoji {
+    font-size: 30px;
+    margin-bottom: 20px;
+}
+
+/* Swal styles */
+.swal-toggle-link {
+    color: #07E;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.swal-toggle-link:hover {
+    color: blue;
+}
+
+.swal2-input {
+    width: auto !important;
+}
+
+/* Others */
+.center,
+.space-between,
+.overflow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.space-between {
+    justify-content: space-between;
+}
+
+.overflow {
+    overflow: auto;
+    white-space: nowrap;
+    justify-content: flex-start;
+    max-width: 100%;
+}
+
+.on-color {
+    color: #07E;
+}
+
+.on-color:hover {
+    color: #0055b3;
+}
+
+.on-bg-color {
+    background-color: #07E;
+}
+
+.on-bg-color:hover {
+    background-color: #0055b3;
+}
+
+.count-yellow {
+    color: rgb(165, 165, 69);
+}
+
+.count-orange {
+    color: orange;
+}
+
+.count-red {
+    color: red;
+}
+
+.count-darkred {
+    color: darkred;
+}
+
+.text-overflow {
+    white-space: nowrap;
+    overflow: auto;
+}
+
+/* Responsiveness and clean design */
+@media (max-width: 768px) {
+    .container {
+        display: block;
+        min-height: 0;
+    }
+
+    .left,
+    .right {
+        height: auto;
+        width: auto;
+    }
+
+    #posts-container {
+        max-height: 400px;
+        overflow: auto;
+    }
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+}
