@@ -1,5 +1,5 @@
 import { lockEvent, config, $ } from "../core/utils.js";
-import { getPosts, postsState } from "./render-posts.js";
+import { getPosts, postsState } from "./main-feed.js";
 import Editor from "../core/editor.js";
 
 const createPostBtn = $("#create-post-btn");

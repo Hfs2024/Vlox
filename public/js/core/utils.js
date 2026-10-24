@@ -89,7 +89,11 @@ export async function initQuickInfo() {
     }
 }
 
+<<<<<<< Updated upstream
 export { $, config };
 
 initQuickInfo();
 initAccessibility();
+=======
+export { $, config };
+>>>>>>> Stashed changes

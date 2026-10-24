@@ -1,0 +1,42 @@
+header,
+footer {
+    background-color: var(--accent-charcoal);
+    padding: 10px;
+    color: var(--accent-white);
+    margin: 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 10px;
+    color: var(--accent-white);
+    text-decoration: none;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px);
+    margin: 20px;
+    background-color: whitesmoke;
+    border-radius: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.scroll-container {
+    max-height: 400px;
+    overflow: auto;
+}
+
+#posts-container {
+    height: 100%;
+    overflow: auto;
+}

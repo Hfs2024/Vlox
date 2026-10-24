@@ -1,4 +1,3 @@
-/* Basic */
 .card,
 .state-nothing-found {
     background-color: var(--card-bg);
@@ -11,7 +10,7 @@
     margin-bottom: 20px;
 }
 
-.post-content {   
+.post-content {
     overflow-wrap: break-word;
 }
 
@@ -32,7 +31,6 @@
     color: var(--accent-secondary-blue);
 }
 
-/* Post actions */
 .reactions-container {
     display: flex;
     justify-content: space-between;

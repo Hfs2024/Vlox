@@ -1,6 +1,6 @@
 import showBookmarks from "../posts/bookmarks.js";
 import templates from "../core/templates.js";
-import { renderProfilePosts } from "./render-profile-posts.js";
+import { renderProfilePosts } from "./profile-feed.js";
 import {
     sendRequest,
     capitalizeFirstLetter,

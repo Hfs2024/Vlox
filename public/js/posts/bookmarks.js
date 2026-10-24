@@ -1,4 +1,4 @@
-import { renderPosts } from "./render-posts.js";
+import { renderPosts } from "./main-feed.js";
 import templates from "../core/templates.js";
 import {
     sendRequest,

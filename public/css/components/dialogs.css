@@ -1,0 +1,22 @@
+.text-swal-auth {
+    margin: 0;
+}
+
+.link-swal-auth {
+    color: var(--accent-main-blue);
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.link-swal-auth:hover {
+    color: var(--accent-secondary-blue);
+}
+
+.swal2-input {
+    width: auto !important;
+}
+
+.swal2-popup {
+    border-radius: 8px !important;
+}
