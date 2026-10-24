@@ -28,7 +28,11 @@ async function showProfile(data) {
               <div class='emoji-container-item'>👧🏻</div>
               <div class='emoji-container-item'>🏇🏻</div>
             </div>
-            <div class='center'` : ""}
+            <div class='overflow'>
+              <button id='reset-password-recovery-codes-btn' class='w-full'>Reset Recovery Codes</button>
+              <input id='insert-many-posts-input' type='file' style='display: none' accept=".json"></input>
+              <button id='insert-many-posts-btn' class='w-full'>Insert Many Posts</button>
+            </div>` : ""}
           </div>
 
           <div class='taskbar'>
@@ -92,7 +96,7 @@ async function showProfile(data) {
     }
 
     // Reset password recovery codes
-    NS("#reset-password-recovery-codes").on("click", async function () {
+    NS("#reset-password-recovery-codes-btn").on("click", async function () {
         const newCodesResponse = await NS.fetch({
             url: "/api/v1/reset/password/recovery-codes",
             method: "POST"
@@ -109,6 +113,37 @@ async function showProfile(data) {
         link.remove();
         URL.revokeObjectURL(url);
         Swal.fire("Sucesss", "Password Recovery Codes Reseted!", "success");
+    });
+
+    // Insert many posts
+    NS("#insert-many-posts-btn").on("click", function () {
+        NS("#insert-many-posts-input").click(1);
+    });
+
+    NS("#insert-many-posts-input").on("change", function (e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = async () => {
+            try {
+                const posts = JSON.parse(reader.result);
+                if (!Array.isArray(posts)) throw new Error("INVALID_DATA");
+                if (posts.length > 10) throw new Error("MAX_LENGTH_EXCEEDED");
+                const insertManyPostsData = await NS.fetch({
+                    url: "/api/v1/insert-many-posts",
+                    method: "POST",
+                    body: { posts: posts }
+                });
+
+                if (!insertManyPostsData.success) return Swal.fire(insertManyPostsData.error);
+                Swal.fire("Success!", "Posts inserted!", "success");
+            } catch (e) {
+                if (e.message === "INVALID_DATA") return Swal.fire("Invalid Data!");
+                if (e.message === "MAX_LENGTH_EXCEEDED") return Swal.fire("Posts count must be less than or equal to 10!");
+                Swal.fire("Something went wrong!");
+            }
+        }
+
+        reader.readAsText(file);
     });
 
     // Bio

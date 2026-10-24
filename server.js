@@ -4,9 +4,8 @@ require("dotenv").config({
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
-const rateLimit = require("express-rate-limit");
 const bcrypt = require("bcrypt");
-const { checkAuth, createErrorMessage, checkValidID, generateRecoveryCodes, hotQueries } = require("./helpers.js");
+const { checkAuth, createErrorMessage, checkValidID, generateRecoveryCodes, createLimiter, hotQueries } = require("./helpers.js");
 const mongoose = require("mongoose");
 const schemas = require("./schemas.js");
 const MongoStore = require("connect-mongo");
@@ -20,12 +19,10 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB connected!"))
     .catch(err => console.log(`Failed to connect MongoDB: ${err.message}`));
 
+// Basic config
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
 app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-
 const isProduction = process.env.NODE_ENV === "production";
-
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
@@ -43,16 +40,13 @@ app.use(
         }
     })
 );
-
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 5000,
-    message: { error: "Too many requests, please try again later." },
-    standardHeaders: true,
-    legacyHeaders: false,
+const limiter = createLimiter(900000, 1000, {
     skip: (req) => req.originalUrl.includes('/api/v1/reset/password')
 });
-app.use(limiter);
+if (!limiter) console.log("Failed to create limiter");
+else app.use(limiter);
+
+// Sub routes
 app.use("/", bookmarksRouter);
 app.use("/", actionsRouter);
 app.use("/", authRouter);
@@ -78,7 +72,7 @@ app.post("/api/v1/posts", checkAuth, async (req, res) => {
             title: title,
             content: content,
             by: req.session.userId,
-            boosted: boost ? true : false,
+            boosted: title.toUpperCase().trim() === "[BOOST]",
             spoilers: spoilers ? true : false,
             keywords: (Array.isArray(keywords) && keywords.length <= 5) ? keywords : [],
             receiverId: null,
@@ -204,17 +198,7 @@ app.get("/api/v1/search/posts", async (req, res) => {
 });
 
 // Password recovery
-const passwordRecoveryHourLimit = rateLimit({
-    windowMs: 60 * 60 * 1000,
-    limit: 5,
-    message: {
-        status: 429,
-        error: 'Too Many Requests. Please try again later.',
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
+const passwordRecoveryHourLimit = createLimiter(3600000, 5);
 app.post("/api/v1/reset/password", passwordRecoveryHourLimit, async (req, res) => {
     try {
         const { username, recoveryCode, newPassword } = req.body;
@@ -271,6 +255,38 @@ app.post("/api/v1/reset/password/recovery-codes", passwordRecoveryHourLimit, che
     } catch (e) {
         console.error(`Failed To Revoke Recovery Codes: ${e.message}`);
         return res.status(500).json({ error: "Could not update your password right now. Try again later." });
+    }
+});
+
+// Insert many posts
+const insertManyPostsLimit = createLimiter(3600000, 3);
+app.post("/api/v1/insert-many-posts", insertManyPostsLimit, checkAuth, async (req, res) => {
+    try {
+        const { posts } = req.body;
+        // Is this data valid?
+        if (!Array.isArray(posts)) return res.status(400).json({ error: "Invalid data!" });
+        if (posts.length > 10) return res.status(400).json({ error: "Posts count must be less than or equal to 10!" });
+
+        // Clean those posts
+        for (let i = 0; i < posts.length; i++) {
+            posts[i] = {
+                by: req.session.userId,
+                content: posts[i].content,
+                title: posts[i].title,
+                keywords: (Array.isArray(posts[i]?.keywords) && posts[i]?.keywords?.length <= 5) ? posts[i]?.keywords : [],
+                boosted: posts[i]?.title?.toUpperCase()?.trim() === "[BOOST]",
+                spoilers: posts[i].spoilers ? true : false,
+                private: posts[i].private ? true : false,
+                pinned: posts[i].pinned ? true : false
+            }
+        }
+
+        // It's time to insert them
+        await schemas.Posts.insertMany(posts, { ordered: false });
+        return res.status(200).json({ success: true });
+    } catch (e) {
+        console.error(`Failed To Insert Posts: ${e.message}`);
+        return res.status(500).json({ error: "Could not insert posts. Try again later." });
     }
 });
 
