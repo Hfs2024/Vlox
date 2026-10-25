@@ -1,4 +1,4 @@
-import Editor from "../core/editor.js";
+import PostEditor from "../core/post-editor.js";
 import {
     copy,
     renderSafeHtml,
@@ -89,17 +89,19 @@ export async function renderProfilePosts(state = {}, preFetchedResponse = null) 
                 .addClass("w-full")
                 .html("<i class='fas fa-edit'></i>")
                 .on("click", lockEvent(async function () {
-                    const editorInstance = new Editor({
-                        initial: post,
-                        successMessage: "Post updated!",
-                        title: "Update post: ",
-                        api: {
-                            endpoint: `/api/v1/posts/${safePost._id}/update`,
-                            method: "PUT"
-                        },
+                    const instance = new PostEditor("Update post", post);
+                    const result = await instance.open();
+                    if (!result.isConfirmed) return;
+
+                    // Send API request
+                    const response = await sendRequest({
+                        url: `/api/v1/posts/${safePost._id}/update`,
+                        method: "PUT",
+                        body: result.value
                     });
 
-                    await editorInstance.init();
+                    if (!response.success) return Swal.fire(response.error);
+                    Swal.fire("Success", "Post updated!", "success");
                 }))
                 .appendTo(buttonsContainer);
 

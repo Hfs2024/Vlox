@@ -1,21 +1,24 @@
-import { lockEvent, config, $ } from "../core/utils.js";
+import { lockEvent, config, $, sendRequest } from "../core/utils.js";
 import { getPosts, postsState } from "./main-feed.js";
-import Editor from "../core/editor.js";
+import PostEditor from "../core/post-editor.js";
 
 const createPostBtn = $("#create-post-btn");
 const postsNavigationContainer = $("#posts-navigation-container");
 
 createPostBtn.on("click", lockEvent(async function () {
-    const editorInstance = new Editor({
-        title: "Create post:",
-        successMessage: "Post created!",
-        api: {
-            endpoint: "/api/v1/posts",
-            method: "POST"
-        }
+    const instance = new PostEditor("Create post", {});
+    const result = await instance.open();
+    if (!result.isConfirmed) return;
+
+    // Send API request
+    const response = await sendRequest({
+        url: "/api/v1/posts",
+        method: "POST",
+        body: result.value
     });
 
-    await editorInstance.init();
+    if (!response.success) return Swal.fire(response.error);
+    Swal.fire("Success", "Post created!", "success");
 }));
 
 if (!postsState.customPostId) {

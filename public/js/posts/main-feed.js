@@ -80,7 +80,6 @@ export async function renderPosts(posts = []) {
             .appendTo(postCard);
 
         // Author
-
         $("<p>")
             .css({ color: "red", cursor: "pointer" })
             .attr("role", "button")
