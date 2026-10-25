@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vlox Light in NS</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
+    <link rel="icon" href="/resources/favicon.ico" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.8/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.20.0/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <a href="/" class="logo">Vlox</a>
+        <div class="center">
+            <i class="fas fa-user-plus icon-helper" id="signup-btn" role="button" tabindex="0"></i>
+            <div id="auth-buttons">
+                <i class="fas fa-user icon-helper" id="profile-btn" role="button" tabindex="0"></i>
+                <i class="fas fa-plus icon-helper" id="create-post-btn" role="button" tabindex="0"></i>
+                <i class="fas fa-sign-out icon-helper" id="signout-btn" role="button" tabindex="0"></i>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="posts-container">
+            <!--Posts will be loaded here -->
+        </div>
+
+        <div class="center" id="posts-navigation-container"></div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Vlox</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script type="module" src="js/main.js"></script>
+</body>
+
+</html>
