@@ -3,9 +3,17 @@ import { validateResult } from "./utils.js";
 import config from "../config/backend.js";
 
 // Helpers
-const skipQuery = () => query("skip")
-    .exists().withMessage("Skip value is required")
-    .isInt({ min: 0 }).withMessage("Skip value must be a non-negative integer");
+const isIntQuery = (field, label) => query(field)
+    .exists().withMessage(`${label} value is required`)
+    .isInt({ min: 0 }).withMessage(`${label} value must be a non-negative integer`);
+
+const isBooleanBody = (field, label) => body(field)
+    .exists().withMessage(`${label} value is required`)
+    .isIn([true, false, "true", "false"]).withMessage(`${label} value must be true or false`);
+
+const mongoIdParam = (field, label) => param(field)
+    .exists().withMessage(`${label} is required`)
+    .isMongoId().withMessage(`Invalid ${label} format`);
 
 const userValidator = () => [
     body("username")
@@ -24,15 +32,14 @@ const userValidator = () => [
         .notEmpty().withMessage("Password cannot be empty"),
 ]
 
-const visibilityValue = () => body("value")
-    .exists().withMessage("Visibility value is required")
-    .isIn([true, false]).withMessage("Visibility value must be true or false");
+const commentBody = () => body("content")
+    .exists().withMessage("Content is required")
+    .isString().withMessage("Content must be a string")
+    .trim()
+    .notEmpty().withMessage("Content cannot be empty")
+    .isLength({ max: config.COMMENTS_MAX_LENGTH }).withMessage(`Content must not exceed ${config.COMMENTS_MAX_LENGTH} chars`);
 
-const mongoIdParam = (field, label) => param(field)
-    .exists().withMessage(`${label} is required`)
-    .isMongoId().withMessage(`Invalid ${label} format`);
-
-const postFieldsValidators = () => [
+const postValidator = () => [
     body("title")
         .isString().withMessage("Post title must be a string")
         .trim()
@@ -47,24 +54,24 @@ const postFieldsValidators = () => [
 
 // Posts
 export const createPostsValidator = [
-    ...postFieldsValidators(),
+    ...postValidator(),
     validateResult
 ]
 
 export const editPostsValidator = [
     mongoIdParam("id", "Post ID"),
-    ...postFieldsValidators(),
+    ...postValidator(),
     validateResult
 ]
 
 export const getPostsValidator = [
-    skipQuery(),
+    isIntQuery("skip", "Skip"),
     validateResult
 ]
 
 export const changePostVisibilityValidator = [
     mongoIdParam("id", "Post ID"),
-    visibilityValue(),
+    isBooleanBody("value", "Visibility"),
     validateResult
 ]
 
@@ -76,17 +83,18 @@ export const defaultPostFindValidator = [
 // Comments
 export const commentsValidator = [
     mongoIdParam("id", "Post ID"),
-    body("content")
-        .exists().withMessage(`Content is required`)
-        .isString().withMessage(`Content must be a string`)
-        .trim()
-        .notEmpty().withMessage(`Content cannot be empty`)
-        .isLength({ max: config.COMMENTS_MAX_LENGTH }).withMessage(`Content must not exceed ${config.COMMENTS_MAX_LENGTH} chars`),
+    commentBody(),
+    validateResult
+]
+
+export const editCommentValidator = [
+    mongoIdParam("id", "Comment ID"),
+    commentBody(),
     validateResult
 ]
 
 export const getCommentsValidator = [
-    skipQuery(),
+    isIntQuery("skip", "Skip"),
     mongoIdParam("id", "Post ID"),
     validateResult
 ]
@@ -105,7 +113,7 @@ export const resetPasswordValidator = [
 
 // Bookmarks
 export const getBookmarksValidator = [
-    skipQuery(),
+    isIntQuery("skip", "Skip"),
     validateResult
 ]
 
@@ -160,7 +168,7 @@ export const updateUserBioValidator = [
 ]
 
 export const updateUserVisibilityValidator = [
-    visibilityValue(),
+    isBooleanBody("value", "Visibility"),
     validateResult
 ]
 
@@ -170,7 +178,7 @@ export const getUserProfileValidator = [
 ]
 
 export const getUserPostsValidator = [
-    skipQuery(),
+    isIntQuery("skip", "Skip"),
     mongoIdParam("id", "User ID"),
     validateResult
 ]
