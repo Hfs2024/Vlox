@@ -79,6 +79,7 @@ export default async function showProfile(id) {
                 });
 
                 if (!response.success) return Alert.error({ text: response.error });
+                if (!response.changed) return Alert.info({ text: "No changed were made!" });
                 Alert.success({ text: "Bio updated!" });
             }));
 
@@ -90,6 +91,7 @@ export default async function showProfile(id) {
                 });
 
                 if (!response.success) return Alert.error({ text: response.error });
+                if (!response.changed) return Alert.info({ text: "No changed were made!" });
                 Alert.success({ text: `Account is ${state.user.private ? "public" : "private"}` });
             }));
 

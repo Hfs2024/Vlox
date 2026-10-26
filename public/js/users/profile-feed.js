@@ -1,4 +1,4 @@
-import PostEditor from "../core/post-editor.js";
+import PostEditor from "../components/post-editor.js";
 import {
     copy,
     renderSafeHtml,
@@ -102,6 +102,8 @@ export async function renderProfilePosts(state = {}, preFetchedResponse = null) 
                     });
 
                     if (!response.success) return Alert.error({ text: response.error });
+                    if (!response.changed) return Alert.info({ text: "No changed were made!" });
+                    
                     Alert.success({ text: "Post updated!" });
                 }))
                 .appendTo(buttonsContainer);
@@ -117,6 +119,8 @@ export async function renderProfilePosts(state = {}, preFetchedResponse = null) 
                     });
 
                     if (!response.success) return Alert.error({ text: response.error });
+                    if (!response.changed) return Alert.info({ text: "No changed were made!" });
+
                     Alert.success({ text: `Post visibility set as ${safePost.private ? "public" : "private"}!` });
                 }))
                 .appendTo(buttonsContainer);

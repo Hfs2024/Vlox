@@ -103,6 +103,8 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
                 });
 
                 if (!response.success) return Alert.error({ text: response.error });
+                if (!response.changed) return Alert.info({ text: "No changed were made!" });
+                
                 Alert.success({ text: "Bookmark renamed successfully!" });
             }))
             .appendTo(buttons);

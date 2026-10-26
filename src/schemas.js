@@ -49,7 +49,8 @@ bookmarksSchema.index({ for: 1, by: 1 }, { unique: true });
 const commentsSchema = new mongoose.Schema({
     for: { type: mongoose.Schema.Types.ObjectId, ref: "Posts", required: true },
     by: { type: mongoose.Schema.Types.ObjectId, ref: "Users", required: true },
-    content: { type: String, trim: true, required: true, maxLength: config.COMMENTS_MAX_LENGTH }
+    content: { type: String, trim: true, required: true, maxLength: config.COMMENTS_MAX_LENGTH },
+    editedAt: { type: Date, default: null }
 }, { timestamps: true });
 
 commentsSchema.index({ for: 1 });

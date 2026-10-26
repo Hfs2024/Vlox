@@ -1,5 +1,6 @@
 import showProfile from "../users/profile.js";
 import showComments from "./comments.js";
+import CommentEditor from "../components/comment-editor.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
@@ -7,9 +8,7 @@ import {
     generatePostLink,
     lockEvent,
     copy,
-    config,
     $,
-    input,
     Alert
 } from "../core/utils.js";
 
@@ -120,18 +119,11 @@ export async function renderPosts(posts = []) {
         $("<button>")
             .html(`<i class="fas fa-comment-medical"></i>`)
             .on("click", lockEvent(async function () {
-                const result = await input({
-                    title: "Add comment: ",
-                    inputAttributes: {
-                        maxLength: config.COMMENTS_MAX_LENGTH
-                    },
-                    preConfirm: result => {
-                        if (!result.length) return Swal.showValidationMessage("Please enter a comment!");
-                    }
-                });
-
+                const instance = new CommentEditor("Add comment");
+                const result = await instance.open();
                 if (!result.isConfirmed) return;
 
+                // Send API request
                 const response = await sendRequest({
                     url: `/api/v1/posts/${safePost._id}/comments`,
                     method: "POST",

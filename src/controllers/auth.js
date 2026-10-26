@@ -144,33 +144,65 @@ router.post("/users/recovery-codes", passwordRecoveryLimiter, checkAuth, async (
 
 router.put("/me/visibility", checkAuth, updateUserVisibilityValidator, async (req, res) => {
     const value = req.cleanData.value;
-    const result = await schemas.Users.updateOne({
-        _id: req.session.userId,
-        private: value ? false : true
-    }, {
-        $set: {
-            private: value
+    const now = new Date();
+
+    const result = await schemas.Users.findOneAndUpdate({
+        _id: req.session.userId
+    }, [
+        {
+            $set: {
+                private: {
+                    $cond: [{ $eq: ["$private", value] }, "$private", value]
+                },
+
+                updatedAt: {
+                    $cond: [{ $eq: ["$private", value] }, "$updatedAt", now]
+                }
+            }
         }
+    ], {
+        returnDocument: "before",
+        projection: { private: 1 },
+        timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Something went wrong. Try again." });
-    return res.status(200).json({ success: true });
+    if (!result) return res.status(400).json({ error: "Something went wrong. Try again." });
+
+    return res.status(200).json({
+        changed: result.private !== value,
+        success: true
+    });
 });
 
 router.put("/me/bio", checkAuth, updateUserBioValidator, async (req, res) => {
     const bio = req.cleanData.bio;
-    const result = await schemas.Users.updateOne({
+    const now = new Date();
+
+    const result = await schemas.Users.findOneAndUpdate({
         _id: req.session.userId
-    }, {
-        $set: {
-            bio: bio
+    }, [
+        {
+            $set: {
+                bio: {
+                    $cond: [{ $eq: ["$bio", bio] }, "$bio", bio]
+                },
+                updatedAt: {
+                    $cond: [{ $eq: ["$bio", bio] }, "$updatedAt", now]
+                }
+            }
         }
-    }, {
-        runValidators: true
+    ], {
+        returnDocument: "before",
+        projection: { bio: 1 },
+        timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update!" });
-    return res.status(200).json({ success: true });
+    if (!result) return res.status(400).json({ error: "Failed to update!" });
+
+    return res.status(200).json({
+        changed: result.bio !== bio,
+        success: true
+    });
 });
 
 router.delete("/me/signout", checkAuth, async (req, res) => {

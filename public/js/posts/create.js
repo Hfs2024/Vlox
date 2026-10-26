@@ -1,6 +1,6 @@
 import { lockEvent, config, $, sendRequest, Alert } from "../core/utils.js";
 import { getPosts, postsState } from "./main-feed.js";
-import PostEditor from "../core/post-editor.js";
+import PostEditor from "../components/post-editor.js";
 
 const createPostBtn = $("#create-post-btn");
 const postsNavigationContainer = $("#posts-navigation-container");
