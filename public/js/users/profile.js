@@ -8,7 +8,8 @@ import {
     config,
     quickInfo,
     input,
-    $
+    $,
+    Alert
 } from "../core/utils.js";
 
 export default async function showProfile(id) {
@@ -17,7 +18,7 @@ export default async function showProfile(id) {
         url: `/api/v1/users/${id}/profile`
     });
 
-    if (!response.success) return Swal.fire(response.error);
+    if (!response.success) return Alert.error({ text: response.error });
 
     // Save user data temporarily
     const user = response.user || {};
@@ -47,14 +48,14 @@ export default async function showProfile(id) {
                     method: "POST"
                 });
 
-                if (!response.success) return Swal.fire(response.error);
+                if (!response.success) return Alert.error({ text: response.error });
 
                 // Download recovery codes
                 const recoveryCodes = Array.isArray(response.codes) ? response.codes : [];
                 const blob = new Blob([recoveryCodes.join("\n")], { type: "text/plain" });
                 window.saveAs(blob, "recovery-codes.txt");
 
-                Swal.fire("Success", "Password Recovery Codes Reseted!", "success");
+                Alert.success({ text: "Password Recovery Codes Reseted!" });
             }));
 
             $("#profile-bio-edit-btn").on("click", lockEvent(async function () {
@@ -77,8 +78,8 @@ export default async function showProfile(id) {
                     body: { bio: result.value }
                 });
 
-                if (!response.success) return Swal.fire(response.error);
-                Swal.fire("Success", "Bio updated!", "success");
+                if (!response.success) return Alert.error({ text: response.error });
+                Alert.success({ text: "Bio updated!" });
             }));
 
             $("#profile-visibility-toggle-btn").on("click", lockEvent(async function () {
@@ -88,8 +89,8 @@ export default async function showProfile(id) {
                     body: { value: !state.user.private }
                 });
 
-                if (!response.success) return Swal.fire(response.error);
-                Swal.fire("Success", `Account is ${state.user.private ? "public" : "private"}`, "success");
+                if (!response.success) return Alert.error({ text: response.error });
+                Alert.success({ text: `Account is ${state.user.private ? "public" : "private"}` });
             }));
 
             $("#profile-load-posts-btn").on("click", lockEvent(async function () {

@@ -1,4 +1,4 @@
-import { lockEvent, config, $, sendRequest } from "../core/utils.js";
+import { lockEvent, config, $, sendRequest, Alert } from "../core/utils.js";
 import { getPosts, postsState } from "./main-feed.js";
 import PostEditor from "../core/post-editor.js";
 
@@ -17,8 +17,8 @@ createPostBtn.on("click", lockEvent(async function () {
         body: result.value
     });
 
-    if (!response.success) return Swal.fire(response.error);
-    Swal.fire("Success", "Post created!", "success");
+    if (!response.success) return Alert.error({ text: response.error });
+    Alert.success({ text: "Post created!" });
 }));
 
 if (!postsState.customPostId) {

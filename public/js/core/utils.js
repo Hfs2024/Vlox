@@ -6,9 +6,9 @@ export async function copy(str) {
 
     try {
         await navigator.clipboard.writeText(str);
-        Swal.fire("Success", "Copied!", "success");
+        Alert.success({ text: "Copied!" });
     } catch {
-        Swal.fire("Error", "Failed to copy!", "error");
+        Alert.error({ text: "Failed to copy!" });
     }
 }
 
@@ -36,7 +36,7 @@ export function lockEvent(fn) {
         try {
             await fn.call(this, e);
         } catch {
-            Swal.fire("Error", "Something went wrong!", "error");
+            Alert.error({ text: "An unexpected error occurred!" });
         } finally {
             el.removeAttr("inert");
         }
@@ -53,7 +53,7 @@ export async function sendRequest({ body, ...requestConfig }) {
 
         return response?.data || {};
     } catch {
-        return { error: "An unexpected error occurred" }
+        return { error: "An unexpected error occurred!" }
     }
 }
 
@@ -62,13 +62,13 @@ export function capitalizeFirstLetter(str) {
     return (str.charAt(0).toUpperCase() + str.slice(1)).trim();
 }
 
-export async function input(inputConfig = {}) {
+export async function input(config = {}) {
     return Swal.fire({
         title: "Enter value:",
         input: "text",
         inputPlaceholder: "Enter value...",
         showCancelButton: true,
-        ...inputConfig
+        ...config
     });
 }
 
@@ -79,8 +79,27 @@ export async function initQuickInfo() {
         const data = await sendRequest({ url: "/api/v1/me/quick-info" });
         Object.assign(quickInfo, data || {});
     } catch {
-        Swal.fire("Error", "Something went wrong!", "error");
+        Alert.error({ text: "Something went wrong!" });
     }
+}
+
+const BaseToast = Swal.mixin({
+    toast: true,
+    position: "bottom-end",
+    title: "",
+    showConfirmButton: false,
+    timer: 1500,
+    timerProgressBar: true,
+    didOpen: toast => {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+    }
+});
+
+export const Alert = {
+    success: (config = {}) => BaseToast.fire({ icon: "success", title: "Success", ...config }),
+    error: (config = {}) => BaseToast.fire({ icon: "error", title: "Error", ...config }),
+    info: (config = {}) => BaseToast.fire({ icon: "info", title: "Info", ...config })
 }
 
 export { $, config };

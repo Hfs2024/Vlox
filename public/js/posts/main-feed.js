@@ -9,7 +9,8 @@ import {
     copy,
     config,
     $,
-    input
+    input,
+    Alert
 } from "../core/utils.js";
 
 const query = new URLSearchParams(window.location.search);
@@ -60,8 +61,8 @@ export async function renderPosts(posts = []) {
                     method: "POST"
                 });
 
-                if (!bookmarkResponse.success) return Swal.fire(bookmarkResponse.error);
-                Swal.fire("Success", "Post bookmarked!", "success");
+                if (!bookmarkResponse.success) return Alert.error({ text: bookmarkResponse.error });
+                Alert.success({ text: "Post bookmarked!" });
             }))
             .appendTo(postIconsGroup);
 
@@ -103,9 +104,9 @@ export async function renderPosts(posts = []) {
                     method: "POST"
                 });
 
-                if (likesResponse.error) return Swal.fire(likesResponse.error);
+                if (likesResponse.error) return Alert.error({ text: likesResponse.error });
                 $(this).find(".likes-count").text(likes + 1);
-                Swal.fire("Success", "Post liked!", "success");
+                Alert.success({ text: "Post liked!" });
             }))
             .appendTo(reactions);
 
@@ -117,7 +118,7 @@ export async function renderPosts(posts = []) {
             .appendTo(reactions);
 
         $("<button>")
-            .html(`<i class="fas fa-share"></i>`)
+            .html(`<i class="fas fa-comment-medical"></i>`)
             .on("click", lockEvent(async function () {
                 const result = await input({
                     title: "Add comment: ",
@@ -139,8 +140,8 @@ export async function renderPosts(posts = []) {
                     }
                 });
 
-                if (!response.success) return Swal.fire(response.error);
-                Swal.fire("Success", "Comment added!", "success");
+                if (!response.success) return Alert.error({ text: response.error });
+                Alert.success({ text: "Comment added!" });
             }))
             .appendTo(reactions);
     });
@@ -149,16 +150,12 @@ export async function renderPosts(posts = []) {
 }
 
 export async function getPosts(postId = null) {
-    try {
-        const data = await sendRequest({
-            url: postId ?
-                `/api/v1/posts/${postId}` :
-                `/api/v1/posts/?skip=${postsState.skip}`,
-        });
+    const data = await sendRequest({
+        url: postId ?
+            `/api/v1/posts/${postId}` :
+            `/api/v1/posts/?skip=${postsState.skip}`,
+    });
 
-        if (!data.success) return Swal.fire(data.error);
-        renderPosts(data.posts);
-    } catch {
-        Swal.fire("Error", "Something went wrong!", "error");
-    }
+    if (!data.success) return Alert.error({ text: data.error });
+    renderPosts(data.posts);
 }

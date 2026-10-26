@@ -5,7 +5,8 @@ import {
     lockEvent,
     config,
     quickInfo,
-    $
+    $,
+    Alert
 } from "../core/utils.js";
 import templates from "../core/templates.js";
 
@@ -34,7 +35,7 @@ function validateAuthField(value, min, max, errorMessage) {
 }
 
 async function handleAuthSuccess(message) {
-    Swal.fire("Success", message, "success");
+    Alert.success({ text: message });
 
     await determineAuthButtonsDisplay();
     await initQuickInfo();
@@ -73,8 +74,8 @@ async function showResetPasswordModal() {
         body: result.value
     });
 
-    if (!response.success) return Swal.fire(response.error);
-    Swal.fire("Success", "Password reset! You can now login", "success");
+    if (!response.success) return Alert.error({ text: response.error });
+    Alert.success({ text: "Password reset! You can now login" });
 }
 
 async function showLoginModal() {
@@ -108,7 +109,7 @@ async function showLoginModal() {
         body: result.value
     });
 
-    if (!response.success) return Swal.fire(response.error);
+    if (!response.success) return Alert.error({ text: response.error });
 
     await handleAuthSuccess("Successfully logged in!");
 }
@@ -156,7 +157,7 @@ async function showSignUpModal() {
         body: result.value
     });
 
-    if (!response.success) return Swal.fire(response.error);
+    if (!response.success) return Alert.error({ text: response.error });
 
     // Download recovery codes
     const recoveryCodes = Array.isArray(response.recoveryCodes) ? response.recoveryCodes : [];
@@ -185,7 +186,7 @@ signOutBtn.on("click", lockEvent(async function () {
         method: "DELETE"
     });
 
-    if (!response.success) return Swal.fire(response.error);
+    if (!response.success) return Alert.error({ text: response.error });
 
     await handleAuthSuccess("You have been logged out!");
 }));

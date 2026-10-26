@@ -6,7 +6,8 @@ import {
     sendRequest,
     $,
     capitalizeFirstLetter,
-    lockEvent
+    lockEvent,
+    Alert
 } from "../core/utils.js";
 
 export async function getProfilePosts(userId, skip) {
@@ -19,7 +20,7 @@ export async function getProfilePosts(userId, skip) {
 
 export async function renderProfilePosts(state = {}, preFetchedResponse = null) {
     const response = preFetchedResponse || await getProfilePosts(state.user.id, state.skip);
-    if (response && !response.success) return Swal.fire(response.error);
+    if (response && !response.success) return Alert.error({ text: response.error });
 
     // Clear container
     $(state.container).empty();
@@ -80,8 +81,8 @@ export async function renderProfilePosts(state = {}, preFetchedResponse = null) 
                         method: "DELETE"
                     });
 
-                    if (!response.success) return Swal.fire(response.error);
-                    Swal.fire("Success", "Post deleted!", "success");
+                    if (!response.success) return Alert.error({ text: response.error });
+                    Alert.success({ text: "Post deleted!" });
                 }))
                 .appendTo(buttonsContainer);
 
@@ -100,8 +101,8 @@ export async function renderProfilePosts(state = {}, preFetchedResponse = null) 
                         body: result.value
                     });
 
-                    if (!response.success) return Swal.fire(response.error);
-                    Swal.fire("Success", "Post updated!", "success");
+                    if (!response.success) return Alert.error({ text: response.error });
+                    Alert.success({ text: "Post updated!" });
                 }))
                 .appendTo(buttonsContainer);
 
@@ -115,8 +116,8 @@ export async function renderProfilePosts(state = {}, preFetchedResponse = null) 
                         body: { value: !safePost.private }
                     });
 
-                    if (!response.success) return Swal.fire(response.error);
-                    Swal.fire("Success", `Post visibility set as ${safePost.private ? "public" : "private"}!`, "success");
+                    if (!response.success) return Alert.error({ text: response.error });
+                    Alert.success({ text: `Post visibility set as ${safePost.private ? "public" : "private"}!` });
                 }))
                 .appendTo(buttonsContainer);
         }

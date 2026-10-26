@@ -6,7 +6,8 @@ import {
     lockEvent,
     config,
     input,
-    $
+    $,
+    Alert
 } from "../core/utils.js";
 
 async function getBookmarks(skip = 0) {
@@ -20,7 +21,7 @@ async function getBookmarks(skip = 0) {
 
 async function renderBookmarks(state = {}, preFetchedResponse = null) {
     const response = preFetchedResponse || await getBookmarks(state.skip);
-    if (response && !response.success) return Swal.fire(response.error);
+    if (response && !response.success) return Alert.error({ text: response.error });
 
     // Clear container
     $(state.container).empty();
@@ -57,9 +58,9 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
                     url: `/api/v1/posts/${safeBookmark.for}`
                 });
 
-                if (!response.success) return Swal.fire(response.error);
+                if (!response.success) return Alert.error({ text: response.error });
                 renderPosts(response.posts);
-                Swal.fire("Success", "Post loaded!", "success");
+                Alert.success({ text: "Post loaded!" });
             }))
             .appendTo(bookmarkHeader);
 
@@ -73,8 +74,8 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
                     method: "DELETE"
                 });
 
-                if (!response.success) return Swal.fire(response.error);
-                Swal.fire("Success", "Bookmark deleted!", "success");
+                if (!response.success) return Alert.error({ text: response.error });
+                Alert.success({ text: "Bookmark deleted!" });
             }))
             .appendTo(buttons);
 
@@ -101,8 +102,8 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
                     body: { title: result.value }
                 });
 
-                if (!response.success) return Swal.fire(response.error);
-                Swal.fire("Success", "Bookmark renamed successfully!", "success");
+                if (!response.success) return Alert.error({ text: response.error });
+                Alert.success({ text: "Bookmark renamed successfully!" });
             }))
             .appendTo(buttons);
     });
@@ -113,7 +114,7 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
 export default async function showBookmarks() {
     const state = { skip: 0, container: null };
     const response = await getBookmarks();
-    if (!response.success) return Swal.fire(response.error);
+    if (!response.success) return Alert.error({ text: response.error });
 
     Swal.fire({
         title: "Your bookmarks: ",

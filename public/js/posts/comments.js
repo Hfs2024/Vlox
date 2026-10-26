@@ -5,7 +5,8 @@ import {
     lockEvent,
     config,
     quickInfo,
-    $
+    $,
+    Alert
 } from "../core/utils.js";
 
 async function getComments(state = {}) {
@@ -16,7 +17,7 @@ async function getComments(state = {}) {
 
 async function renderComments(state = {}, preFetchedResponse = null) {
     const response = preFetchedResponse || await getComments(state);
-    if (response && !response.success) return Swal.fire(response.error);
+    if (response && !response.success) return Alert.error({ text: response.error });
 
     // Clear container
     $(state.container).empty(); 
@@ -51,7 +52,7 @@ async function renderComments(state = {}, preFetchedResponse = null) {
                 .addClass("fas fa-pen-to-square icon-helper")
                 .attr({ role: "button", tabindex: "0" })
                 .on("click", lockEvent(async function () {
-                    Swal.fire("Info", "Still working on this feature", "info");
+                    Alert.info({ text: "Still working on this feature" });
                 }))
                 .appendTo(commentsHeader);
         }
@@ -80,7 +81,7 @@ async function renderComments(state = {}, preFetchedResponse = null) {
 export default async function showComments(id) {
     const state = { id, skip: 0, container: null };
     const response = await getComments(state);
-    if (!response.success) return Swal.fire(response.error);
+    if (!response.success) return Alert.error({ text: response.error });
 
     Swal.fire({
         title: "Comments",
