@@ -1,4 +1,5 @@
 import templates from "../core/templates.js";
+import CommentEditor from "../components/comment-editor.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
@@ -20,13 +21,13 @@ async function renderComments(state = {}, preFetchedResponse = null) {
     if (response && !response.success) return Alert.error({ text: response.error });
 
     // Clear container
-    $(state.container).empty(); 
+    $(state.container).empty();
 
     // No data
     if (!Array.isArray(response?.comments) || response.comments.length <= 0) {
         $("<div>")
             .addClass("state-nothing-found")
-            .html("<b>You don't have any comments yet.</b>")
+            .html("<b>No comments yet.</b>")
             .appendTo(state.container);
         return;
     }
@@ -52,7 +53,23 @@ async function renderComments(state = {}, preFetchedResponse = null) {
                 .addClass("fas fa-pen-to-square icon-helper")
                 .attr({ role: "button", tabindex: "0" })
                 .on("click", lockEvent(async function () {
-                    Alert.info({ text: "Still working on this feature" });
+                    const instance = new CommentEditor("Edit comment", safeComment.content);
+                    const result = await instance.open();
+                    if (!result.isConfirmed) return;
+
+                    // Send API request
+                    const response = await sendRequest({
+                        url: `/api/v1/comments/${safeComment._id}/update`,
+                        method: "PUT",
+                        body: {
+                            content: result.value
+                        }
+                    });
+
+                    if (!response.success) return Alert.error({ text: response.error });
+                    if (!response.changed) return Alert.info({ text: "No changed were made!" });
+
+                    Alert.success({ text: "Comment updated!" });
                 }))
                 .appendTo(commentsHeader);
         }
@@ -63,11 +80,7 @@ async function renderComments(state = {}, preFetchedResponse = null) {
             .appendTo(commentsCard);
 
         // Edited badge
-        const createdAt = new Date(safeComment.createdAt || 0).getTime();
-        const updatedAt = new Date(safeComment.updatedAt || 0).getTime();
-        const isEdited = updatedAt > createdAt;
-
-        if (isEdited) {
+        if (safeComment.editedAt) {
             $("<small>")
                 .text("(Edited)")
                 .css("color", "gray")
