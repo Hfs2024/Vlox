@@ -16,7 +16,7 @@ router.put("/posts/:id/visibility", checkAuth, changePostVisibilityValidator, as
     const value = req.cleanData.value === true || req.cleanData.value === "true";
     const now = new Date();
 
-    const result = await schemas.Posts.findOneAndUpdate(postQueries.modify_post(id, req.session.userId), [
+    const result = await schemas.Posts.updateOne(postQueries.modify_post(id, req.session.userId), [
         {
             $set: {
                 private: {
@@ -28,13 +28,15 @@ router.put("/posts/:id/visibility", checkAuth, changePostVisibilityValidator, as
             }
         }
     ], {
-        returnDocument: "before",
-        projection: { private: 1 },
         timestamps: false
     });
 
-    if (!result) return res.status(400).json({ error: "Post not found or post is private!" });
-    return res.status(200).json({ changed: result.private !== value, success: true });
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Post not found!" });
+
+    return res.status(200).json({
+        changed: result.modifiedCount !== 0,
+        success: true
+    });
 });
 
 router.post("/posts/:id/like", checkAuth, defaultPostFindValidator, async (req, res) => {
@@ -71,7 +73,7 @@ router.put("/posts/:id/update", checkAuth, editPostsValidator, async (req, res) 
     const { content, title, id } = req.cleanData;
     const now = new Date();
 
-    const result = await schemas.Posts.findOneAndUpdate(postQueries.modify_post(id, req.session.userId), [
+    const result = await schemas.Posts.updateOne(postQueries.modify_post(id, req.session.userId), [
         {
             $set: {
                 title: {
@@ -90,15 +92,13 @@ router.put("/posts/:id/update", checkAuth, editPostsValidator, async (req, res) 
             }
         }
     ], {
-        returnDocument: "before",
-        projection: { title: 1, content: 1 },
         timestamps: false
     });
 
-    if (!result) return res.status(400).json({ error: "Post not found!" });
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Post not found!" });
 
     return res.status(200).json({
-        changed: result.title !== title || result.content !== content,
+        changed: result.modifiedCount !== 0,
         success: true
     });
 });
@@ -138,11 +138,10 @@ router.put("/comments/:id/update", checkAuth, editCommentValidator, async (req, 
     const { id, content } = req.cleanData;
     const now = new Date();
 
-    const result = await schemas.Comments.findOneAndUpdate(
-        {
-            _id: id,
-            by: req.session.userId
-        },
+    const result = await schemas.Comments.updateOne({
+        _id: id,
+        by: req.session.userId
+    },
         [
             {
                 $set: {
@@ -153,24 +152,20 @@ router.put("/comments/:id/update", checkAuth, editCommentValidator, async (req, 
                     editedAt: {
                         $cond: [{ $eq: ["$content", content] }, "$editedAt", now]
                     },
-                    
+
                     updatedAt: {
                         $cond: [{ $eq: ["$content", content] }, "$updatedAt", now]
                     }
                 }
             }
-        ],
-        {
-            returnDocument: "before",
-            projection: { content: 1 },
-            timestamps: false
-        }
-    )
+        ], {
+        timestamps: false
+    });
 
-    if (!result) return res.status(404).json({ error: "Comment not found!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "Comment not found!" });
 
     return res.status(200).json({
-        changed: result.content !== content,
+        changed: result.modifiedCount !== 0,
         success: true
     });
 });

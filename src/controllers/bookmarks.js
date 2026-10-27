@@ -44,9 +44,9 @@ router.post("/bookmarks/:id", checkAuth, defaultPostFindValidator, async (req, r
 
 router.put("/bookmarks/:id/rename", checkAuth, renameBookmarkValidator, async (req, res) => {
     const { id, title } = req.cleanData;
-
     const now = new Date();
-    const result = await schemas.Bookmarks.findOneAndUpdate({
+    
+    const result = await schemas.Bookmarks.updateOne({
         _id: id,
         by: req.session.userId
     }, [
@@ -55,20 +55,22 @@ router.put("/bookmarks/:id/rename", checkAuth, renameBookmarkValidator, async (r
                 title: {
                     $cond: [{ $eq: ["$title", title] }, "$title", title]
                 },
-                
+
                 updatedAt: {
                     $cond: [{ $eq: ["$title", title] }, "$updatedAt", now]
                 }
             }
         }
     ], {
-        returnDocument: "before",
-        projection: { title: 1 },
         timestamps: false
     });
 
-    if (!result) return res.status(400).json({ error: "Bookmark not found!" });
-    return res.status(200).json({ changed: result.title !== title, success: true });
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Bookmark not found!" });
+
+    return res.status(200).json({
+        changed: result.modifiedCount !== 0,
+        success: true
+    });
 });
 
 router.delete("/bookmarks/:id/delete", checkAuth, deleteBookmarkValidator, async (req, res) => {

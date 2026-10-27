@@ -146,7 +146,7 @@ router.put("/me/visibility", checkAuth, updateUserVisibilityValidator, async (re
     const value = req.cleanData.value;
     const now = new Date();
 
-    const result = await schemas.Users.findOneAndUpdate({
+    const result = await schemas.Users.updateOne({
         _id: req.session.userId
     }, [
         {
@@ -161,15 +161,13 @@ router.put("/me/visibility", checkAuth, updateUserVisibilityValidator, async (re
             }
         }
     ], {
-        returnDocument: "before",
-        projection: { private: 1 },
         timestamps: false
     });
 
-    if (!result) return res.status(400).json({ error: "Something went wrong. Try again." });
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update!" });
 
     return res.status(200).json({
-        changed: result.private !== value,
+        changed: result.modifiedCount !== 0,
         success: true
     });
 });
@@ -178,7 +176,7 @@ router.put("/me/bio", checkAuth, updateUserBioValidator, async (req, res) => {
     const bio = req.cleanData.bio;
     const now = new Date();
 
-    const result = await schemas.Users.findOneAndUpdate({
+    const result = await schemas.Users.updateOne({
         _id: req.session.userId
     }, [
         {
@@ -192,15 +190,13 @@ router.put("/me/bio", checkAuth, updateUserBioValidator, async (req, res) => {
             }
         }
     ], {
-        returnDocument: "before",
-        projection: { bio: 1 },
         timestamps: false
     });
 
-    if (!result) return res.status(400).json({ error: "Failed to update!" });
+    if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update!" });
 
     return res.status(200).json({
-        changed: result.bio !== bio,
+        changed: result.modifiedCount !== 0,
         success: true
     });
 });
