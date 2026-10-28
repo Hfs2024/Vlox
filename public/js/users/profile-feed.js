@@ -94,7 +94,7 @@ export async function renderProfilePosts(state = {}, preFetchedResponse = null) 
                     const result = await instance.open();
                     if (!result.isConfirmed) return;
 
-                    // Send API request
+                    // Send request
                     const response = await sendRequest({
                         url: `/api/v1/posts/${safePost._id}/update`,
                         method: "PUT",

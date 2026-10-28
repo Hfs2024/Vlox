@@ -22,10 +22,9 @@ import {
 } from "./src/validators.js";
 
 const __dirname = import.meta.dirname;
-const isProduction = config.NODE_ENV === "production";
 const app = express();
 
-// Connect MonogDB
+// MonogDB
 mongoose.connect(config.MONGO_URI)
     .then(() => console.log("MongoDB connected!"))
     .catch(err => console.log(`Failed to connect MongoDB: ${err.message}`));
@@ -44,12 +43,13 @@ app.use(
         }),
         cookie: {
             httpOnly: true,
-            secure: isProduction,
+            secure: config.PRODUCTION,
             maxAge: config.MAX_SESSION_AGE,
-            sameSite: isProduction ? "none" : "lax"
+            sameSite: "lax"
         }
     })
-);
+)
+
 const mainLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.MAIN_RATE_LIMIT_MAX_REQ, {
     skip: (req) => ["/api/v1/users/password", "/api/v1/users/recovery-codes"].some((path) => req.originalUrl.includes(path))
 });
@@ -80,7 +80,7 @@ app.post("/api/v1/posts", checkAuth, createPostsValidator, async (req, res) => {
     });
 
     await newPost.save();
-    return res.status(200).json({ success: true });
+    return res.status(201).json({ success: true, postId: newPost._id });
 });
 
 app.get("/api/v1/posts/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
@@ -91,7 +91,7 @@ app.get("/api/v1/posts/:id", checkAuth, defaultPostFindValidator, async (req, re
         .populate("by", "-password -recoveryCodes -email")
         .lean();
 
-    if (!post) return res.status(400).json({ error: "Post not found!" });
+    if (!post) return res.status(404).json({ error: "Post not found!" });
     return res.status(200).json({ success: true, posts: [post] });
 });
 
@@ -128,7 +128,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-    if (err.code === 11000) return res.status(400).json({ error: "This already exists on the system!" });
+    if (err.code === 11000) return res.status(409).json({ error: "This already exists on the system!" });
     if (err.isCustom) return res.status(err.statusCode).json({ error: err.message });
 
     // For debugging only

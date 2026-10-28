@@ -21,10 +21,11 @@ router.post("/users/login", authRateLimiter, loginValidator, async (req, res) =>
     const { username, password } = req.cleanData;
 
     const user = await schemas.Users.findOne({ username }).select("password");
-    if (!user) return res.status(400).json({ error: "Invalid username or password" });
+    if (!user) return res.status(401).json({ error: "Invalid username or password" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ error: "Invalid username or password" });
+    if (!isMatch) return res.status(401).json({ error: "Invalid username or password" });
+
     req.session.isLoggedIn = true;
     req.session.userId = user._id;
     req.session.save((err) => {
@@ -32,6 +33,7 @@ router.post("/users/login", authRateLimiter, loginValidator, async (req, res) =>
             console.error("Login Session Save Failure: ", err.message);
             return res.status(500).json({ error: "Session initialization failed" });
         }
+
         return res.status(200).json({ success: true });
     });
 });
@@ -56,8 +58,9 @@ router.post("/users/signup", authRateLimiter, signupValidator, async (req, res) 
     req.session.save((err) => {
         if (err) {
             console.error("Signup Session Save Failure: ", err.message);
-            return res.status(500).json({ error: "Session creation failed" });
+            return res.status(500).json({ error: "Session initialization failed" });
         }
+
         return res.status(201).json({ success: true, recoveryCodes: recoveryCodes.raw });
     });
 });
@@ -75,7 +78,7 @@ router.get("/users/:id/profile", checkAuth, getUserProfileValidator, async funct
         .select("username bio private")
         .lean();
 
-    if (!user) return res.status(400).json({ error: "User not found or their account is private!" });
+    if (!user) return res.status(404).json({ error: "User not found or their account is private!" });
 
     return res.status(200).json({ success: true, user });
 });
@@ -102,7 +105,8 @@ router.post("/users/password", passwordRecoveryLimiter, resetPasswordValidator, 
     const user = await schemas.Users.findOne({ username })
         .select("recoveryCodes")
         .lean();
-    if (!user) return res.status(400).json({ error: "Failed to find user!" });
+
+    if (!user) return res.status(400).json({ error: "Failed to find an account with that username!" });
 
     for (const code of user.recoveryCodes) {
         const isValid = await bcrypt.compare(recoveryCode, code);
@@ -120,7 +124,7 @@ router.post("/users/password", passwordRecoveryLimiter, resetPasswordValidator, 
             }
         });
 
-        if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update password!" });
+        if (result.matchedCount === 0) return res.status(500).json({ error: "Failed to update password!" });
 
         return res.status(200).json({ success: true });
     }
@@ -138,7 +142,7 @@ router.post("/users/recovery-codes", passwordRecoveryLimiter, checkAuth, async (
         }
     });
 
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Could not find your account right now!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "Can't find your account right now!" });
     return res.status(200).json({ success: true, codes: newCodes.raw });
 });
 
@@ -164,7 +168,7 @@ router.put("/me/visibility", checkAuth, updateUserVisibilityValidator, async (re
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "Can't find your account right now" });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -193,7 +197,7 @@ router.put("/me/bio", checkAuth, updateUserBioValidator, async (req, res) => {
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Failed to update!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "Can't find your account right now!" });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -222,7 +226,10 @@ router.get("/me/quick-info", checkAuth, async (req, res) => {
 });
 
 router.get("/me/status", async function (req, res) {
-    return res.status(200).json({ success: true, loggedIn: req.session.isLoggedIn });
+    return res.status(200).json({
+        success: true,
+        loggedIn: req.session.isLoggedIn
+    });
 });
 
 export default router;

@@ -8,7 +8,7 @@ import config from "../config/backend.js";
 export async function checkAuth(req, res, next) {
     if (!req.session.isLoggedIn || !req.session.userId) return res.status(401).json({ error: "You are not logged in!" });
     const user = await schemas.Users.findById(req.session.userId);
-    if (!user) return res.status(401).json({ error: "Can't find your account right now!" });
+    if (!user) return res.status(404).json({ error: "Can't find your account right now!" });
 
     req.currentUser = user;
     next();
@@ -76,8 +76,7 @@ export function createLimiter(
 
 export function validateResult(req, res, next) {
     const result = validationResult(req);
-    if (!result.isEmpty())
-        return res.status(400).json({ error: result.array()[0].msg || "Invalid request" });
+    if (!result.isEmpty()) return res.status(400).json({ error: result.array()[0].msg || "Invalid request" });
 
     // Result
     const cleanData = matchedData(req);

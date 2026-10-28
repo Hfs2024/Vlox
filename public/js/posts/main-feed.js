@@ -20,7 +20,6 @@ export const postsState = {
 }
 
 export async function renderPosts(posts = []) {
-    // Clear container
     const postsContainer = $("#posts-container");
     postsContainer.empty();
 
@@ -123,7 +122,7 @@ export async function renderPosts(posts = []) {
                 const result = await instance.open();
                 if (!result.isConfirmed) return;
 
-                // Send API request
+                // Send request
                 const response = await sendRequest({
                     url: `/api/v1/posts/${safePost._id}/comments`,
                     method: "POST",

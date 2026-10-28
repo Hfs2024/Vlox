@@ -12,8 +12,7 @@ import {
 const router = express.Router();
 
 router.put("/posts/:id/visibility", checkAuth, changePostVisibilityValidator, async (req, res) => {
-    const { id } = req.cleanData;
-    const value = req.cleanData.value === true || req.cleanData.value === "true";
+    const { id, value } = req.cleanData;
     const now = new Date();
 
     const result = await schemas.Posts.updateOne(postQueries.modify_post(id, req.session.userId), [
@@ -31,7 +30,7 @@ router.put("/posts/:id/visibility", checkAuth, changePostVisibilityValidator, as
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Post not found!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "Post not found!" });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -66,7 +65,7 @@ router.post("/posts/:id/like", checkAuth, defaultPostFindValidator, async (req, 
     });
 
     await session.endSession();
-    return res.status(200).json({ success: true });
+    return res.status(201).json({ success: true });
 });
 
 router.put("/posts/:id/update", checkAuth, editPostsValidator, async (req, res) => {
@@ -95,7 +94,7 @@ router.put("/posts/:id/update", checkAuth, editPostsValidator, async (req, res) 
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Post not found!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "Post not found!" });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -115,13 +114,13 @@ router.delete("/posts/:id/delete", checkAuth, defaultPostFindValidator, async fu
     });
 
     await session.endSession();
-    return res.status(200).json({ success: true });
+    return res.status(204).json();
 });
 
 router.post("/posts/:id/comments", checkAuth, commentsValidator, async (req, res) => {
     const { id, content } = req.cleanData;
     const post = await schemas.Posts.exists(postQueries.view_post(id, req.session.userId));
-    if (!post) return res.status(400).json({ error: "Post not found!" });
+    if (!post) return res.status(404).json({ error: "Post not found!" });
 
     // Insert comment
     const newComment = new schemas.Comments({
@@ -131,7 +130,7 @@ router.post("/posts/:id/comments", checkAuth, commentsValidator, async (req, res
     });
 
     await newComment.save();
-    return res.status(200).json({ success: true });
+    return res.status(201).json({ success: true });
 });
 
 router.put("/comments/:id/update", checkAuth, editCommentValidator, async (req, res) => {

@@ -23,7 +23,7 @@ const config = {
     MONGO_URI: process.env.MONGO_URI,
     SESSION_SECRET: process.env.SESSION_SECRET,
     PORT: process.env.PORT,
-    NODE_ENV: process.env.NODE_ENV,
+    PRODUCTION: process.env.NODE_ENV === "production"
 }
 
 export default config;

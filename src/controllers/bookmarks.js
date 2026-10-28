@@ -20,7 +20,7 @@ router.post("/bookmarks", checkAuth, getBookmarksValidator, async (req, res) => 
         .limit(config.BOOKMARKS_LIMIT)
         .lean();
 
-    return res.status(200).json({ success: true, bookmarks: bookmarks });
+    return res.status(200).json({ success: true, bookmarks });
 });
 
 router.post("/bookmarks/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
@@ -29,7 +29,7 @@ router.post("/bookmarks/:id", checkAuth, defaultPostFindValidator, async (req, r
         .select("title")
         .lean();
 
-    if (!post) return res.status(400).json({ error: "Post not found!" });
+    if (!post) return res.status(404).json({ error: "Post not found!" });
 
     // Insert bookmark
     const newBookmark = new schemas.Bookmarks({
@@ -39,7 +39,7 @@ router.post("/bookmarks/:id", checkAuth, defaultPostFindValidator, async (req, r
     });
 
     await newBookmark.save();
-    return res.status(200).json({ success: true });
+    return res.status(201).json({ success: true });
 });
 
 router.put("/bookmarks/:id/rename", checkAuth, renameBookmarkValidator, async (req, res) => {
@@ -65,7 +65,7 @@ router.put("/bookmarks/:id/rename", checkAuth, renameBookmarkValidator, async (r
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(400).json({ error: "Bookmark not found!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "Bookmark not found!" });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -80,7 +80,7 @@ router.delete("/bookmarks/:id/delete", checkAuth, deleteBookmarkValidator, async
         by: req.session.userId
     });
 
-    if (result.deletedCount === 0) return res.status(400).json({ error: "Bookmark not found!" });
+    if (result.deletedCount === 0) return res.status(404).json({ error: "Bookmark not found!" });
     return res.status(200).json({ success: true });
 });
 

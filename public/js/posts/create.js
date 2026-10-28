@@ -10,7 +10,7 @@ createPostBtn.on("click", lockEvent(async function () {
     const result = await instance.open();
     if (!result.isConfirmed) return;
 
-    // Send API request
+    // Send request
     const response = await sendRequest({
         url: "/api/v1/posts",
         method: "POST",
