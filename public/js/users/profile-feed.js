@@ -9,6 +9,7 @@ import {
     lockEvent,
     Alert
 } from "../core/utils.js";
+import { getErrorMessage } from "../core/errors.js";
 
 export async function getProfilePosts(userId, skip) {
     const response = await sendRequest({
@@ -20,7 +21,7 @@ export async function getProfilePosts(userId, skip) {
 
 export async function renderProfilePosts(state = {}, preFetchedResponse = null) {
     const response = preFetchedResponse || await getProfilePosts(state.user.id, state.skip);
-    if (response && !response.success) return Alert.error({ text: response.error });
+    if (response && !response.success) return Alert.error({ text: getErrorMessage(response.error) });
 
     // Clear container
     $(state.container).empty();
@@ -81,7 +82,7 @@ export async function renderProfilePosts(state = {}, preFetchedResponse = null) 
                         method: "DELETE"
                     });
 
-                    if (!response.success) return Alert.error({ text: response.error });
+                    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
                     Alert.success({ text: "Post deleted!" });
                 }))
                 .appendTo(buttonsContainer);
@@ -101,7 +102,7 @@ export async function renderProfilePosts(state = {}, preFetchedResponse = null) 
                         body: result.value
                     });
 
-                    if (!response.success) return Alert.error({ text: response.error });
+                    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
                     if (!response.changed) return Alert.info({ text: "No changed were made!" });
                     
                     Alert.success({ text: "Post updated!" });
@@ -118,7 +119,7 @@ export async function renderProfilePosts(state = {}, preFetchedResponse = null) 
                         body: { value: !safePost.private }
                     });
 
-                    if (!response.success) return Alert.error({ text: response.error });
+                    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
                     if (!response.changed) return Alert.info({ text: "No changed were made!" });
 
                     Alert.success({ text: `Post visibility set as ${safePost.private ? "public" : "private"}!` });

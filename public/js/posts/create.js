@@ -1,6 +1,7 @@
 import { lockEvent, config, $, sendRequest, Alert } from "../core/utils.js";
 import { getPosts, postsState } from "./main-feed.js";
 import PostEditor from "../components/post-editor.js";
+import { getErrorMessage } from "../core/errors.js";
 
 const createPostBtn = $("#create-post-btn");
 const postsNavigationContainer = $("#posts-navigation-container");
@@ -17,7 +18,7 @@ createPostBtn.on("click", lockEvent(async function () {
         body: result.value
     });
 
-    if (!response.success) return Alert.error({ text: response.error });
+    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
     Alert.success({ text: "Post created!" });
 }));
 

@@ -91,7 +91,7 @@ app.get("/api/v1/posts/:id", checkAuth, defaultPostFindValidator, async (req, re
         .populate("by", "-password -recoveryCodes -email")
         .lean();
 
-    if (!post) return res.status(404).json({ error: "Post not found!" });
+    if (!post) return res.status(404).json({ error: "POST_NOT_FOUND" });
     return res.status(200).json({ success: true, posts: [post] });
 });
 
@@ -128,12 +128,12 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-    if (err.code === 11000) return res.status(409).json({ error: "This already exists on the system!" });
-    if (err.isCustom) return res.status(err.statusCode).json({ error: err.message });
+    if (err.code === 11000) return res.status(409).json({ error: "DUPLICATE_RESOURCE" });
+    if (err.isCustom) return res.status(err.statusCode).json({ error: err.errorCode });
 
     // For debugging only
     console.log(err);
-    return res.status(500).json({ error: "An unexpected error occurred!" });
+    return res.status(500).json({ error: "UNEXPECTED_ERROR" });
 });
 
 app.listen(config.PORT, config.HOST, () => {

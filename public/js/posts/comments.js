@@ -1,5 +1,6 @@
 import templates from "../core/templates.js";
 import CommentEditor from "../components/comment-editor.js";
+import { getErrorMessage } from "../core/errors.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
@@ -18,7 +19,7 @@ async function getComments(state = {}) {
 
 async function renderComments(state = {}, preFetchedResponse = null) {
     const response = preFetchedResponse || await getComments(state);
-    if (response && !response.success) return Alert.error({ text: response.error });
+    if (response && !response.success) return Alert.error({ text: getErrorMessage(response.error) });
 
     // Clear container
     $(state.container).empty();
@@ -66,7 +67,7 @@ async function renderComments(state = {}, preFetchedResponse = null) {
                         }
                     });
 
-                    if (!response.success) return Alert.error({ text: response.error });
+                    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
                     if (!response.changed) return Alert.info({ text: "No changed were made!" });
 
                     Alert.success({ text: "Comment updated!" });
@@ -94,7 +95,7 @@ async function renderComments(state = {}, preFetchedResponse = null) {
 export default async function showComments(id) {
     const state = { id, skip: 0, container: null };
     const response = await getComments(state);
-    if (!response.success) return Alert.error({ text: response.error });
+    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
 
     Swal.fire({
         title: "Comments",

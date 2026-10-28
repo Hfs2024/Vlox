@@ -1,4 +1,5 @@
-import { config } from "../core/utils.js"
+import { config } from "../core/utils.js";
+import { getErrorMessage } from "../core/errors.js";
 
 export default class CommentEditor {
     #instance;
@@ -24,7 +25,7 @@ export default class CommentEditor {
                 this.#instance = null;
             },
             preConfirm: result => {
-                if (!result.length) return Swal.showValidationMessage("Please enter a comment!");
+                if (!result?.trim()) return Swal.showValidationMessage(getErrorMessage("COMMENT_REQUIRED"));
             }
         });
 

@@ -1,5 +1,6 @@
 import { config, $ } from "../core/utils.js"
 import templates from "../core/templates.js";
+import { getErrorMessage } from "../core/errors.js";
 
 export default class PostEditor {
     #instance;
@@ -34,7 +35,7 @@ export default class PostEditor {
                 const title = $(Swal.getPopup()).find("#post-editor-title").val().trim();
                 const content = $(Swal.getPopup()).find("#post-editor-content").val().trim();
 
-                if (!title || !content) return Swal.showValidationMessage("Title and content are required!");
+                if (!title || !content) return Swal.showValidationMessage(getErrorMessage("TITLE_CONTENT_REQUIRED"));
                 return { title, content };
             }
         });

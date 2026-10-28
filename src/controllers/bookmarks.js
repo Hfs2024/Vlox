@@ -29,7 +29,7 @@ router.post("/bookmarks/:id", checkAuth, defaultPostFindValidator, async (req, r
         .select("title")
         .lean();
 
-    if (!post) return res.status(404).json({ error: "Post not found!" });
+    if (!post) return res.status(404).json({ error: "POST_NOT_FOUND" });
 
     // Insert bookmark
     const newBookmark = new schemas.Bookmarks({
@@ -65,7 +65,7 @@ router.put("/bookmarks/:id/rename", checkAuth, renameBookmarkValidator, async (r
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "Bookmark not found!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "BOOKMARK_NOT_FOUND" });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -80,7 +80,7 @@ router.delete("/bookmarks/:id/delete", checkAuth, deleteBookmarkValidator, async
         by: req.session.userId
     });
 
-    if (result.deletedCount === 0) return res.status(404).json({ error: "Bookmark not found!" });
+    if (result.deletedCount === 0) return res.status(404).json({ error: "BOOKMARK_NOT_FOUND" });
     return res.status(200).json({ success: true });
 });
 

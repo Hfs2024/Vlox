@@ -1,5 +1,6 @@
 import $ from "https://cdn.jsdelivr.net/npm/cash-dom@8.1.0/dist/cash.esm.js";
 import config from "/config/shared.js";
+import { getErrorMessage } from "./errors.js";
 
 export async function copy(str) {
     if (!str || typeof str !== "string") return;
@@ -8,7 +9,7 @@ export async function copy(str) {
         await navigator.clipboard.writeText(str);
         Alert.success({ text: "Copied!" });
     } catch {
-        Alert.error({ text: "Failed to copy!" });
+        Alert.error({ text: getErrorMessage("COPY_FAILED") });
     }
 }
 
@@ -36,7 +37,7 @@ export function lockEvent(fn) {
         try {
             await fn.call(this, e);
         } catch {
-            Alert.error({ text: "An unexpected error occurred!" });
+            Alert.error({ text: getErrorMessage("UNEXPECTED_ERROR") });
         } finally {
             el.removeAttr("inert");
         }
@@ -47,13 +48,13 @@ export async function sendRequest({ body, ...requestConfig }) {
     try {
         const response = await axios({
             ...requestConfig,
-            validateStatus: (status) => (status >= 200 && status < 300) || [400, 401].includes(status),
+            validateStatus: status => status >= 200 && status < 500,
             data: body
         });
 
         return response?.data || {};
-    } catch {
-        return { error: "An unexpected error occurred!" }
+    } catch (error) {
+        return { error: error.response?.data?.error || "UNEXPECTED_ERROR" };
     }
 }
 
@@ -79,7 +80,7 @@ export async function initQuickInfo() {
         const data = await sendRequest({ url: "/api/v1/me/quick-info" });
         Object.assign(quickInfo, data || {});
     } catch {
-        Alert.error({ text: "Something went wrong!" });
+        Alert.error({ text: getErrorMessage("UNEXPECTED_ERROR") });
     }
 }
 

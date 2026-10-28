@@ -6,9 +6,9 @@ import { validationResult, matchedData } from "express-validator";
 import config from "../config/backend.js";
 
 export async function checkAuth(req, res, next) {
-    if (!req.session.isLoggedIn || !req.session.userId) return res.status(401).json({ error: "You are not logged in!" });
+    if (!req.session.isLoggedIn || !req.session.userId) return res.status(401).json({ error: "NOT_AUTHENTICATED" });
     const user = await schemas.Users.findById(req.session.userId);
-    if (!user) return res.status(404).json({ error: "Can't find your account right now!" });
+    if (!user) return res.status(404).json({ error: "ACCOUNT_NOT_FOUND" });
 
     req.currentUser = user;
     next();
@@ -54,7 +54,7 @@ export function createLimiter(
     windowMs = config.RATE_LIMIT_WINDOW_MS,
     limit = config.MAIN_RATE_LIMIT_MAX_REQ,
     options = {},
-    error = "Too Many Requests. Please try again later."
+    error = "RATE_LIMITED"
 ) {
     try {
         return rateLimit({
@@ -76,7 +76,7 @@ export function createLimiter(
 
 export function validateResult(req, res, next) {
     const result = validationResult(req);
-    if (!result.isEmpty()) return res.status(400).json({ error: result.array()[0].msg || "Invalid request" });
+    if (!result.isEmpty()) return res.status(400).json({ error: "INVALID_REQUEST" });
 
     // Result
     const cleanData = matchedData(req);
@@ -85,9 +85,10 @@ export function validateResult(req, res, next) {
 }
 
 export class ClientError extends Error {
-    constructor(message, statusCode = 400) {
-        super(message);
+    constructor(errorCode, statusCode = 400) {
+        super(errorCode);
         this.statusCode = statusCode;
+        this.errorCode = errorCode;
         this.isCustom = true;
     }
 }

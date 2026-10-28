@@ -30,7 +30,7 @@ router.put("/posts/:id/visibility", checkAuth, changePostVisibilityValidator, as
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "Post not found!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "POST_NOT_FOUND" });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -53,7 +53,7 @@ router.post("/posts/:id/like", checkAuth, defaultPostFindValidator, async (req, 
             session
         });
 
-        if (updatePostResult.matchedCount === 0) throw new ClientError("You may not have access to this post!");
+        if (updatePostResult.matchedCount === 0) throw new ClientError("POST_ACCESS_DENIED");
 
         // Insert like
         const newLike = new schemas.Likes({
@@ -94,7 +94,7 @@ router.put("/posts/:id/update", checkAuth, editPostsValidator, async (req, res) 
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "Post not found!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "POST_NOT_FOUND" });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -107,20 +107,20 @@ router.delete("/posts/:id/delete", checkAuth, defaultPostFindValidator, async fu
     const id = req.cleanData.id;
     await session.withTransaction(async () => {
         const deletePostResult = await schemas.Posts.deleteOne(postQueries.modify_post(id, req.session.userId), { session });
-        if (deletePostResult.deletedCount === 0) throw new ClientError("You may not have access to this post!");
+        if (deletePostResult.deletedCount === 0) throw new ClientError("POST_ACCESS_DENIED");
 
         await schemas.Likes.deleteMany({ for: id }, { session });
         await schemas.Comments.deleteMany({ for: id }, { session });
     });
 
     await session.endSession();
-    return res.status(204).json();
+    return res.status(200).json({ success: true });
 });
 
 router.post("/posts/:id/comments", checkAuth, commentsValidator, async (req, res) => {
     const { id, content } = req.cleanData;
     const post = await schemas.Posts.exists(postQueries.view_post(id, req.session.userId));
-    if (!post) return res.status(404).json({ error: "Post not found!" });
+    if (!post) return res.status(404).json({ error: "POST_NOT_FOUND" });
 
     // Insert comment
     const newComment = new schemas.Comments({
@@ -161,7 +161,7 @@ router.put("/comments/:id/update", checkAuth, editCommentValidator, async (req, 
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "Comment not found!" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: "COMMENT_NOT_FOUND" });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
