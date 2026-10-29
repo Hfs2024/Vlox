@@ -1,8 +1,9 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import schemas from "../schemas.js";
-import config from "../../config/backend.js";
-import { checkAuth, generateRecoveryCodes, createLimiter } from "../utils.js";
+import schemas from "../core/schemas.js";
+import config from "../core/config.js";
+import { checkAuth, generateRecoveryCodes, createLimiter } from "../core/utils.js";
+import errors from "../../shared/errors.js";
 import {
     updateUserBioValidator,
     loginValidator,
@@ -11,7 +12,7 @@ import {
     getUserProfileValidator,
     getUserPostsValidator,
     resetPasswordValidator
-} from "../validators.js";
+} from "../core/validators.js";
 
 const router = express.Router();
 const passwordRecoveryLimiter = createLimiter(config.RATE_LIMIT_WINDOW_MS, config.AUTH_RATE_LIMIT_MAX_REQ);
@@ -21,17 +22,17 @@ router.post("/users/login", authRateLimiter, loginValidator, async (req, res) =>
     const { username, password } = req.cleanData;
 
     const user = await schemas.Users.findOne({ username }).select("password");
-    if (!user) return res.status(401).json({ error: "INVALID_CREDENTIALS" });
+    if (!user) return res.status(401).json({ error: errors.INVALID_CREDENTIALS });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ error: "INVALID_CREDENTIALS" });
+    if (!isMatch) return res.status(401).json({ error: errors.INVALID_CREDENTIALS });
 
     req.session.isLoggedIn = true;
     req.session.userId = user._id;
     req.session.save((err) => {
         if (err) {
-            console.error("Login Session Save Failure: ", err.message);
-            return res.status(500).json({ error: "SESSION_INITIALIZATION_FAILED" });
+            console.error(err.message);
+            return res.status(500).json({ error: errors.SESSION_INITIALIZATION_FAILED });
         }
 
         return res.status(200).json({ success: true });
@@ -57,8 +58,8 @@ router.post("/users/signup", authRateLimiter, signupValidator, async (req, res) 
     req.session.userId = newUser._id;
     req.session.save((err) => {
         if (err) {
-            console.error("Signup Session Save Failure: ", err.message);
-            return res.status(500).json({ error: "SESSION_INITIALIZATION_FAILED" });
+            console.error(err.message);
+            return res.status(500).json({ error: errors.SESSION_INITIALIZATION_FAILED });
         }
 
         return res.status(201).json({ success: true, recoveryCodes: recoveryCodes.raw });
@@ -78,7 +79,7 @@ router.get("/users/:id/profile", checkAuth, getUserProfileValidator, async funct
         .select("username bio private")
         .lean();
 
-    if (!user) return res.status(404).json({ error: "PROFILE_NOT_FOUND_OR_PRIVATE" });
+    if (!user) return res.status(404).json({ error: errors.PROFILE_NOT_FOUND_OR_PRIVATE });
 
     return res.status(200).json({ success: true, user });
 });
@@ -106,7 +107,7 @@ router.post("/users/password", passwordRecoveryLimiter, resetPasswordValidator, 
         .select("recoveryCodes")
         .lean();
 
-    if (!user) return res.status(400).json({ error: "ACCOUNT_NOT_FOUND_FOR_USERNAME" });
+    if (!user) return res.status(400).json({ error: errors.ACCOUNT_NOT_FOUND_FOR_USERNAME });
 
     for (const code of user.recoveryCodes) {
         const isValid = await bcrypt.compare(recoveryCode, code);
@@ -124,12 +125,12 @@ router.post("/users/password", passwordRecoveryLimiter, resetPasswordValidator, 
             }
         });
 
-        if (result.matchedCount === 0) return res.status(500).json({ error: "PASSWORD_UPDATE_FAILED" });
+        if (result.matchedCount === 0) return res.status(500).json({ error: errors.PASSWORD_UPDATE_FAILED });
 
         return res.status(200).json({ success: true });
     }
 
-    return res.status(400).json({ error: "INVALID_RECOVERY_CODE" });
+    return res.status(400).json({ error: errors.INVALID_RECOVERY_CODE });
 });
 
 router.post("/users/recovery-codes", passwordRecoveryLimiter, checkAuth, async (req, res) => {
@@ -142,7 +143,7 @@ router.post("/users/recovery-codes", passwordRecoveryLimiter, checkAuth, async (
         }
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "ACCOUNT_NOT_FOUND" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: errors.ACCOUNT_NOT_FOUND });
     return res.status(200).json({ success: true, codes: newCodes.raw });
 });
 
@@ -168,7 +169,7 @@ router.put("/me/visibility", checkAuth, updateUserVisibilityValidator, async (re
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "ACCOUNT_NOT_FOUND" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: errors.ACCOUNT_NOT_FOUND });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -197,7 +198,7 @@ router.put("/me/bio", checkAuth, updateUserBioValidator, async (req, res) => {
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "ACCOUNT_NOT_FOUND" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: errors.ACCOUNT_NOT_FOUND });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -208,8 +209,8 @@ router.put("/me/bio", checkAuth, updateUserBioValidator, async (req, res) => {
 router.delete("/me/signout", checkAuth, async (req, res) => {
     req.session.destroy(err => {
         if (err) {
-            console.log("Error: " + err.message);
-            return res.status(500).json({ error: "SESSION_DESTROY_FAILED" });
+            console.error(err.message);
+            return res.status(500).json({ error: errors.SESSION_DESTROY_FAILED });
         }
 
         res.clearCookie("connect.sid");

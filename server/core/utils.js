@@ -2,13 +2,14 @@ import schemas from "./schemas.js";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import rateLimit from "express-rate-limit";
+import config from "./config.js";
+import errors from "../../shared/errors.js";
 import { validationResult, matchedData } from "express-validator";
-import config from "../config/backend.js";
 
 export async function checkAuth(req, res, next) {
-    if (!req.session.isLoggedIn || !req.session.userId) return res.status(401).json({ error: "NOT_AUTHENTICATED" });
+    if (!req.session.isLoggedIn || !req.session.userId) return res.status(401).json({ error: errors.NOT_AUTHENTICATED });
     const user = await schemas.Users.findById(req.session.userId);
-    if (!user) return res.status(404).json({ error: "ACCOUNT_NOT_FOUND" });
+    if (!user) return res.status(404).json({ error: errors.ACCOUNT_NOT_FOUND });
 
     req.currentUser = user;
     next();
@@ -54,7 +55,7 @@ export function createLimiter(
     windowMs = config.RATE_LIMIT_WINDOW_MS,
     limit = config.MAIN_RATE_LIMIT_MAX_REQ,
     options = {},
-    error = "RATE_LIMITED"
+    error = errors.RATE_LIMITED
 ) {
     try {
         return rateLimit({
@@ -68,15 +69,15 @@ export function createLimiter(
             legacyHeaders: false,
             ...options
         });
-    } catch (e) {
-        console.log("Error:", e);
+    } catch (err) {
+        console.error(err);
         return null;
     }
 }
 
 export function validateResult(req, res, next) {
     const result = validationResult(req);
-    if (!result.isEmpty()) return res.status(400).json({ error: "INVALID_REQUEST" });
+    if (!result.isEmpty()) return res.status(400).json({ error: errors.INVALID_REQUEST });
 
     // Result
     const cleanData = matchedData(req);
@@ -85,10 +86,9 @@ export function validateResult(req, res, next) {
 }
 
 export class ClientError extends Error {
-    constructor(errorCode, statusCode = 400) {
-        super(errorCode);
+    constructor(message, statusCode = 400) {
+        super(message);
         this.statusCode = statusCode;
-        this.errorCode = errorCode;
         this.isCustom = true;
     }
 }

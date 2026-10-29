@@ -1,4 +1,4 @@
-import { initQuickInfo, $ } from "../js/core/utils.js";
+import { initQuickInfo, $ } from "./core/utils.js";
 import { getPosts, postsState } from "./posts/main-feed.js";
 import './users/signup.js';
 import './users/profile.js';

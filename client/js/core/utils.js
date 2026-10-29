@@ -1,6 +1,6 @@
 import $ from "https://cdn.jsdelivr.net/npm/cash-dom@8.1.0/dist/cash.esm.js";
-import config from "/config/shared.js";
-import { getErrorMessage } from "./errors.js";
+import config from "/shared/config.js";
+import errors from "/shared/errors.js";
 
 export async function copy(str) {
     if (!str || typeof str !== "string") return;
@@ -9,7 +9,7 @@ export async function copy(str) {
         await navigator.clipboard.writeText(str);
         Alert.success({ text: "Copied!" });
     } catch {
-        Alert.error({ text: getErrorMessage("COPY_FAILED") });
+        Alert.error({ text: errors.COPY_FAILED });
     }
 }
 
@@ -37,7 +37,7 @@ export function lockEvent(fn) {
         try {
             await fn.call(this, e);
         } catch {
-            Alert.error({ text: getErrorMessage("UNEXPECTED_ERROR") });
+            Alert.error({ text: errors.UNEXPECTED_ERROR });
         } finally {
             el.removeAttr("inert");
         }
@@ -54,7 +54,7 @@ export async function sendRequest({ body, ...requestConfig }) {
 
         return response?.data || {};
     } catch (error) {
-        return { error: error.response?.data?.error || "UNEXPECTED_ERROR" };
+        return { error: error.response?.data?.error || errors.UNEXPECTED_ERROR };
     }
 }
 
@@ -80,7 +80,7 @@ export async function initQuickInfo() {
         const data = await sendRequest({ url: "/api/v1/me/quick-info" });
         Object.assign(quickInfo, data || {});
     } catch {
-        Alert.error({ text: getErrorMessage("UNEXPECTED_ERROR") });
+        Alert.error({ text: errors.UNEXPECTED_ERROR });
     }
 }
 

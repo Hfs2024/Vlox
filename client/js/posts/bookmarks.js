@@ -1,5 +1,6 @@
 import { renderPosts } from "./main-feed.js";
 import templates from "../core/templates.js";
+import errors from "/shared/errors.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
@@ -9,7 +10,6 @@ import {
     $,
     Alert
 } from "../core/utils.js";
-import { getErrorMessage } from "../core/errors.js";
 
 async function getBookmarks(skip = 0) {
     const response = await sendRequest({
@@ -22,7 +22,7 @@ async function getBookmarks(skip = 0) {
 
 async function renderBookmarks(state = {}, preFetchedResponse = null) {
     const response = preFetchedResponse || await getBookmarks(state.skip);
-    if (response && !response.success) return Alert.error({ text: getErrorMessage(response.error) });
+    if (response && !response.success) return Alert.error({ text: response.error });
 
     // Clear container
     $(state.container).empty();
@@ -59,7 +59,7 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
                     url: `/api/v1/posts/${safeBookmark.for}`
                 });
 
-                if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+                if (!response.success) return Alert.error({ text: response.error });
                 renderPosts(response.posts);
                 Alert.success({ text: "Post loaded!" });
             }))
@@ -75,7 +75,7 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
                     method: "DELETE"
                 });
 
-                if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+                if (!response.success) return Alert.error({ text: response.error });
                 Alert.success({ text: "Bookmark deleted!" });
             }))
             .appendTo(buttons);
@@ -90,7 +90,7 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
                         maxLength: config.POST_TITLE_MAX_LENGTH
                     },
                     preConfirm: result => {
-                        if (!result?.trim()) return Swal.showValidationMessage(getErrorMessage("TITLE_REQUIRED"));
+                        if (!result?.trim()) return Swal.showValidationMessage(errors.TITLE_REQUIRED);
                     }
                 });
 
@@ -103,7 +103,7 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
                     body: { title: result.value }
                 });
 
-                if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+                if (!response.success) return Alert.error({ text: response.error });
                 if (!response.changed) return Alert.info({ text: "No changed were made!" });
                 
                 Alert.success({ text: "Bookmark renamed successfully!" });
@@ -117,7 +117,7 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
 export default async function showBookmarks() {
     const state = { skip: 0, container: null };
     const response = await getBookmarks();
-    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+    if (!response.success) return Alert.error({ text: response.error });
 
     Swal.fire({
         title: "Your bookmarks: ",

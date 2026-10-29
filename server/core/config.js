@@ -1,5 +1,5 @@
 import "dotenv/config";
-import sharedConfig from "./shared.js";
+import sharedConfig from "../../shared/config.js";
 
 const config = {
     ...sharedConfig,

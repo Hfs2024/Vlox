@@ -1,4 +1,4 @@
-import config from "/config/shared.js";
+import config from "./config.js";
 
 const errors = {
     ACCOUNT_NOT_FOUND: "We can't find your account right now.",
@@ -19,7 +19,6 @@ const errors = {
     POST_NOT_FOUND: "Post not found.",
     PROFILE_NOT_FOUND_OR_PRIVATE: "User not found, or their account is private.",
     RATE_LIMITED: "Too many requests. Please try again later.",
-    ROUTE_NOT_FOUND: "The requested API route was not found.",
     PASSWORD_LENGTH: `Password must be between ${config.PASSWORD_MIN_LENGTH} and ${config.PASSWORD_MAX_LENGTH} characters.`,
     PASSWORD_MAX_LENGTH: `Password must be no longer than ${config.PASSWORD_MAX_LENGTH} characters.`,
     SESSION_DESTROY_FAILED: "Failed to destroy session.",
@@ -29,10 +28,6 @@ const errors = {
     UNEXPECTED_ERROR: "An unexpected error occurred.",
     USERNAME_LENGTH: `Username must be between ${config.USERNAME_MIN_LENGTH} and ${config.USERNAME_MAX_LENGTH} characters.`,
     PASSWORD_UPDATE_FAILED: "Failed to update password."
-}
-
-export function getErrorMessage(errorCode) {
-    return errors[errorCode] || errors.UNEXPECTED_ERROR;
 }
 
 export default errors;

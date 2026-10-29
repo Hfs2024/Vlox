@@ -1,6 +1,6 @@
 import { body, param, query } from "express-validator";
 import { validateResult } from "./utils.js";
-import config from "../config/backend.js";
+import config from "./config.js";
 
 // Helpers
 const isIntQuery = (field, label) => query(field)

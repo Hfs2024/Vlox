@@ -1,7 +1,6 @@
 import showProfile from "../users/profile.js";
 import showComments from "./comments.js";
 import CommentEditor from "../components/comment-editor.js";
-import { getErrorMessage } from "../core/errors.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
@@ -60,7 +59,7 @@ export async function renderPosts(posts = []) {
                     method: "POST"
                 });
 
-                if (!bookmarkResponse.success) return Alert.error({ text: getErrorMessage(bookmarkResponse.error) });
+                if (!bookmarkResponse.success) return Alert.error({ text: bookmarkResponse.error });
                 Alert.success({ text: "Post bookmarked!" });
             }))
             .appendTo(postIconsGroup);
@@ -103,7 +102,7 @@ export async function renderPosts(posts = []) {
                     method: "POST"
                 });
 
-                if (likesResponse.error) return Alert.error({ text: getErrorMessage(likesResponse.error) });
+                if (likesResponse.error) return Alert.error({ text: likesResponse.error });
                 $(this).find(".likes-count").text(likes + 1);
                 Alert.success({ text: "Post liked!" });
             }))
@@ -132,7 +131,7 @@ export async function renderPosts(posts = []) {
                     }
                 });
 
-                if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+                if (!response.success) return Alert.error({ text: response.error });
                 Alert.success({ text: "Comment added!" });
             }))
             .appendTo(reactions);
@@ -148,6 +147,6 @@ export async function getPosts(postId = null) {
             `/api/v1/posts/?skip=${postsState.skip}`,
     });
 
-    if (!data.success) return Alert.error({ text: getErrorMessage(data.error) });
+    if (!data.success) return Alert.error({ text: data.error });
     renderPosts(data.posts);
 }

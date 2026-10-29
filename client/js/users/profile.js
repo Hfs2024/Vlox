@@ -1,6 +1,7 @@
 import showBookmarks from "../posts/bookmarks.js";
 import templates from "../core/templates.js";
 import { renderProfilePosts } from "./profile-feed.js";
+import errors from "/shared/errors.js";
 import {
     sendRequest,
     capitalizeFirstLetter,
@@ -11,7 +12,6 @@ import {
     $,
     Alert
 } from "../core/utils.js";
-import { getErrorMessage } from "../core/errors.js";
 
 export default async function showProfile(id) {
     // Get data
@@ -19,7 +19,7 @@ export default async function showProfile(id) {
         url: `/api/v1/users/${id}/profile`
     });
 
-    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+    if (!response.success) return Alert.error({ text: response.error });
 
     // Save user data temporarily
     const user = response.user || {};
@@ -49,7 +49,7 @@ export default async function showProfile(id) {
                     method: "POST"
                 });
 
-                if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+                if (!response.success) return Alert.error({ text: response.error });
 
                 // Download recovery codes
                 const recoveryCodes = Array.isArray(response.codes) ? response.codes : [];
@@ -67,7 +67,7 @@ export default async function showProfile(id) {
                     },
                     preConfirm: result => {
                         if (result.length < config.BIO_MIN_LENGTH) {
-                            return Swal.showValidationMessage(getErrorMessage("BIO_MIN_LENGTH"));
+                            return Swal.showValidationMessage(errors.BIO_MIN_LENGTH);
                         }
                     }
                 });
@@ -81,7 +81,7 @@ export default async function showProfile(id) {
                     body: { bio: result.value }
                 });
 
-                if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+                if (!response.success) return Alert.error({ text: response.error });
                 if (!response.changed) return Alert.info({ text: "No changed were made!" });
                 Alert.success({ text: "Bio updated!" });
             }));
@@ -93,7 +93,7 @@ export default async function showProfile(id) {
                     body: { value: !state.user.private }
                 });
 
-                if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+                if (!response.success) return Alert.error({ text: response.error });
                 if (!response.changed) return Alert.info({ text: "No changed were made!" });
                 Alert.success({ text: `Account is ${state.user.private ? "public" : "private"}` });
             }));

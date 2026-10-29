@@ -4,22 +4,23 @@ import path from "path";
 import session from "express-session";
 import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
-import config from "./config/backend.js";
-import schemas from "./src/schemas.js";
-import bookmarksRouter from "./src/controllers/bookmarks.js";
-import postsRouter from "./src/controllers/posts.js";
-import authRouter from "./src/controllers/auth.js";
+import config from "./core/config.js";
+import errors from "../shared/errors.js";
+import schemas from "./core/schemas.js";
+import bookmarksRouter from "./controllers/bookmarks.js";
+import postsRouter from "./controllers/posts.js";
+import authRouter from "./controllers/auth.js";
 import {
     checkAuth,
     createLimiter,
     postQueries
-} from "./src/utils.js";
+} from "./core/utils.js";
 import {
     defaultPostFindValidator,
     getPostsValidator,
     createPostsValidator,
     getCommentsValidator
-} from "./src/validators.js";
+} from "./core/validators.js";
 
 const __dirname = import.meta.dirname;
 const app = express();
@@ -27,10 +28,11 @@ const app = express();
 // MonogDB
 mongoose.connect(config.MONGO_URI)
     .then(() => console.log("MongoDB connected!"))
-    .catch(err => console.log(`Failed to connect MongoDB: ${err.message}`));
+    .catch(err => console.error(err.message));
 
 // Basic config
-app.use(express.static(path.join(__dirname, "public"), { index: false }));
+app.use(express.static(path.join(__dirname, "..", "client"), { index: false }));
+app.use("/shared", express.static(path.join(__dirname, "..", "shared"), { index: false }));
 app.use(express.json({ limit: config.JSON_BODY_LIMIT }));
 app.use(
     session({
@@ -63,11 +65,7 @@ app.use("/api/v1", authRouter);
 
 // Main routes
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public/index.html"));
-});
-
-app.get("/config/shared.js", (req, res) => {
-    res.sendFile(path.join(__dirname, "config", "shared.js"));
+    res.sendFile(path.join(__dirname, "..", "client", "index.html"));
 });
 
 // Basic routes
@@ -91,7 +89,7 @@ app.get("/api/v1/posts/:id", checkAuth, defaultPostFindValidator, async (req, re
         .populate("by", "-password -recoveryCodes -email")
         .lean();
 
-    if (!post) return res.status(404).json({ error: "POST_NOT_FOUND" });
+    if (!post) return res.status(404).json({ error: errors.POST_NOT_FOUND });
     return res.status(200).json({ success: true, posts: [post] });
 });
 
@@ -128,12 +126,12 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-    if (err.code === 11000) return res.status(409).json({ error: "DUPLICATE_RESOURCE" });
-    if (err.isCustom) return res.status(err.statusCode).json({ error: err.errorCode });
+    if (err.code === 11000) return res.status(409).json({ error: errors.DUPLICATE_RESOURCE });
+    if (err.isCustom) return res.status(err.statusCode).json({ error: err.message });
 
     // For debugging only
-    console.log(err);
-    return res.status(500).json({ error: "UNEXPECTED_ERROR" });
+    console.error(err);
+    return res.status(500).json({ error: errors.UNEXPECTED_ERROR });
 });
 
 app.listen(config.PORT, config.HOST, () => {

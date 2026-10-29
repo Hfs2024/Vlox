@@ -1,4 +1,6 @@
 import showProfile from "./profile.js";
+import errors from "/shared/errors.js";
+import templates from "../core/templates.js";
 import {
     sendRequest,
     initQuickInfo,
@@ -8,8 +10,6 @@ import {
     $,
     Alert
 } from "../core/utils.js";
-import { getErrorMessage } from "../core/errors.js";
-import templates from "../core/templates.js";
 
 const signUpBtn = $("#signup-btn");
 const signOutBtn = $("#signout-btn");
@@ -28,10 +28,10 @@ $(document).on("click", ".link-swal-auth", function () {
 });
 
 // Quick helpers
-function validateAuthField(value, min, max, errorCode) {
-    if (!value) return getErrorMessage(errorCode);
-    if (min !== undefined && value.length < min) return getErrorMessage(errorCode);
-    if (max !== undefined && value.length > max) return getErrorMessage(errorCode);
+function validateAuthField(value, min, max, error) {
+    if (!value) return error;
+    if (min !== undefined && value.length < min) return error;
+    if (max !== undefined && value.length > max) return error;
     return null;
 }
 
@@ -55,14 +55,14 @@ async function showResetPasswordModal() {
             const password = passwordRaw ? passwordRaw.trim() : "";
             const recoveryCode = $("#reset-recovery-code").val();
 
-            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, "USERNAME_LENGTH");
+            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, errors.USERNAME_LENGTH);
             if (usernameErr) return Swal.showValidationMessage(usernameErr);
 
-            const passwordErr = validateAuthField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, "PASSWORD_LENGTH");
+            const passwordErr = validateAuthField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, errors.PASSWORD_LENGTH);
             if (passwordErr) return Swal.showValidationMessage(passwordErr);
 
             if (!recoveryCode || recoveryCode.length !== config.RECOVERY_CODE_LENGTH) {
-                return Swal.showValidationMessage(getErrorMessage("RECOVERY_CODE_LENGTH"));
+                return Swal.showValidationMessage(errors.RECOVERY_CODE_LENGTH);
             }
 
             return { username, password, recoveryCode };
@@ -77,7 +77,7 @@ async function showResetPasswordModal() {
         body: result.value
     });
 
-    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+    if (!response.success) return Alert.error({ text: response.error });
     Alert.success({ text: "Password reset! You can now login" });
 }
 
@@ -94,10 +94,10 @@ async function showLoginModal() {
             const passwordRaw = $("#login-password").val();
             const password = passwordRaw ? passwordRaw.trim() : "";
 
-            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, "USERNAME_LENGTH");
+            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, errors.USERNAME_LENGTH);
             if (usernameErr) return Swal.showValidationMessage(usernameErr);
 
-            const passwordErr = validateAuthField(password, undefined, config.PASSWORD_MAX_LENGTH, "PASSWORD_MAX_LENGTH");
+            const passwordErr = validateAuthField(password, undefined, config.PASSWORD_MAX_LENGTH, errors.PASSWORD_MAX_LENGTH);
             if (passwordErr) return Swal.showValidationMessage(passwordErr);
 
             return { username, password };
@@ -112,7 +112,7 @@ async function showLoginModal() {
         body: result.value
     });
 
-    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+    if (!response.success) return Alert.error({ text: response.error });
 
     await handleAuthSuccess("Successfully logged in!");
 }
@@ -136,17 +136,17 @@ async function showSignUpModal() {
             const email = $("#signup-email").val();
             const bio = $("#signup-bio").val();
 
-            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, "USERNAME_LENGTH");
+            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, errors.USERNAME_LENGTH);
             if (usernameErr) return Swal.showValidationMessage(usernameErr);
 
-            const passwordErr = validateAuthField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, "PASSWORD_LENGTH");
+            const passwordErr = validateAuthField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, errors.PASSWORD_LENGTH);
             if (passwordErr) return Swal.showValidationMessage(passwordErr);
 
             if (!email || email.length > config.EMAIL_MAX_LENGTH || !/.+\@.+\..+/.test(email)) {
-                return Swal.showValidationMessage(getErrorMessage("EMAIL_INVALID"));
+                return Swal.showValidationMessage(errors.EMAIL_INVALID);
             }
 
-            const bioErr = validateAuthField(bio, config.BIO_MIN_LENGTH, undefined, "BIO_MIN_LENGTH");
+            const bioErr = validateAuthField(bio, config.BIO_MIN_LENGTH, undefined, errors.BIO_MIN_LENGTH);
             if (bioErr) return Swal.showValidationMessage(bioErr);
 
             return { username, password, email, bio };
@@ -162,7 +162,7 @@ async function showSignUpModal() {
         body: result.value
     });
 
-    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+    if (!response.success) return Alert.error({ text: response.error });
 
     // Download recovery codes
     const recoveryCodes = Array.isArray(response.recoveryCodes) ? response.recoveryCodes : [];
@@ -191,7 +191,7 @@ signOutBtn.on("click", lockEvent(async function () {
         method: "DELETE"
     });
 
-    if (!response.success) return Alert.error({ text: getErrorMessage(response.error) });
+    if (!response.success) return Alert.error({ text: response.error });
 
     await handleAuthSuccess("You have been logged out!");
 }));

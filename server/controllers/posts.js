@@ -1,5 +1,6 @@
-import schemas from "../schemas.js";
-import { checkAuth, postQueries, ClientError } from "../utils.js";
+import schemas from "../core/schemas.js";
+import { checkAuth, ClientError, postQueries } from "../core/utils.js";
+import errors from "../../shared/errors.js";
 import express from "express";
 import mongoose from "mongoose";
 import {
@@ -8,7 +9,7 @@ import {
     defaultPostFindValidator,
     commentsValidator,
     editCommentValidator
-} from "../validators.js";
+} from "../core/validators.js";
 const router = express.Router();
 
 router.put("/posts/:id/visibility", checkAuth, changePostVisibilityValidator, async (req, res) => {
@@ -30,7 +31,7 @@ router.put("/posts/:id/visibility", checkAuth, changePostVisibilityValidator, as
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "POST_NOT_FOUND" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: errors.POST_NOT_FOUND });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -53,7 +54,7 @@ router.post("/posts/:id/like", checkAuth, defaultPostFindValidator, async (req, 
             session
         });
 
-        if (updatePostResult.matchedCount === 0) throw new ClientError("POST_ACCESS_DENIED");
+        if (updatePostResult.matchedCount === 0) throw new ClientError(errors.POST_ACCESS_DENIED);
 
         // Insert like
         const newLike = new schemas.Likes({
@@ -94,7 +95,7 @@ router.put("/posts/:id/update", checkAuth, editPostsValidator, async (req, res) 
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "POST_NOT_FOUND" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: errors.POST_NOT_FOUND });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -107,7 +108,7 @@ router.delete("/posts/:id/delete", checkAuth, defaultPostFindValidator, async fu
     const id = req.cleanData.id;
     await session.withTransaction(async () => {
         const deletePostResult = await schemas.Posts.deleteOne(postQueries.modify_post(id, req.session.userId), { session });
-        if (deletePostResult.deletedCount === 0) throw new ClientError("POST_ACCESS_DENIED");
+        if (deletePostResult.deletedCount === 0) throw new ClientError(errors.POST_ACCESS_DENIED);
 
         await schemas.Likes.deleteMany({ for: id }, { session });
         await schemas.Comments.deleteMany({ for: id }, { session });
@@ -120,7 +121,7 @@ router.delete("/posts/:id/delete", checkAuth, defaultPostFindValidator, async fu
 router.post("/posts/:id/comments", checkAuth, commentsValidator, async (req, res) => {
     const { id, content } = req.cleanData;
     const post = await schemas.Posts.exists(postQueries.view_post(id, req.session.userId));
-    if (!post) return res.status(404).json({ error: "POST_NOT_FOUND" });
+    if (!post) return res.status(404).json({ error: errors.POST_NOT_FOUND });
 
     // Insert comment
     const newComment = new schemas.Comments({
@@ -161,7 +162,7 @@ router.put("/comments/:id/update", checkAuth, editCommentValidator, async (req, 
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "COMMENT_NOT_FOUND" });
+    if (result.matchedCount === 0) return res.status(404).json({ error: errors.COMMENT_NOT_FOUND });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
