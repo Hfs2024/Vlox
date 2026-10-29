@@ -31,7 +31,7 @@ router.put("/posts/:id/visibility", checkAuth, changePostVisibilityValidator, as
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: errors.POST_NOT_FOUND });
+    if (result.matchedCount === 0) return res.status(404).json({ error: errors.NOT_FOUND("Post") });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -41,11 +41,10 @@ router.put("/posts/:id/visibility", checkAuth, changePostVisibilityValidator, as
 
 router.post("/posts/:id/like", checkAuth, defaultPostFindValidator, async (req, res) => {
     const session = await mongoose.startSession();
-    const { id } = req.cleanData;
+    const id = req.cleanData.id;
 
     await session.withTransaction(async () => {
-        // Update post
-        const updatePostResult = await schemas.Posts.updateOne(postQueries.view_post(id, req.session.userId),
+        const result = await schemas.Posts.updateOne(postQueries.view_post(id, req.session.userId),
             {
                 $inc: {
                     likes: 1
@@ -54,15 +53,9 @@ router.post("/posts/:id/like", checkAuth, defaultPostFindValidator, async (req, 
             session
         });
 
-        if (updatePostResult.matchedCount === 0) throw new ClientError(errors.POST_ACCESS_DENIED);
+        if (result.matchedCount === 0) throw new ClientError(errors.POST_ACCESS_DENIED());
 
-        // Insert like
-        const newLike = new schemas.Likes({
-            by: req.session.userId,
-            for: id
-        });
-
-        await newLike.save({ session });
+        await schemas.Likes.create([{ by: req.session.userId, for: id }], { session });
     });
 
     await session.endSession();
@@ -95,7 +88,7 @@ router.put("/posts/:id/update", checkAuth, editPostsValidator, async (req, res) 
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: errors.POST_NOT_FOUND });
+    if (result.matchedCount === 0) return res.status(404).json({ error: errors.NOT_FOUND("Post") });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,
@@ -106,9 +99,10 @@ router.put("/posts/:id/update", checkAuth, editPostsValidator, async (req, res) 
 router.delete("/posts/:id/delete", checkAuth, defaultPostFindValidator, async function (req, res) {
     const session = await mongoose.startSession();
     const id = req.cleanData.id;
+
     await session.withTransaction(async () => {
-        const deletePostResult = await schemas.Posts.deleteOne(postQueries.modify_post(id, req.session.userId), { session });
-        if (deletePostResult.deletedCount === 0) throw new ClientError(errors.POST_ACCESS_DENIED);
+        const result = await schemas.Posts.deleteOne(postQueries.modify_post(id, req.session.userId), { session });
+        if (result.deletedCount === 0) throw new ClientError(errors.POST_ACCESS_DENIED());
 
         await schemas.Likes.deleteMany({ for: id }, { session });
         await schemas.Comments.deleteMany({ for: id }, { session });
@@ -121,16 +115,9 @@ router.delete("/posts/:id/delete", checkAuth, defaultPostFindValidator, async fu
 router.post("/posts/:id/comments", checkAuth, commentsValidator, async (req, res) => {
     const { id, content } = req.cleanData;
     const post = await schemas.Posts.exists(postQueries.view_post(id, req.session.userId));
-    if (!post) return res.status(404).json({ error: errors.POST_NOT_FOUND });
+    if (!post) return res.status(404).json({ error: errors.NOT_FOUND("Post") });
 
-    // Insert comment
-    const newComment = new schemas.Comments({
-        content: content,
-        for: id,
-        by: req.session.userId
-    });
-
-    await newComment.save();
+    await schemas.Comments.create({ content, for: id, by: req.session.userId });
     return res.status(201).json({ success: true });
 });
 
@@ -162,7 +149,7 @@ router.put("/comments/:id/update", checkAuth, editCommentValidator, async (req, 
         timestamps: false
     });
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: errors.COMMENT_NOT_FOUND });
+    if (result.matchedCount === 0) return res.status(404).json({ error: errors.NOT_FOUND("Comment") });
 
     return res.status(200).json({
         changed: result.modifiedCount !== 0,

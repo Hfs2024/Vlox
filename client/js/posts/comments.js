@@ -102,15 +102,16 @@ export default async function showComments(id) {
         stopKeydownPropagation: false,
         confirmButtonText: "Close",
         didOpen: () => {
-            state.container = $("#comments-container");
+            const $popup = $(Swal.getPopup());
+            state.container = $popup.find("#comments-container");
 
-            $("#comments-prev-btn").on("click", lockEvent(async function () {
+            $popup.find("#comments-prev-btn").on("click", lockEvent(async function () {
                 if (state.skip <= 0) return;
                 state.skip -= config.COMMENTS_LIMIT;
                 await renderComments(state);
             }));
 
-            $("#comments-next-btn").on("click", lockEvent(async function () {
+            $popup.find("#comments-next-btn").on("click", lockEvent(async function () {
                 if ($(state.container).find(".state-nothing-found").length) return;
                 state.skip += config.COMMENTS_LIMIT;
                 await renderComments(state);

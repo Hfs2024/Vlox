@@ -17,15 +17,19 @@ export default class CommentEditor {
             inputValue: this.initial,
             inputPlaceholder: "Enter value...",
             showCancelButton: true,
-            confirmButtonText: "Submit",            
+            confirmButtonText: "Submit",
             inputAttributes: {
                 maxLength: config.COMMENTS_MAX_LENGTH
             },
+            
             didDestroy: () => {
                 this.#instance = null;
             },
+
             preConfirm: result => {
-                if (!result?.trim()) return Swal.showValidationMessage(errors.COMMENT_REQUIRED);
+                if (validator.isEmpty(result)) {
+                    return Swal.showValidationMessage(errors.VALIDATION.REQUIRED("Comment"));
+                }
             }
         });
 

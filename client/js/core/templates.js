@@ -24,13 +24,6 @@ const templates = {
   <button id="comments-next-btn"><i class="fas fa-caret-right"></i></button>
 </div>`,
 
-  USER_PASSWORD_RESET: () => `
-<h2>Reset your password</h2>
-<input type="text" id="reset-username" placeholder="Username">
-<input type="password" id="reset-recovery-code" placeholder="Recovery code">
-<input type="password" id="reset-password" placeholder="New password">
-`,
-
   USER_LOGIN: () => `
 <h2>Login</h2>
 <input type="text" id="login-username" placeholder="Username">

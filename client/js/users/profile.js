@@ -14,7 +14,6 @@ import {
 } from "../core/utils.js";
 
 export default async function showProfile(id) {
-    // Get data
     const response = await sendRequest({
         url: `/api/v1/users/${id}/profile`
     });
@@ -35,39 +34,29 @@ export default async function showProfile(id) {
         }
     }
 
+    // Render data
     Swal.fire({
         titleText: `Hello, ${state.user.username}!`,
         html: templates.USER_PROFILE(state),
         confirmButtonText: "Close",
         stopKeydownPropagation: false,
         didOpen: () => {
-            state.container = $("#user-posts-container");
+            const $popup = $(Swal.getPopup());
+            state.container = $popup.find("#user-posts-container");
 
-            $("#reset-password-recovery-codes-btn").on("click", lockEvent(async function () {
-                const response = await sendRequest({
-                    url: "/api/v1/users/recovery-codes",
-                    method: "POST"
-                });
-
-                if (!response.success) return Alert.error({ text: response.error });
-
-                // Download recovery codes
-                const recoveryCodes = Array.isArray(response.codes) ? response.codes : [];
-                const blob = new Blob([recoveryCodes.join("\n")], { type: "text/plain" });
-                window.saveAs(blob, "recovery-codes.txt");
-
-                Alert.success({ text: "Password Recovery Codes Reseted!" });
+            $popup.find("#reset-password-recovery-codes-btn").on("click", lockEvent(async function () {
+                Alert.info({ text: "Working on an update..." });
             }));
 
-            $("#profile-bio-edit-btn").on("click", lockEvent(async function () {
+            $popup.find("#profile-bio-edit-btn").on("click", lockEvent(async function () {
                 const result = await input({
                     inputValue: state.user.bio || "",
                     inputAttributes: {
                         maxLength: config.BIO_MAX_LENGTH
                     },
                     preConfirm: result => {
-                        if (result.length < config.BIO_MIN_LENGTH) {
-                            return Swal.showValidationMessage(errors.BIO_MIN_LENGTH);
+                        if (!validator.isLength(result, { min: config.BIO_MIN_LENGTH })) {
+                            return Swal.showValidationMessage(errors.VALIDATION.MIN_LENGTH("Bio", config.BIO_MIN_LENGTH));
                         }
                     }
                 });
@@ -86,7 +75,7 @@ export default async function showProfile(id) {
                 Alert.success({ text: "Bio updated!" });
             }));
 
-            $("#profile-visibility-toggle-btn").on("click", lockEvent(async function () {
+            $popup.find("#profile-visibility-toggle-btn").on("click", lockEvent(async function () {
                 const response = await sendRequest({
                     url: "/api/v1/me/visibility",
                     method: "PUT",
@@ -98,21 +87,21 @@ export default async function showProfile(id) {
                 Alert.success({ text: `Account is ${state.user.private ? "public" : "private"}` });
             }));
 
-            $("#profile-load-posts-btn").on("click", lockEvent(async function () {
+            $popup.find("#profile-load-posts-btn").on("click", lockEvent(async function () {
                 await renderProfilePosts(state);
             }));
 
-            $("#profile-bookmarks-btn").on("click", lockEvent(async function () {
+            $popup.find("#profile-bookmarks-btn").on("click", lockEvent(async function () {
                 await showBookmarks();
             }));
 
-            $("#profile-posts-prev-btn").on("click", lockEvent(async function () {
+            $popup.find("#profile-posts-prev-btn").on("click", lockEvent(async function () {
                 if (state.skip <= 0) return;
                 state.skip -= config.USER_POSTS_LIMIT;
                 await renderProfilePosts(state);
             }));
 
-            $("#profile-posts-next-btn").on("click", lockEvent(async function () {
+            $popup.find("#profile-posts-next-btn").on("click", lockEvent(async function () {
                 if ($(state.container).find(".state-nothing-found").length) return;
                 state.skip += config.USER_POSTS_LIMIT;
                 await renderProfilePosts(state);

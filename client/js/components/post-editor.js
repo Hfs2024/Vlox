@@ -18,11 +18,13 @@ export default class PostEditor {
             showCancelButton: true,
             confirmButtonText: "Submit",
             didOpen: () => {
-                $(Swal.getPopup()).find("#post-editor-title")
+                const $popup = $(Swal.getPopup());
+                
+                $popup.find("#post-editor-title")
                     .val(this.initial.title || "")
                     .attr("maxLength", config.POST_TITLE_MAX_LENGTH);
 
-                $(Swal.getPopup()).find("#post-editor-content")
+                $popup.find("#post-editor-content")
                     .val(this.initial.content || "")
                     .attr("maxLength", config.POST_CONTENT_MAX_LENGTH);
             },
@@ -32,10 +34,19 @@ export default class PostEditor {
             },
 
             preConfirm: () => {
-                const title = $(Swal.getPopup()).find("#post-editor-title").val().trim();
-                const content = $(Swal.getPopup()).find("#post-editor-content").val().trim();
+                const $popup = $(Swal.getPopup());
+                const title = $popup.find("#post-editor-title").val().trim();
+                const content = $popup.find("#post-editor-content").val().trim();
 
-                if (!title || !content) return Swal.showValidationMessage(errors.TITLE_CONTENT_REQUIRED);
+                const missing = [
+                    validator.isEmpty(title),
+                    validator.isEmpty(content),
+                ].filter(Boolean);
+
+                if (missing.length) {
+                    return Swal.showValidationMessage(errors.VALIDATION.REQUIRED_FIELDS(...missing));
+                }
+
                 return { title, content };
             }
         });

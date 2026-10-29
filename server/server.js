@@ -71,14 +71,14 @@ app.get("/", (req, res) => {
 // Basic routes
 app.post("/api/v1/posts", checkAuth, createPostsValidator, async (req, res) => {
     const { title, content } = req.cleanData;
-    const newPost = new schemas.Posts({
+
+    await schemas.Posts.create({
         title,
         content,
         by: req.session.userId
     });
 
-    await newPost.save();
-    return res.status(201).json({ success: true, postId: newPost._id });
+    return res.status(201).json({ success: true });
 });
 
 app.get("/api/v1/posts/:id", checkAuth, defaultPostFindValidator, async (req, res) => {
@@ -89,14 +89,12 @@ app.get("/api/v1/posts/:id", checkAuth, defaultPostFindValidator, async (req, re
         .populate("by", "-password -recoveryCodes -email")
         .lean();
 
-    if (!post) return res.status(404).json({ error: errors.POST_NOT_FOUND });
+    if (!post) return res.status(404).json({ error: errors.NOT_FOUND("Post") });
     return res.status(200).json({ success: true, posts: [post] });
 });
 
 app.get("/api/v1/posts", getPostsValidator, async (req, res) => {
     const skip = req.cleanData.skip;
-
-    // Find posts
     const posts = await schemas.Posts.find({
         private: false
     })
@@ -126,12 +124,12 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-    if (err.code === 11000) return res.status(409).json({ error: errors.DUPLICATE_RESOURCE });
+    if (err.code === 11000) return res.status(409).json({ error: errors.DUPLICATE_RESOURCE() });
     if (err.isCustom) return res.status(err.statusCode).json({ error: err.message });
 
-    // For debugging only
+    // For debugging only :)
     console.error(err);
-    return res.status(500).json({ error: errors.UNEXPECTED_ERROR });
+    return res.status(500).json({ error: errors.UNEXPECTED_ERROR() });
 });
 
 app.listen(config.PORT, config.HOST, () => {

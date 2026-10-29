@@ -84,9 +84,9 @@ export async function renderPosts(posts = []) {
             .attr("role", "button")
             .attr("tabindex", "0")
             .html(`Created by: <span class="author-name">${capitalizeFirstLetter(safeBy.username) || "User"}</span>`)
-            .on("click", async function () {
-                showProfile(safeBy._id);
-            })
+            .on("click", lockEvent(async function () {
+                await showProfile(safeBy._id);
+            }))
             .appendTo(postCard);
 
         // Actions
@@ -103,6 +103,7 @@ export async function renderPosts(posts = []) {
                 });
 
                 if (likesResponse.error) return Alert.error({ text: likesResponse.error });
+                
                 $(this).find(".likes-count").text(likes + 1);
                 Alert.success({ text: "Post liked!" });
             }))

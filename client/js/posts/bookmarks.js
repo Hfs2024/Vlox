@@ -60,6 +60,7 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
                 });
 
                 if (!response.success) return Alert.error({ text: response.error });
+                
                 renderPosts(response.posts);
                 Alert.success({ text: "Post loaded!" });
             }))
@@ -90,7 +91,9 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
                         maxLength: config.POST_TITLE_MAX_LENGTH
                     },
                     preConfirm: result => {
-                        if (!result?.trim()) return Swal.showValidationMessage(errors.TITLE_REQUIRED);
+                        if (validator.isEmpty(result)) {
+                            return Swal.showValidationMessage(errors.VALIDATION.REQUIRED("Title"));
+                        }
                     }
                 });
 
@@ -105,7 +108,7 @@ async function renderBookmarks(state = {}, preFetchedResponse = null) {
 
                 if (!response.success) return Alert.error({ text: response.error });
                 if (!response.changed) return Alert.info({ text: "No changed were made!" });
-                
+
                 Alert.success({ text: "Bookmark renamed successfully!" });
             }))
             .appendTo(buttons);
@@ -125,15 +128,16 @@ export default async function showBookmarks() {
         stopKeydownPropagation: false,
         html: templates.USER_BOOKMARKS(),
         didOpen: () => {
-            state.container = $("#user-bookmarks-container");
+            const $popup = $(Swal.getPopup());
+            state.container = $popup.find("#user-bookmarks-container");
 
-            $("#user-bookmarks-prev-btn").on("click", lockEvent(async function () {
+            $popup.find("#user-bookmarks-prev-btn").on("click", lockEvent(async function () {
                 if (state.skip <= 0) return;
                 state.skip -= config.BOOKMARKS_LIMIT;
                 await renderBookmarks(state);
             }));
 
-            $("#user-bookmarks-next-btn").on("click", lockEvent(async function () {
+            $popup.find("#user-bookmarks-next-btn").on("click", lockEvent(async function () {
                 if ($(state.container).find(".state-nothing-found").length) return;
                 state.skip += config.BOOKMARKS_LIMIT;
                 await renderBookmarks(state);

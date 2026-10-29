@@ -1,9 +1,13 @@
 import showProfile from "./profile.js";
-import errors from "/shared/errors.js";
 import templates from "../core/templates.js";
 import {
+    getLoginError,
+    getSignUpError,
+    toggleAuthButtons,
+    handleAuthSuccess
+} from "./signup-helpers.js";
+import {
     sendRequest,
-    initQuickInfo,
     lockEvent,
     config,
     quickInfo,
@@ -14,72 +18,17 @@ import {
 const signUpBtn = $("#signup-btn");
 const signOutBtn = $("#signout-btn");
 const profileBtn = $("#profile-btn");
-const loggedInGroup = $("#auth-buttons");
+
 const modalRoutes = {
     "login": showLoginModal,
     "signup": showSignUpModal,
-    "password_recovery": showResetPasswordModal
+    "password_recovery": () => Alert.info({ text: "Working on an update..." })
 }
 
 $(document).on("click", ".link-swal-auth", function () {
     const target = $(this).data("target");
-
     if (modalRoutes[target]) modalRoutes[target]();
 });
-
-// Quick helpers
-function validateAuthField(value, min, max, error) {
-    if (!value) return error;
-    if (min !== undefined && value.length < min) return error;
-    if (max !== undefined && value.length > max) return error;
-    return null;
-}
-
-async function handleAuthSuccess(message) {
-    Alert.success({ text: message });
-
-    await determineAuthButtonsDisplay();
-    await initQuickInfo();
-}
-
-// Actions
-async function showResetPasswordModal() {
-    const result = await Swal.fire({
-        html: templates.USER_PASSWORD_RESET(),
-        stopKeydownPropagation: false,
-        showCancelButton: true,
-        confirmButtonText: "Submit",
-        preConfirm: () => {
-            const username = $("#reset-username").val();
-            const passwordRaw = $("#reset-password").val();
-            const password = passwordRaw ? passwordRaw.trim() : "";
-            const recoveryCode = $("#reset-recovery-code").val();
-
-            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, errors.USERNAME_LENGTH);
-            if (usernameErr) return Swal.showValidationMessage(usernameErr);
-
-            const passwordErr = validateAuthField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, errors.PASSWORD_LENGTH);
-            if (passwordErr) return Swal.showValidationMessage(passwordErr);
-
-            if (!recoveryCode || recoveryCode.length !== config.RECOVERY_CODE_LENGTH) {
-                return Swal.showValidationMessage(errors.RECOVERY_CODE_LENGTH);
-            }
-
-            return { username, password, recoveryCode };
-        }
-    });
-
-    if (!result.isConfirmed) return;
-
-    const response = await sendRequest({
-        url: "/api/v1/users/password",
-        method: "POST",
-        body: result.value
-    });
-
-    if (!response.success) return Alert.error({ text: response.error });
-    Alert.success({ text: "Password reset! You can now login" });
-}
 
 async function showLoginModal() {
     const result = await Swal.fire({
@@ -88,17 +37,13 @@ async function showLoginModal() {
         showCancelButton: true,
         confirmButtonText: "Submit",
         cancelButtonText: "Cancel",
-
         preConfirm: () => {
-            const username = $("#login-username").val();
-            const passwordRaw = $("#login-password").val();
-            const password = passwordRaw ? passwordRaw.trim() : "";
+            const $popup = $(Swal.getPopup());
+            const username = $popup.find("#login-username").val().trim();
+            const password = $popup.find("#login-password").val().trim();
 
-            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, errors.USERNAME_LENGTH);
-            if (usernameErr) return Swal.showValidationMessage(usernameErr);
-
-            const passwordErr = validateAuthField(password, undefined, config.PASSWORD_MAX_LENGTH, errors.PASSWORD_MAX_LENGTH);
-            if (passwordErr) return Swal.showValidationMessage(passwordErr);
+            const error = getLoginError(username, password);
+            if (error) return Swal.showValidationMessage(error);
 
             return { username, password };
         }
@@ -106,14 +51,14 @@ async function showLoginModal() {
 
     if (!result.isConfirmed) return;
 
+    // Send request
     const response = await sendRequest({
-        url: `/api/v1/users/login`,
+        url: "/api/v1/users/login",
         method: "POST",
         body: result.value
     });
 
     if (!response.success) return Alert.error({ text: response.error });
-
     await handleAuthSuccess("Successfully logged in!");
 }
 
@@ -124,30 +69,19 @@ async function showSignUpModal() {
         showCancelButton: true,
         confirmButtonText: "Submit",
         cancelButtonText: "Cancel",
-
         didOpen: () => {
-            $("#signup-bio").attr("maxlength", config.BIO_MAX_LENGTH);
+            $(Swal.getPopup()).find("#signup-bio").attr("maxlength", config.BIO_MAX_LENGTH);
         },
 
         preConfirm: () => {
-            const username = $("#signup-username").val();
-            const passwordRaw = $("#signup-password").val();
-            const password = passwordRaw ? passwordRaw.trim() : "";
-            const email = $("#signup-email").val();
-            const bio = $("#signup-bio").val();
+            const $popup = $(Swal.getPopup());
+            const username = $popup.find("#signup-username").val().trim();
+            const password = $popup.find("#signup-password").val().trim();
+            const email = $popup.find("#signup-email").val().trim();
+            const bio = $popup.find("#signup-bio").val().trim();
 
-            const usernameErr = validateAuthField(username, config.USERNAME_MIN_LENGTH, config.USERNAME_MAX_LENGTH, errors.USERNAME_LENGTH);
-            if (usernameErr) return Swal.showValidationMessage(usernameErr);
-
-            const passwordErr = validateAuthField(password, config.PASSWORD_MIN_LENGTH, config.PASSWORD_MAX_LENGTH, errors.PASSWORD_LENGTH);
-            if (passwordErr) return Swal.showValidationMessage(passwordErr);
-
-            if (!email || email.length > config.EMAIL_MAX_LENGTH || !/.+\@.+\..+/.test(email)) {
-                return Swal.showValidationMessage(errors.EMAIL_INVALID);
-            }
-
-            const bioErr = validateAuthField(bio, config.BIO_MIN_LENGTH, undefined, errors.BIO_MIN_LENGTH);
-            if (bioErr) return Swal.showValidationMessage(bioErr);
+            const error = getSignUpError(username, password, email, bio);
+            if (error) return Swal.showValidationMessage(error);
 
             return { username, password, email, bio };
         }
@@ -157,7 +91,7 @@ async function showSignUpModal() {
 
     // Send request
     const response = await sendRequest({
-        url: `/api/v1/users/signup`,
+        url: "/api/v1/users/signup",
         method: "POST",
         body: result.value
     });
@@ -165,20 +99,12 @@ async function showSignUpModal() {
     if (!response.success) return Alert.error({ text: response.error });
 
     // Download recovery codes
-    const recoveryCodes = Array.isArray(response.recoveryCodes) ? response.recoveryCodes : [];
-    const blob = new Blob([recoveryCodes.join("\n")], { type: "text/plain" });
-    window.saveAs(blob, "recovery-codes.txt");
+    if (Array.isArray(response.recoveryCodes)) {
+        const blob = new Blob([response.recoveryCodes.join("\n")], { type: "text/plain" });
+        window.saveAs(blob, "recovery-codes.txt");
+    }
+
     await handleAuthSuccess("Account created successfully!");
-}
-
-async function determineAuthButtonsDisplay() {
-    const status = await sendRequest({
-        url: "/api/v1/me/status"
-    });
-
-    const isLoggedIn = !!status.loggedIn;
-    signUpBtn.toggle(!isLoggedIn);
-    loggedInGroup.toggle(isLoggedIn);
 }
 
 signUpBtn.on("click", lockEvent(async function () {
@@ -192,7 +118,6 @@ signOutBtn.on("click", lockEvent(async function () {
     });
 
     if (!response.success) return Alert.error({ text: response.error });
-
     await handleAuthSuccess("You have been logged out!");
 }));
 
@@ -200,4 +125,4 @@ profileBtn.on("click", lockEvent(async function () {
     await showProfile(quickInfo?._id);
 }));
 
-determineAuthButtonsDisplay();
+toggleAuthButtons();

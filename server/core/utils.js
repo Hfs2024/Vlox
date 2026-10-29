@@ -7,9 +7,9 @@ import errors from "../../shared/errors.js";
 import { validationResult, matchedData } from "express-validator";
 
 export async function checkAuth(req, res, next) {
-    if (!req.session.isLoggedIn || !req.session.userId) return res.status(401).json({ error: errors.NOT_AUTHENTICATED });
+    if (!req.session.isLoggedIn || !req.session.userId) return res.status(401).json({ error: errors.NOT_AUTHENTICATED() });
     const user = await schemas.Users.findById(req.session.userId);
-    if (!user) return res.status(404).json({ error: errors.ACCOUNT_NOT_FOUND });
+    if (!user) return res.status(404).json({ error: errors.NOT_FOUND("Account") });
 
     req.currentUser = user;
     next();
@@ -55,7 +55,7 @@ export function createLimiter(
     windowMs = config.RATE_LIMIT_WINDOW_MS,
     limit = config.MAIN_RATE_LIMIT_MAX_REQ,
     options = {},
-    error = errors.RATE_LIMITED
+    error = errors.RATE_LIMITED()
 ) {
     try {
         return rateLimit({
@@ -77,7 +77,7 @@ export function createLimiter(
 
 export function validateResult(req, res, next) {
     const result = validationResult(req);
-    if (!result.isEmpty()) return res.status(400).json({ error: errors.INVALID_REQUEST });
+    if (!result.isEmpty()) return res.status(400).json({ error: result.array()[0].msg });
 
     // Result
     const cleanData = matchedData(req);
